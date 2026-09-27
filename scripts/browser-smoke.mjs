@@ -151,9 +151,7 @@ async function captureViewport(browser, vp, pageUrl, theme) {
   });
   const hasVapelog = /Vapelog/i.test(bodyText);
   const screenshotPath =
-    theme === "dark"
-      ? vp.screenshot.replace(/\.png$/i, `.dark.png`)
-      : vp.screenshot;
+    theme === "dark" ? vp.screenshot.replace(/\.png$/i, `.dark.png`) : vp.screenshot;
   await page.screenshot({ path: screenshotPath, fullPage: false });
   await page.close();
 
@@ -216,7 +214,12 @@ try {
     try {
       extended.sheets[path] = await captureViewport(
         browser,
-        { name: "sheet", width: 1280, height: 800, screenshot: join(dirname(outPng), `sheet${path.replaceAll("/", "-")}.png`) },
+        {
+          name: "sheet",
+          width: 1280,
+          height: 800,
+          screenshot: join(dirname(outPng), `sheet${path.replaceAll("/", "-")}.png`),
+        },
         sheetUrl,
         "light",
       );
