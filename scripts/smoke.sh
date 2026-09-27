@@ -1,33 +1,52 @@
 #!/usr/bin/env bash
-# Smoke temporal: sirve el build de producción y exige HTTP 200 en las rutas
-# principales. Otro agente lo pulirá (Playwright, más rutas, regresiones).
+# Smoke: sirve el build de producción y exige HTTP 200 + marcador en el body.
+# Determinista, ≤5 min. Fallar si el servidor no arranca.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PORT="${SMOKE_PORT:-4173}"
 BASE="http://127.0.0.1:${PORT}"
+LOG="$(mktemp)"
+MARKER="Vapelog"
 
-if [ -f dist/server/server.js ]; then
-  echo "smoke: sirviendo con 'vite preview' (artefacto dist/)" >&2
-elif [ -f .output/server/index.mjs ]; then
-  echo "smoke: artefacto legacy .output detectado; usando vite preview" >&2
-else
+cleanup() {
+  if [ -n "${SERVER_PID:-}" ]; then
+    kill "$SERVER_PID" 2>/dev/null || true
+    wait "$SERVER_PID" 2>/dev/null || true
+  fi
+  rm -f "$LOG"
+}
+trap cleanup EXIT
+
+if [ ! -d dist/client ] || [ ! -f dist/server/server.js ]; then
   echo "smoke: sin build previo; ejecutando pnpm build" >&2
   pnpm build
 fi
 
-pnpm exec vite preview --port "$PORT" --strictPort &
+echo "smoke: arrancando vite preview en :${PORT}" >&2
+pnpm exec vite preview --host 127.0.0.1 --port "$PORT" --strictPort >"$LOG" 2>&1 &
 SERVER_PID=$!
-trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 
-for _ in $(seq 1 60); do
+ready=0
+for _ in $(seq 1 90); do
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    echo "smoke: el servidor murió al arrancar" >&2
+    cat "$LOG" >&2 || true
+    exit 1
+  fi
   if curl -fsS -o /dev/null "$BASE/" 2>/dev/null; then
+    ready=1
     break
   fi
   sleep 0.5
 done
 
-MARKER="Vapelog"
+if [ "$ready" != "1" ]; then
+  echo "smoke: timeout esperando $BASE/" >&2
+  cat "$LOG" >&2 || true
+  exit 1
+fi
+
 for path in / /dispositivos; do
   body="$(mktemp)"
   code="$(curl -sS -o "$body" -w "%{http_code}" "$BASE$path")"
