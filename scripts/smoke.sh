@@ -18,14 +18,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [ ! -d dist/client ] || [ ! -f dist/server/server.js ]; then
+if [ ! -f .output/server/index.mjs ] && [ ! -d dist/client ]; then
   echo "smoke: sin build previo; ejecutando pnpm build" >&2
   pnpm build
 fi
 
-echo "smoke: arrancando vite preview en :${PORT}" >&2
-pnpm exec vite preview --host 127.0.0.1 --port "$PORT" --strictPort >"$LOG" 2>&1 &
-SERVER_PID=$!
+if [ -f .output/server/index.mjs ]; then
+  echo "smoke: arrancando Nitro (.output) en :${PORT}" >&2
+  PORT="$PORT" HOST=127.0.0.1 NITRO_HOST=127.0.0.1 NITRO_PORT="$PORT" \
+    node .output/server/index.mjs >"$LOG" 2>&1 &
+  SERVER_PID=$!
+else
+  echo "smoke: arrancando vite preview en :${PORT}" >&2
+  pnpm exec vite preview --host 127.0.0.1 --port "$PORT" --strictPort >"$LOG" 2>&1 &
+  SERVER_PID=$!
+fi
 
 ready=0
 for _ in $(seq 1 90); do

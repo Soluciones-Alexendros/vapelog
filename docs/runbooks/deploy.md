@@ -13,10 +13,11 @@
 
 ## Deploy
 
-1. Conectar el repo `Soluciones-Alexendros/vapelog` a un proyecto Vercel.
-2. Framework preset: Vite / TanStack Start según el dashboard.
-3. Build command: `pnpm run build`.
-4. Output: `dist` (ajustar si el adapter de Start cambia).
+1. Conectar el repo `Soluciones-Alexendros/vapelog` a un proyecto Vercel
+   (framework **TanStack Start** / Nitro).
+2. Install: `pnpm install --frozen-lockfile`.
+3. Build: `pnpm run build` (emite `.output/` vía Nitro).
+4. Start local de verificación: `pnpm start` → `node .output/server/index.mjs`.
 
 ## Verificación
 
