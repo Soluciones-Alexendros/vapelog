@@ -40,7 +40,7 @@ function declaredKeys() {
 }
 
 const used = new Set();
-const scanDirs = ["src", "scripts", "."];
+const scanDirs = ["src"];
 const scanned = new Set();
 for (const dir of scanDirs) {
   const full = join(ROOT, dir);
@@ -53,8 +53,10 @@ for (const dir of scanDirs) {
     for (const match of src.matchAll(/import\.meta\.env\.([A-Z][A-Z0-9_]*)/g)) used.add(match[1]);
   }
 }
-used.delete("NODE_ENV"); // la inyecta el runtime, no es contrato del proyecto
-
+// Runtime / framework: no forman parte del contrato .env.example del proyecto.
+for (const key of [...used]) {
+  if (key === "NODE_ENV" || key.startsWith("TSS_") || key.startsWith("VITE_")) used.delete(key);
+}
 const { keys: declared, file: hasExample } = declaredKeys();
 const undeclared = [...used].filter((key) => !declared.includes(key)).sort();
 const unused = declared.filter((key) => !used.has(key)).sort();
