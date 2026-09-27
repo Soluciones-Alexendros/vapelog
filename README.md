@@ -19,9 +19,10 @@ Contratos: [AGENTS.md](AGENTS.md) · [ARCHITECTURE.md](ARCHITECTURE.md) ·
 
 |            |                                                              |
 | ---------- | ------------------------------------------------------------ |
-| **Estado** | Catálogo puro (sin auth / multiplayer / broker Grok)         |
-| **Stack**  | TanStack Start · React 19 · TypeScript · Tailwind v4 · OKLCH |
-| **Gestor** | pnpm · Node 22                                               |
+| **Estado**     | Catálogo puro (sin auth / multiplayer / broker Grok)                      |
+| **Producción** | [vapelog-beryl.vercel.app](https://vapelog-beryl.vercel.app)              |
+| **Stack**      | TanStack Start · React 19 · TypeScript · Tailwind v4 · OKLCH · Nitro      |
+| **Gestor**     | pnpm · Node 22                                                            |
 
 [![CI](https://github.com/Soluciones-Alexendros/vapelog/actions/workflows/ci.yml/badge.svg)](https://github.com/Soluciones-Alexendros/vapelog/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
