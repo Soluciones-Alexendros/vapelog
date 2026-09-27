@@ -1,0 +1,31 @@
+name: Feature
+description: Propuesta de mejora o nueva capacidad
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options:
+        - Catálogo / datos
+        - Fichas / UI
+        - Compatibilidad
+        - Herramientas
+        - Tokens / accesibilidad
+        - Docs / DX
+        - Otro
+    validations:
+      required: true
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema o necesidad
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+    validations:
+      required: true

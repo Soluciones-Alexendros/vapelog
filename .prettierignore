@@ -1,0 +1,8 @@
+node_modules
+dist
+.output
+.tanstack
+coverage
+public/catalog
+src/routeTree.gen.ts
+pnpm-lock.yaml

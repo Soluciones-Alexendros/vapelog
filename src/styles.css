@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.985 0.006 85);
+  --foreground: oklch(0.22 0.02 80);
+  --card: oklch(0.995 0.004 85);
+  --card-foreground: oklch(0.22 0.02 80);
+  --popover: oklch(0.995 0.004 85);
+  --popover-foreground: oklch(0.22 0.02 80);
+  --primary: oklch(0.5 0.14 62);
+  --primary-foreground: oklch(0.99 0.01 95);
+  --secondary: oklch(0.94 0.012 80);
+  --secondary-foreground: oklch(0.28 0.02 80);
+  --muted: oklch(0.94 0.01 80);
+  --muted-foreground: oklch(0.38 0.025 80);
+  --accent: oklch(0.94 0.02 75);
+  --accent-foreground: oklch(0.28 0.03 70);
+  --destructive: oklch(0.48 0.18 25);
+  --destructive-foreground: oklch(0.99 0.01 95);
+  --border: oklch(0.55 0.025 80);
+  --input: oklch(0.55 0.025 80);
+  --ring: oklch(0.42 0.07 210);
+  --chart-1: oklch(0.62 0.14 62);
+  --chart-2: oklch(0.55 0.1 210);
+  --chart-3: oklch(0.5 0.08 145);
+  --chart-4: oklch(0.58 0.12 25);
+  --chart-5: oklch(0.5 0.06 300);
+  --radius: 0.375rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --font-sans: "Public Sans", "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+}
+
+.dark {
+  --background: oklch(0.16 0.012 80);
+  --foreground: oklch(0.96 0.012 95);
+  --card: oklch(0.22 0.014 80);
+  --card-foreground: oklch(0.96 0.012 95);
+  --popover: oklch(0.22 0.014 80);
+  --popover-foreground: oklch(0.96 0.012 95);
+  --primary: oklch(0.72 0.15 62);
+  --primary-foreground: oklch(0.22 0.03 70);
+  --secondary: oklch(0.26 0.016 78);
+  --secondary-foreground: oklch(0.96 0.012 95);
+  --muted: oklch(0.26 0.016 78);
+  --muted-foreground: oklch(0.82 0.02 90);
+  --accent: oklch(0.26 0.016 78);
+  --accent-foreground: oklch(0.96 0.012 95);
+  --destructive: oklch(0.68 0.16 25);
+  --destructive-foreground: oklch(0.99 0.01 95);
+  --border: oklch(0.55 0.025 80);
+  --input: oklch(0.55 0.025 80);
+  --ring: oklch(0.88 0.06 210);
+  --chart-1: oklch(0.72 0.15 62);
+  --chart-2: oklch(0.7 0.1 210);
+  --chart-3: oklch(0.68 0.1 145);
+  --chart-4: oklch(0.68 0.14 25);
+  --chart-5: oklch(0.65 0.08 300);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    color-scheme: light;
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1.12;
+    font-weight: 560;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+    background: var(--muted);
+    color: var(--muted-foreground);
+    border-color: var(--border);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    background: var(--background);
+    color: var(--foreground);
+    border: 1px solid var(--input);
+    border-radius: var(--radius-sm);
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    font: inherit;
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  @media (prefers-contrast: more) {
+    :root {
+      --foreground: oklch(0.12 0.01 80);
+      --muted-foreground: oklch(0.28 0.02 80);
+      --border: oklch(0.55 0.03 80);
+      --background: oklch(1 0 0);
+      --card: oklch(1 0 0);
+    }
+
+    .dark {
+      --foreground: oklch(0.98 0.008 95);
+      --muted-foreground: oklch(0.9 0.015 95);
+      --border: oklch(0.78 0.02 90);
+      --background: oklch(0.12 0.008 80);
+      --card: oklch(0.16 0.01 80);
+    }
+  }
+
+  @media (forced-colors: active) {
+    :root,
+    .dark {
+      --background: Canvas;
+      --card: Canvas;
+      --popover: Canvas;
+      --muted: Canvas;
+      --secondary: Canvas;
+      --accent: Canvas;
+      --foreground: CanvasText;
+      --card-foreground: CanvasText;
+      --popover-foreground: CanvasText;
+      --muted-foreground: CanvasText;
+      --secondary-foreground: CanvasText;
+      --accent-foreground: CanvasText;
+      --primary: LinkText;
+      --primary-foreground: Canvas;
+      --ring: Highlight;
+      --destructive: LinkText;
+      --destructive-foreground: Canvas;
+      --border: CanvasText;
+      --input: CanvasText;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+      forced-color-adjust: auto;
+      border: 1px solid CanvasText;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

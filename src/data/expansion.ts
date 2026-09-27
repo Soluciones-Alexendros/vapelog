@@ -1,0 +1,804 @@
+import type { Brand, Coil, Device, Draw, Liquid, Part, Platform, Taxon } from "./types";
+
+export const extraBrands: Brand[] = [
+  { id: "voopoo", name: "Voopoo", country: "China" },
+  { id: "drifter", name: "Drifter", country: "Reino Unido" },
+  { id: "herrera", name: "Herrera", country: "España" },
+  { id: "kings-crest", name: "King's Crest", country: "Estados Unidos" },
+  { id: "bombo", name: "Bombo", country: "España" },
+  { id: "especificacion", name: "Especificación", country: "—" },
+];
+
+export const extraPlatforms: Platform[] = [
+  { id: "xlim-04", name: "OXVA XLIM 0,4 Ω" },
+  { id: "gtx", name: "Vaporesso GTX" },
+  { id: "pnp", name: "Voopoo PnP" },
+  { id: "geekvape-b", name: "Geekvape B" },
+];
+
+export const extraTaxa: Taxon[] = [
+  { id: "capsula.gtx", domain: "coil", parentId: "capsula", es: "GTX", en: "GTX" },
+  { id: "tanque.pnp", domain: "coil", parentId: "tanque", es: "PnP", en: "PnP" },
+  { id: "tanque.b", domain: "coil", parentId: "tanque", es: "Serie B", en: "B series" },
+  {
+    id: "tanque.gtx",
+    domain: "coil",
+    parentId: "tanque",
+    es: "GTX de tanque",
+    en: "GTX tank coil",
+  },
+  { id: "tabaco.neto", domain: "flavor", parentId: "tabaco", es: "Tabaco neto", en: "NET tobacco" },
+  { id: "tabaco.criollo", domain: "flavor", parentId: "tabaco", es: "Criollo", en: "Criollo" },
+  { id: "tabaco.corojo", domain: "flavor", parentId: "tabaco", es: "Corojo", en: "Corojo" },
+  { id: "tabaco.habano", domain: "flavor", parentId: "tabaco", es: "Habano", en: "Habano" },
+  { id: "postre.crema", domain: "flavor", parentId: "postre", es: "Cremas", en: "Creams" },
+  { id: "bateria", domain: "part", parentId: null, es: "Baterías", en: "Batteries" },
+  { id: "bateria.18650", domain: "part", parentId: "bateria", es: "Celda 18650", en: "18650 cell" },
+  { id: "boquilla", domain: "part", parentId: null, es: "Boquillas", en: "Mouthpieces" },
+  { id: "boquilla.510", domain: "part", parentId: "boquilla", es: "Rosca 510", en: "510 drip tip" },
+  {
+    id: "boquilla.capsula",
+    domain: "part",
+    parentId: "boquilla",
+    es: "Integrada en la cápsula",
+    en: "Built into the pod",
+  },
+];
+
+const oxvaPod = "https://www.oxva.com/es/pages/xlim-refillable-cartridge";
+const gtxPage = "https://ecigone.co.uk/products/vaporesso-gtx-coil-5pcs";
+const pnpPage = "https://m.voopoo.com/pnpplatform.html";
+const bPage = "https://www.geekvape.com/product/b-series-coil/";
+
+const noUfi = "SUPUESTO NO VERIFICADO: no hay UFI ni número de notificación TPD en esta ficha.";
+
+function coilOf(input: {
+  id: string;
+  slug: string;
+  archiveId: string;
+  brandId: string;
+  name: string;
+  familyId: string;
+  subId: string;
+  platformIds: string[];
+  ohms: number;
+  wattMin: number;
+  wattMax: number;
+  draw: Draw;
+  connector: Coil["connector"];
+  wire: string;
+  summary: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  caveats: string[];
+  pack: string;
+}): Coil {
+  return {
+    domain: "coil",
+    id: input.id,
+    slug: input.slug,
+    archiveId: input.archiveId,
+    brandId: input.brandId,
+    name: input.name,
+    familyId: input.familyId,
+    subId: input.subId,
+    summary: input.summary,
+    confidence: "fabricante",
+    sources: [{ label: input.sourceLabel, url: input.sourceUrl }],
+    caveats: input.caveats,
+    tags: [input.draw.toLowerCase(), `${input.ohms}ohm`, input.brandId],
+    status: "referenciado",
+    platformIds: input.platformIds,
+    ohms: input.ohms,
+    wattMin: input.wattMin,
+    wattMax: input.wattMax,
+    wattConfidence: "fabricante",
+    wire: input.wire,
+    build: "Malla",
+    draw: input.draw,
+    connector: input.connector,
+    refillable: true,
+    pack: input.pack,
+  };
+}
+
+export const extraCoils: Coil[] = [
+  ...[
+    [0.15, 60, 75, "DL", "NiCr", "Sub-ohm de pulmón. La tabla cita 70 W como punto dulce."],
+    [0.2, 45, 60, "DL", "NiCr", "Pulmón. Punto dulce citado: 55 W."],
+    [0.3, 32, 45, "DL", "NiCr", "Pulmón. Punto dulce citado: 40 W."],
+    [0.4, 26, 32, "RDL", "FeCrAl", "Pulmón restringido. Punto dulce citado: 30 W."],
+    [0.6, 20, 26, "RDL", "FeCrAl", "MTL holgado. Punto dulce citado: 24 W."],
+    [0.8, 12, 16, "MTL", "FeCrAl", "MTL. Punto dulce citado: 16 W."],
+    [1.2, 8, 12, "MTL", "FeCrAl", "MTL cerrado. Punto dulce citado: 11 W."],
+  ].map(([ohms, min, max, draw, wire, note]) =>
+    coilOf({
+      id: `gtx-${String(ohms).replace(".", "")}`,
+      slug: `vaporesso-gtx-${String(ohms).replace(".", "-")}`,
+      archiveId: `A510-COIL-GTX${String(ohms).replace(".", "")}`,
+      brandId: "vaporesso",
+      name: `GTX ${String(ohms).replace(".", ",")} Ω`,
+      familyId: "tanque",
+      subId: "tanque.gtx",
+      platformIds: ["gtx"],
+      ohms: ohms as number,
+      wattMin: min as number,
+      wattMax: max as number,
+      draw: draw as Draw,
+      connector: "510",
+      wire: `Malla ${wire}`,
+      summary: `Coil GTX de ${String(ohms).replace(".", ",")} Ω. ${note} No entra en un pod XROS: esa serie sella la resistencia dentro de la cápsula COREX.`,
+      sourceLabel: "Ecigone — tabla GTX atribuida a Vaporesso",
+      sourceUrl: gtxPage,
+      caveats: [
+        "La ventana sale de una ficha de distribuidor que la presenta como la publicada por Vaporesso. No se abrió un PDF de la marca en esta pasada.",
+        "0,15, 0,2 y 0,3 Ω existen también en doble malla, con ficha propia. La ventana de vatios grabada coincide.",
+        "Hay tanques GTX con rosca 510 y pods propietarios. El cruce eléctrico no sustituye al atomizador.",
+      ],
+      pack: "Blíster de 5, según el distribuidor",
+    }),
+  ),
+  ...[
+    ["vm6", "PnP-VM6", 0.15, 55, 70, "DL", "Malla"],
+    ["vm5", "PnP-VM5", 0.2, 40, 60, "DL", "Malla"],
+    ["vm1", "PnP-VM1", 0.3, 32, 40, "DL", "Malla simple"],
+    ["vm3", "PnP-VM3", 0.45, 25, 35, "RDL", "Malla simple"],
+    ["vm4", "PnP-VM4", 0.6, 20, 28, "RDL", "Malla simple"],
+    ["tm1", "PnP-TM1", 0.6, 20, 25, "RDL", "Malla"],
+    ["tm2", "PnP-TM2", 0.8, 12, 18, "MTL", "Malla"],
+    ["tr1", "PnP-TR1", 1.2, 10, 15, "MTL", "Malla"],
+  ].map(([id, name, ohms, min, max, draw, wire]) =>
+    coilOf({
+      id: `pnp-${id}`,
+      slug: `voopoo-pnp-${id}`,
+      archiveId: `A510-COIL-PNP-${String(id).toUpperCase()}`,
+      brandId: "voopoo",
+      name: String(name),
+      familyId: "tanque",
+      subId: "tanque.pnp",
+      platformIds: ["pnp"],
+      ohms: ohms as number,
+      wattMin: min as number,
+      wattMax: max as number,
+      draw: draw as Draw,
+      connector: "propietario",
+      wire: String(wire),
+      summary: `${name}, ${String(ohms).replace(".", ",")} Ω, encaje a presión de la plataforma PnP. No es una coil de rosca: va dentro del pod o del tanque PnP.`,
+      sourceLabel: "Voopoo — plataforma PnP",
+      sourceUrl: pnpPage,
+      caveats: [
+        "El render oficial del VM6 graba 55–70 W. Otro bloque de la misma página dice 60–80 W.",
+        "VM1 también aparece como 28–36 W en otro bloque. Aquí queda 32–40 W.",
+        "VM3 aparece como 25–32 W y como 25–35 W. Aquí queda 25–35 W.",
+        "Existen tanques PnP con rosca 510 que esta ficha no da de alta. El cruce nativo es con el pod Drag X.",
+      ],
+      pack: "No fijado en la página de plataforma",
+    }),
+  ),
+  ...[
+    [0.15, 60, 75, "DL", "Boost"],
+    [0.2, 50, 58, "DL", "Boost"],
+    [0.3, 30, 38, "DL", "Boost"],
+    [0.4, 25, 35, "RDL", "Boost"],
+    [0.6, 15, 25, "RDL", "Boost"],
+    [0.8, 12, 16, "MTL", "MTL"],
+    [1.2, 8, 12, "MTL", "MTL"],
+  ].map(([ohms, min, max, draw, version]) =>
+    coilOf({
+      id: `b-${String(ohms).replace(".", "")}`,
+      slug: `geekvape-b-${String(ohms).replace(".", "-")}`,
+      archiveId: `A510-COIL-B${String(ohms).replace(".", "")}`,
+      brandId: "geekvape",
+      name: `B ${String(ohms).replace(".", ",")} Ω`,
+      familyId: "tanque",
+      subId: "tanque.b",
+      platformIds: ["geekvape-b"],
+      ohms: ohms as number,
+      wattMin: min as number,
+      wattMax: max as number,
+      draw: draw as Draw,
+      connector: "510",
+      wire: "Malla",
+      summary: `Coil serie B de ${String(ohms).replace(".", ",")} Ω (${version}). Misma interfaz que la versión anterior: Geekvape dice que son intercambiables. No es una coil Z.`,
+      sourceLabel: "Geekvape — B Series Coil",
+      sourceUrl: bPage,
+      caveats: [
+        "La página asocia la serie a cartucho Boost, Hero, Force y a tanques Z Nano 2, Z Nano 3 y Z Nano MTL. El tanque Z del kit L200 no está en esa lista.",
+        "0,6 Ω figura dos veces, Boost y MTL, con la misma ventana 15–25 W. Una sola ficha.",
+      ],
+      pack: "La vida útil citada por la marca es orientativa (50–60 ml en Boost, 20–30 ml en MTL), no una garantía",
+    }),
+  ),
+];
+
+export const extraDevices: Device[] = [
+  {
+    domain: "device",
+    id: "xlim-go-2",
+    slug: "oxva-xlim-go-2",
+    archiveId: "A510-DEV-XLIMGO2",
+    brandId: "oxva",
+    name: "XLIM Go 2",
+    familyId: "pod",
+    subId: "pod.abierto",
+    format: "Pod",
+    summary:
+      "Pod de la serie XLIM sin botón. OXVA publica 1500 mAh y cartucho de 3 ml, 2 ml en versión TPD, con cápsulas de la misma plataforma que el Pro 2.",
+    confidence: "fabricante",
+    sources: [{ label: "OXVA — XLIM Go 2", url: "https://www.oxva.com/pages/xlim-go-2" }],
+    caveats: [
+      "La página no publica un rango de vatios. El cartucho de 0,4 Ω está recomendado a 26–30 W: no se afirma que este kit llegue ahí.",
+      "La corriente de carga no está en el extracto usado.",
+    ],
+    tags: ["pod", "mtl", "rdl", "xlim", "tpd"],
+    status: "referenciado",
+    battery: "1500 mAh integrada",
+    charge: "No publicada en el extracto",
+    power: "No publicada",
+    powerMinW: null,
+    powerMaxW: null,
+    ohmMin: null,
+    ohmMax: null,
+    chipset: "Unitech 2.0, según la página",
+    modes: ["Calada, sin botón"],
+    display: null,
+    connector: "propietario",
+    platformIds: ["xlim", "xlim-04"],
+    kitPlatformIds: [],
+    materials: "No publicados en el extracto",
+    airflow: "El de la cápsula",
+    capacity: "2 ml TPD / 3 ml",
+    dimensions: null,
+    weight: null,
+    tpd: "si",
+    year: null,
+    draw: "MTL y RDL, según el cartucho",
+  },
+  {
+    domain: "device",
+    id: "xlim-sq-pro-2",
+    slug: "oxva-xlim-sq-pro-2",
+    archiveId: "A510-DEV-XLIMSQPRO2",
+    brandId: "oxva",
+    name: "XLIM SQ Pro 2",
+    familyId: "pod",
+    subId: "pod.abierto",
+    format: "Pod",
+    summary:
+      "Pod XLIM con pantalla táctil. OXVA publica 1600 mAh, 30 W y carga USB-C a 5 V / 2 A. Usa los cartuchos XLIM, incluido el de 0,4 Ω.",
+    confidence: "fabricante",
+    sources: [{ label: "OXVA — XLIM SQ Pro 2", url: "https://www.oxva.com/pages/xlim-sq-pro-2" }],
+    caveats: [
+      "La página consultada no repetía la capacidad del cartucho. En la serie, la versión TPD es de 2 ml.",
+      "«45 minutos» y «7 días» son frases comerciales de la página, no una medición del archivo.",
+    ],
+    tags: ["pod", "mtl", "rdl", "usb-c", "xlim", "30w"],
+    status: "referenciado",
+    battery: "1600 mAh integrada",
+    charge: "USB-C, 5 V / 2 A",
+    power: "Hasta 30 W",
+    powerMinW: null,
+    powerMaxW: 30,
+    ohmMin: null,
+    ohmMax: null,
+    chipset: null,
+    modes: ["Pantalla táctil", "Eco"],
+    display: "Pantalla táctil HD",
+    connector: "propietario",
+    platformIds: ["xlim", "xlim-04"],
+    kitPlatformIds: [],
+    materials: "No publicados en el extracto",
+    airflow: "El de la cápsula",
+    capacity: "Cartucho XLIM; 2 ml en la versión TPD de la serie",
+    dimensions: null,
+    weight: null,
+    tpd: "parcial",
+    year: null,
+    draw: "MTL y RDL, según el cartucho",
+  },
+  {
+    domain: "device",
+    id: "luxe-x",
+    slug: "vaporesso-luxe-x",
+    archiveId: "A510-DEV-LUXEX",
+    brandId: "vaporesso",
+    name: "LUXE X",
+    familyId: "pod",
+    subId: "pod.abierto",
+    format: "Pod",
+    summary:
+      "Pod Vaporesso de 1500 mAh y 40 W, con cápsula de 5 ml o 2 ml en versión TPD. La ficha de la serie lista pods de malla y coils GTX: no es un XROS.",
+    confidence: "fabricante",
+    sources: [
+      {
+        label: "Vaporesso — serie LUXE X",
+        url: "https://www.vaporesso.com/series-product/luxe-x-series/luxe-x",
+      },
+    ],
+    caveats: [
+      "La URL pedida de LUXE XR Max redirigió a esta ficha de LUXE X. No se mezclan los dos nombres.",
+      "El tope publicado es 40 W, no un rango 5–40. Una GTX de 0,15 Ω (desde 60 W) no cabe en esa ventana.",
+      "La ficha cita pods de 0,4 Ω a 32 W, 0,6 Ω a 21 W y 0,8 Ω a 16 W, además de coils GTX sueltas.",
+    ],
+    tags: ["pod", "gtx", "mtl", "rdl", "usb-c", "tpd"],
+    status: "referenciado",
+    battery: "1500 mAh integrada",
+    charge: "USB-C, 5 V / 1,5 A",
+    power: "40 W",
+    powerMinW: null,
+    powerMaxW: 40,
+    ohmMin: null,
+    ohmMax: null,
+    chipset: null,
+    modes: ["Aire al cambiar la orientación de la cápsula"],
+    display: "Tres LED",
+    connector: "propietario",
+    platformIds: ["gtx"],
+    kitPlatformIds: [],
+    materials: "No publicados en el extracto",
+    airflow: "De abierto a cerrado girando la cápsula",
+    capacity: "2 ml TPD / 5 ml",
+    dimensions: null,
+    weight: null,
+    tpd: "si",
+    year: null,
+    draw: "MTL a RDL, según la coil",
+  },
+  {
+    domain: "device",
+    id: "drag-x",
+    slug: "voopoo-drag-x",
+    archiveId: "A510-DEV-DRAGX",
+    brandId: "voopoo",
+    name: "Drag X",
+    familyId: "pod",
+    subId: "pod.abierto",
+    format: "Pod mod",
+    summary:
+      "Pod mod de una 18650 externa, 5–80 W y ventana 0,1–3,0 Ω. El pod es PnP: la coil no se enrosca al mod.",
+    confidence: "fabricante",
+    sources: [{ label: "Voopoo — Drag X", url: "https://www.voopoo.com/drag-series/drag-x.html" }],
+    caveats: [
+      "La página cita 4,5 ml de pod. En la UE el depósito con nicotina queda en 2 ml: el cristal grande no es el formato TPD.",
+      "La ficha destaca PnP-VM6 y PnP-VM1. El resto de la plataforma PnP entra por encaje, no porque esa página los enumere todos.",
+      "La celda no viene en la caja. Hace falta una 18650 de alto drenaje, terminal plano.",
+    ],
+    tags: ["pod", "pnp", "18650", "usb-c", "80w"],
+    status: "referenciado",
+    battery: "Una 18650 externa, no incluida",
+    charge: "USB-C",
+    power: "5–80 W",
+    powerMinW: 5,
+    powerMaxW: 80,
+    ohmMin: 0.1,
+    ohmMax: 3,
+    chipset: null,
+    modes: ["Potencia regulable"],
+    display: null,
+    connector: "propietario",
+    platformIds: ["pnp"],
+    kitPlatformIds: [],
+    materials: "No publicados en el extracto",
+    airflow: "El del pod PnP",
+    capacity: "4,5 ml en la ficha; 2 ml si el kit es TPD",
+    dimensions: "124 × 32,5 × 28 mm",
+    weight: null,
+    tpd: "parcial",
+    year: null,
+    draw: "MTL a DL, según la coil PnP",
+  },
+];
+
+const tpdSalt = [
+  "Un registro por sabor, en el escalón de 20 mg/ml y 10 ml. Si la línea vende 5, 10 o 15 mg, el volumen, el tipo de sal y el ratio no cambian.",
+  noUfi,
+];
+
+function salt(input: {
+  brandId: string;
+  line: string;
+  flavor: string;
+  flavorIds: string[];
+  ratio: Liquid["ratio"];
+  summary: string;
+  sources: Liquid["sources"];
+  extraCaveats?: string[];
+  confidence?: Liquid["confidence"];
+  status?: Liquid["status"];
+}): Liquid {
+  const slug = `${input.brandId}-${input.flavor}`
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return {
+    domain: "liquid",
+    id: slug,
+    slug,
+    archiveId: `A510-LIQ-${slug.slice(0, 22).toUpperCase()}`,
+    brandId: input.brandId,
+    name: `${input.flavor} sales 20 mg`,
+    line: input.line,
+    familyId: "sal",
+    subId: "sal.10",
+    summary: input.summary,
+    confidence: input.confidence ?? "distribuidor",
+    sources: input.sources,
+    caveats: [...tpdSalt, ...(input.extraCaveats ?? [])],
+    tags: ["sales", "10ml", "20mg", input.brandId, ...(input.ratio ? [input.ratio] : [])],
+    status: input.status ?? "referenciado",
+    flavorIds: input.flavorIds,
+    volumeMl: 10,
+    nicotineMg: 20,
+    nicotineType: "sal",
+    ratio: input.ratio,
+    bottle: "10 ml listo para vapear",
+    assumedBottleMl: 10,
+    recommendedDraw: ["MTL", "RDL"],
+    tpd: "si",
+  };
+}
+
+const bomboSrc = [
+  {
+    label: "Cachimberos — Bombo Bar Juice 10 ml",
+    url: "https://cachimberos.es/sales-de-nicotina/2562-bombo-bar-juice-10-ml.html",
+  },
+  {
+    label: "Bazar del Vapeo — guía de líneas Bombo",
+    url: "https://www.bazardelvapeo.com/aromas-bombo-sabores-guia/",
+  },
+];
+
+const bomboBar = [
+  ["Super Strawberry Ice", ["frutal.bayas", "menta.frio"]],
+  ["Watermelon Max Ice", ["frutal", "menta.frio"]],
+  ["Banana Max Ice", ["frutal", "menta.frio"]],
+  ["Pineapple Coconut Ice", ["frutal.tropicales", "menta.frio"]],
+  ["Candy Fruits Ice", ["frutal", "menta.frio"]],
+  ["Pineapple Papaya Ice", ["frutal.tropicales", "menta.frio"]],
+  ["Strawberry Milkshake Ice", ["frutal.bayas", "postre.crema"]],
+  ["Apple Pear Max Ice", ["frutal", "menta.frio"]],
+  ["Cranberry Cherry Ice", ["frutal.bayas", "menta.frio"]],
+  ["Triple Mango Ice", ["frutal.tropicales", "menta.frio"]],
+  ["Pineapple Peach Mango Ice", ["frutal.tropicales", "menta.frio"]],
+  ["Ultra Melon Ice", ["frutal", "menta.frio"]],
+  ["Lemon Lime Soda Ice", ["frutal.citricos", "menta.frio"]],
+] as const;
+
+const herreraSrc = [
+  { label: "Herrera — catálogo", url: "https://herreraeliquid.com/en/" },
+  {
+    label: "Vaposelección — marca Herrera",
+    url: "https://www.vaposeleccion.com/en/brand/230-herrera",
+  },
+];
+
+const herreraLines = [
+  ["Abarra", ["tabaco.criollo"], "Tabaco Criollo."],
+  ["Viura", ["tabaco.corojo"], "Tabaco Corojo."],
+  ["Boj", ["tabaco.neto"], "Línea de tabaco del catálogo actual."],
+  ["Ultramenthol", ["menta.frio"], "Mentolado intenso, no tabaco."],
+  ["Toloño", ["tabaco.neto"], "Línea de tabaco del catálogo actual."],
+  ["Churdinas", ["tabaco.neto"], "Línea de tabaco del catálogo actual."],
+  ["Peñas", ["tabaco.neto"], "Línea de tabaco del catálogo actual."],
+  ["Puro Habano", ["tabaco.habano"], "Tabaco habano."],
+  ["Cigarrillo Habano", ["tabaco.habano"], "Tabaco habano en registro de cigarrillo."],
+  ["Inglares", ["tabaco.neto"], "Línea de tabaco del catálogo actual."],
+  ["Roques", ["tabaco.neto"], "Línea de tabaco del catálogo actual."],
+] as const;
+
+const drifterFlavors = [
+  ["Blue Razz Lemonade", ["frutal.bayas", "frutal.citricos"]],
+  ["Mango Ice", ["frutal.tropicales", "menta.frio"]],
+  ["Strawberry Ice", ["frutal.bayas", "menta.frio"]],
+  ["Watermelon Ice", ["frutal", "menta.frio"]],
+  ["Pink Lemonade", ["frutal.citricos"]],
+  ["Grape Ice", ["frutal.bayas", "menta.frio"]],
+  ["Cherry", ["frutal"]],
+  ["Cola", ["complejo"]],
+  ["Lemon Lime", ["frutal.citricos"]],
+  ["Peach Ice", ["frutal", "menta.frio"]],
+] as const;
+
+export const extraLiquids: Liquid[] = [
+  ...bomboBar.map(([flavor, flavorIds]) =>
+    salt({
+      brandId: "bombo",
+      line: "Bar Juice",
+      flavor,
+      flavorIds: [...flavorIds],
+      ratio: "50/50",
+      summary: `Sales Bombo Bar Juice, sabor ${flavor}. Formato de tienda: 10 ml, 50/50, nicotina en sal.`,
+      sources: bomboSrc,
+      extraCaveats: [
+        "Cachimberos lista 10 y 20 mg/ml. Otras tiendas de la misma línea añaden 5 y 15 mg/ml.",
+      ],
+    }),
+  ),
+  salt({
+    brandId: "bombo",
+    line: "Bombo Salts",
+    flavor: "Tabaco Rubio",
+    flavorIds: ["tabaco.rubio"],
+    ratio: "50/50",
+    summary:
+      "Sales Bombo de tabaco rubio. La guía de tienda lo da en 10 ml, 50/50, a 10 o 20 mg/ml.",
+    sources: bomboSrc,
+  }),
+  salt({
+    brandId: "bombo",
+    line: "Bombo Salts",
+    flavor: "Crema Santa",
+    flavorIds: ["postre.crema"],
+    ratio: "50/50",
+    summary:
+      "Sales Bombo Crema Santa. Misma ficha de formato que el resto de sales de la marca: 10 ml y 50/50.",
+    sources: bomboSrc,
+  }),
+  ...herreraLines.map(([flavor, flavorIds, note]) =>
+    salt({
+      brandId: "herrera",
+      line: "Herrera",
+      flavor,
+      flavorIds: [...flavorIds],
+      ratio: "50/50",
+      summary: `Línea Herrera ${flavor}. ${note} El archivo guarda el formato de sales de 10 ml. La web también anuncia nicotina libre, 40 ml, mini longfill de 30 ml y longfill de 120 ml.`,
+      sources: herreraSrc,
+      extraCaveats: [
+        "El 50/50 sale de una ficha de distribuidor (50 VG / 50 PG), no de una etiqueta reproducida aquí.",
+        "Esos otros formatos no se convierten en fichas: no tienen, en la fuente usada, un ratio y una graduación únicos.",
+      ],
+    }),
+  ),
+  salt({
+    brandId: "herrera",
+    line: "Clásicos",
+    flavor: "Chufli",
+    flavorIds: ["complejo.anisado"],
+    ratio: "50/50",
+    summary:
+      "Clásico anisado de Herrera. No aparece en el listado actual de herreraeliquid.com consultado.",
+    sources: herreraSrc,
+    status: "historico",
+    extraCaveats: [
+      "SUPUESTO NO VERIFICADO como SKU vigente. Se archiva como línea histórica, con el mismo formato de sales que el resto de la marca.",
+    ],
+  }),
+  salt({
+    brandId: "herrera",
+    line: "Clásicos",
+    flavor: "Pechuga",
+    flavorIds: ["postre.crema"],
+    ratio: "50/50",
+    summary:
+      "Clásico cremoso de Herrera. No aparece en el listado actual de herreraeliquid.com consultado.",
+    sources: herreraSrc,
+    status: "historico",
+    extraCaveats: ["SUPUESTO NO VERIFICADO como SKU vigente. Se archiva como línea histórica."],
+  }),
+  salt({
+    brandId: "oxva",
+    line: "OX Passion",
+    flavor: "Strawberry",
+    flavorIds: ["frutal.bayas"],
+    ratio: "50/50",
+    summary:
+      "Sales OX Passion de fresa. OXVA describe la línea a 20 mg y 50/50 VG/PG, pensada para pods.",
+    sources: [
+      {
+        label: "OXVA — nota OX Passion",
+        url: "https://www.oxva.com/ja/blogs/news/ox-passion-e-liquid-hits-polish-market-in-2025-ready-to-break-taste-boundaries",
+      },
+    ],
+    confidence: "fabricante",
+    extraCaveats: [
+      "La nota cita 18 sabores y solo nombra tres. Aquí entran esos tres, no una lista inventada.",
+      "No escribe los mililitros. 10 ml es el tope TPD de un bote con nicotina, no una cifra leída en la etiqueta.",
+    ],
+  }),
+  salt({
+    brandId: "oxva",
+    line: "OX Passion",
+    flavor: "Cherry Peach Lemon",
+    flavorIds: ["frutal", "frutal.citricos"],
+    ratio: "50/50",
+    summary:
+      "Sales OX Passion de cereza, melocotón y limón. Mismo formato declarado: sal, 20 mg, 50/50.",
+    sources: [
+      {
+        label: "OXVA — nota OX Passion",
+        url: "https://www.oxva.com/ja/blogs/news/ox-passion-e-liquid-hits-polish-market-in-2025-ready-to-break-taste-boundaries",
+      },
+    ],
+    confidence: "fabricante",
+    extraCaveats: ["Volumen de 10 ml asumido por el tope TPD. La nota no lo escribe."],
+  }),
+  salt({
+    brandId: "oxva",
+    line: "OX Passion",
+    flavor: "Blue Citrus",
+    flavorIds: ["frutal.bayas", "frutal.citricos"],
+    ratio: "50/50",
+    summary: "Sales OX Passion de cítrico y arándano. Mismo formato declarado: sal, 20 mg, 50/50.",
+    sources: [
+      {
+        label: "OXVA — nota OX Passion",
+        url: "https://www.oxva.com/ja/blogs/news/ox-passion-e-liquid-hits-polish-market-in-2025-ready-to-break-taste-boundaries",
+      },
+    ],
+    confidence: "fabricante",
+    extraCaveats: ["Volumen de 10 ml asumido por el tope TPD. La nota no lo escribe."],
+  }),
+  salt({
+    brandId: "kings-crest",
+    line: "Bar & Fruits",
+    flavor: "Bar and Fruits",
+    flavorIds: ["frutal"],
+    ratio: null,
+    summary:
+      "Colección King's Crest Bar & Fruits en sales de 10 ml, según el listado de una tienda española. No se desglosan sabores: la fuente no los nombra.",
+    sources: [
+      {
+        label: "Cachimberos — mención King's Crest Bar & Fruits 10 ml",
+        url: "https://cachimberos.es/sales-de-nicotina/2562-bombo-bar-juice-10-ml.html",
+      },
+    ],
+    extraCaveats: [
+      "El ratio PG/VG no está en esa mención. Queda vacío a propósito.",
+      "Don Juan Reserve, Supra y Aldonza circulan además como longfill. Sin mililitros y ratio únicos en la fuente, no entran como fichas.",
+    ],
+  }),
+  ...drifterFlavors.map(([flavor, flavorIds]) =>
+    salt({
+      brandId: "drifter",
+      line: "Bar Juice",
+      flavor,
+      flavorIds: [...flavorIds],
+      ratio: "50/50",
+      summary: `Sales Drifter Bar, sabor ${flavor}. Formato homogeneizado de la línea: 10 ml, sal, 50/50, 20 mg/ml.`,
+      sources: [],
+      extraCaveats: [
+        "SUPUESTO NO VERIFICADO: el sabor es de los habituales en tienda UE. No se abrió una ficha del fabricante en esta pasada y no se inventa una URL.",
+        "El 50/50 y los 20 mg/ml son el formato TPD con el que se vende la línea. Hay que leer el lote.",
+      ],
+    }),
+  ),
+];
+
+function mouthpiece(input: {
+  id: string;
+  brandId: string;
+  name: string;
+  platformId: string;
+  summary: string;
+  sourceLabel: string;
+  sourceUrl: string;
+}): Part {
+  return {
+    domain: "part",
+    id: input.id,
+    slug: input.id,
+    archiveId: `A510-PART-${input.id.slice(0, 18).toUpperCase()}`,
+    brandId: input.brandId,
+    name: input.name,
+    familyId: "boquilla",
+    subId: "boquilla.capsula",
+    summary: input.summary,
+    confidence: "fabricante",
+    sources: [{ label: input.sourceLabel, url: input.sourceUrl }],
+    caveats: [
+      "No se vende suelta en la ficha usada: va moldeada en la cápsula. El recambio es la cápsula entera.",
+    ],
+    tags: ["boquilla", input.platformId],
+    status: "referenciado",
+    kind: "boquilla",
+    fitsPlatformIds: [input.platformId],
+    fitsBattery: null,
+    fitsConnector: null,
+    spec: "Boquilla fija de la cápsula. Sin rosca 510 ni 810.",
+    quantityNote: "Una por cápsula.",
+  };
+}
+
+export const extraParts: Part[] = [
+  {
+    domain: "part",
+    id: "celda-18650",
+    slug: "celda-18650-alto-drenaje",
+    archiveId: "A510-PART-18650",
+    brandId: "especificacion",
+    name: "Celda 18650 de alto drenaje",
+    familyId: "bateria",
+    subId: "bateria.18650",
+    summary:
+      "Requisito de los mods que no traen batería. No es un SKU de Voopoo ni de Geekvape: es la celda que el aparato exige para funcionar.",
+    confidence: "ficha",
+    sources: [
+      {
+        label: "Voopoo — Drag X, batería excluida",
+        url: "https://www.voopoo.com/drag-series/drag-x.html",
+      },
+    ],
+    caveats: [
+      "No se fija marca, mAh ni CDR. Una 18650 de linterna no sirve para 80 W o 200 W.",
+      "Terminal plano. El botón superior de algunas celdas no cierra el portapilas.",
+      "Cargar fuera del mod cuando se pueda. El USB del aparato no sustituye un cargador externo.",
+      "SUPUESTO NO VERIFICADO: ninguna de estas marcas publica aquí un modelo concreto de celda.",
+    ],
+    tags: ["18650", "bateria", "cdr"],
+    status: "referenciado",
+    kind: "bateria",
+    fitsPlatformIds: [],
+    fitsBattery: "18650",
+    fitsConnector: null,
+    spec: "18650 · terminal plano · química de alto drenaje (INR/IMR). El CDR manda, no los mAh.",
+    quantityNote: "Una celda por hueco. El Legend 2 lleva dos; el Drag X, una.",
+  },
+  {
+    domain: "part",
+    id: "boquilla-510",
+    slug: "boquilla-rosca-510",
+    archiveId: "A510-PART-DT510",
+    brandId: "especificacion",
+    name: "Boquilla de rosca 510",
+    familyId: "boquilla",
+    subId: "boquilla.510",
+    summary:
+      "Drip tip de rosca 510 para atomizadores que la usen. No implica que el tanque del kit sea 510 y no 810.",
+    confidence: "ficha",
+    sources: [],
+    caveats: [
+      "Muchos sub-ohm usan boquilla 810. Hay que mirar el tanque, no el conector del mod.",
+      "SUPUESTO NO VERIFICADO como recambio oficial de una marca concreta.",
+    ],
+    tags: ["boquilla", "510"],
+    status: "referenciado",
+    kind: "boquilla",
+    fitsPlatformIds: [],
+    fitsBattery: null,
+    fitsConnector: "510",
+    spec: "Rosca 510. El diámetro interior no se fija: cambia con el fabricante del tanque.",
+    quantityNote: "Una por atomizador, si el tanque es de boquilla 510.",
+  },
+  mouthpiece({
+    id: "boquilla-xlim",
+    brandId: "oxva",
+    name: "Boquilla del cartucho XLIM",
+    platformId: "xlim",
+    summary:
+      "La boquilla del XLIM es la propia cápsula. Cambiar de calada es cambiar de cartucho, no de drip tip.",
+    sourceLabel: "OXVA — cartucho XLIM",
+    sourceUrl: oxvaPod,
+  }),
+  mouthpiece({
+    id: "boquilla-xros",
+    brandId: "vaporesso",
+    name: "Boquilla de la cápsula XROS",
+    platformId: "xros",
+    summary: "En XROS la boquilla viaja con la cápsula COREX. No hay coil ni drip tip sueltos.",
+    sourceLabel: "Ecigone — ficha XROS 4",
+    sourceUrl: "https://ecigone.co.uk/products/vaporesso-xros-4-pod-vape-kit",
+  }),
+  mouthpiece({
+    id: "boquilla-gtx",
+    brandId: "vaporesso",
+    name: "Boquilla del pod LUXE X",
+    platformId: "gtx",
+    summary:
+      "En el LUXE X la boquilla forma parte del pod. La pieza que se sustituye por desgaste de sabor es la coil GTX, no un drip tip.",
+    sourceLabel: "Vaporesso — serie LUXE X",
+    sourceUrl: "https://www.vaporesso.com/series-product/luxe-x-series/luxe-x",
+  }),
+  mouthpiece({
+    id: "boquilla-pnp",
+    brandId: "voopoo",
+    name: "Boquilla del pod PnP",
+    platformId: "pnp",
+    summary:
+      "En el Drag X la boquilla va en el pod PnP. La pieza eléctrica de recambio es la coil PnP.",
+    sourceLabel: "Voopoo — Drag X",
+    sourceUrl: "https://www.voopoo.com/drag-series/drag-x.html",
+  }),
+];

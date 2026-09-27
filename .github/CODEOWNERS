@@ -1,0 +1,10 @@
+# CODEOWNERS · vapelog
+*                       @Alexendros
+
+/SECURITY.md            @Alexendros
+/LICENSE                @Alexendros
+/CODE_OF_CONDUCT.md     @Alexendros
+/SUPPORT.md             @Alexendros
+/.github/               @Alexendros
+/docs/architecture/     @Alexendros
+/docs/runbooks/         @Alexendros

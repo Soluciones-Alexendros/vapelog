@@ -1,0 +1,31 @@
+name: Bug
+description: Algo no funciona como debería
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options:
+        - Catálogo / listados
+        - Ficha de producto
+        - Compatibilidad / cruce
+        - Herramientas / calculadoras
+        - Tema claro/oscuro
+        - Build / CI / deploy
+        - Otro
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Pasos para reproducir
+      description: Qué hiciste, qué esperabas, qué ocurrió.
+    validations:
+      required: true
+  - type: input
+    id: entorno
+    attributes:
+      label: Entorno
+      placeholder: "navegador, SO, pnpm dev / preview"
