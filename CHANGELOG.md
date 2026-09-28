@@ -12,6 +12,8 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-28
+
 ### Added
 
 - Toolchain TanStack Start + Vite + pnpm con scripts canónicos P1.
