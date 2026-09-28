@@ -441,11 +441,11 @@ export const exampleQueries: ExampleQuery[] = [
     search: { familia: "capsula", marca: "vaporesso", vista: "tabla" },
   },
   {
-    id: "integrada-uwell",
+    id: "integrada-oxva",
     domain: "coil",
-    title: "Integrada y Uwell",
+    title: "Integrada y OXVA",
     text: "El mismo cruce con otra marca que sí tiene ficha.",
-    search: { familia: "capsula", marca: "uwell", vista: "tabla" },
+    search: { familia: "capsula", marca: "oxva", vista: "tabla" },
   },
   {
     id: "tanque-dl-malla",

@@ -22,12 +22,11 @@ function ModelPage() {
         </p>
         <p>
           CBD y tabaco calentado quedan fuera: otro régimen, y no se documentan aquí. Los
-          desechables de un solo uso no se mezclan con el kit BM600 recargable.
+          desechables de un solo uso no se mezclan con pods abiertos rellenables.
         </p>
         <p>
           Las fichas de hardware citan fabricante o distribuidor. Donde las fuentes chocan —pantalla
-          del XROS 4, 750 frente a 900 mAh del G3, una FAQ que llama “single battery” al L200— se
-          dice, no se elige en silencio.
+          del XROS 4, una FAQ que llama “single battery” al L200— se dice, no se elige en silencio.
         </p>
         <p>
           La ampliación homogeneiza unidades: ohmios y vatios en número, nicotina en mg/ml, volumen

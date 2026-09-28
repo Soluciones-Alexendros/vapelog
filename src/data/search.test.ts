@@ -29,11 +29,11 @@ describe("búsqueda por característica", () => {
   it("elige una marca y sigue contando las demás", () => {
     const facets = buildFacets("coil", { familia: "capsula", marca: "vaporesso" });
     const marcas = facets.find((facet) => facet.key === "marca");
-    const uwell = marcas?.options.find((option) => option.id === "uwell");
+    const oxva = marcas?.options.find((option) => option.id === "oxva");
     const expected = coils.filter(
-      (coil) => coil.familyId === "capsula" && coil.brandId === "uwell",
+      (coil) => coil.familyId === "capsula" && coil.brandId === "oxva",
     ).length;
-    assert.equal(uwell?.count, expected);
+    assert.equal(oxva?.count, expected);
     assert.ok(expected > 0);
   });
 

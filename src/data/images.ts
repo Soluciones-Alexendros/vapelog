@@ -1,8 +1,5 @@
 /** Fotos de producto en /public/catalog. La clave es el slug de la ficha. */
 const catalogImages: Record<string, string> = {
-  "caliburn-g3-0-6": "/catalog/caliburn-g3-0-6.png",
-  "caliburn-g3-0-9": "/catalog/caliburn-g3-0-9.png",
-  "caliburn-g3-1-2": "/catalog/caliburn-g3-1-2.png",
   "geekvape-aegis-legend-2": "/catalog/geekvape-aegis-legend-2.jpg",
   "geekvape-b-0-15": "/catalog/geekvape-b-0-15.png",
   "geekvape-b-0-2": "/catalog/geekvape-b-0-2.jpg",
@@ -39,13 +36,9 @@ const catalogImages: Record<string, string> = {
   "geekvape-z-0-25": "/catalog/geekvape-z-0-25.png",
   "geekvape-z-0-4-xm": "/catalog/geekvape-z-0-4-xm.png",
   "geekvape-z-0-4": "/catalog/geekvape-z-0-4.jpg",
-  "innokin-endura-t18-ii": "/catalog/innokin-endura-t18-ii.png",
-  "lost-mary-bm600-pod": "/catalog/lost-mary-bm600-pod.png",
-  "lost-mary-bm600": "/catalog/lost-mary-bm600.png",
   "oxva-xlim-go-2": "/catalog/oxva-xlim-go-2.png",
   "oxva-xlim-pro-2": "/catalog/oxva-xlim-pro-2.png",
   "oxva-xlim-sq-pro-2": "/catalog/oxva-xlim-sq-pro-2.png",
-  "uwell-caliburn-g3": "/catalog/uwell-caliburn-g3.png",
   "vaporesso-gt-ccell-0-3": "/catalog/vaporesso-gt-ccell-0-3.png",
   "vaporesso-gt-ccell-0-5": "/catalog/vaporesso-gt-ccell-0-5.png",
   "vaporesso-gt-mesh-0-18": "/catalog/vaporesso-gt-mesh-0-18.png",

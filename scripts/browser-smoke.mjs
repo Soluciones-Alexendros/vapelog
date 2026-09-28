@@ -107,7 +107,10 @@ const VIEWPORTS = [
 
 /** Rutas de ficha (un dominio cada una) para el pase extendido. */
 const SHEET_PATHS = [
-  "/dispositivos/vaporesso-xros-4",
+  "/dispositivos/vaporesso-xros-6",
+  "/dispositivos/geekvape-aegis-hero-5",
+  "/dispositivos/voopoo-argus-g4",
+  "/dispositivos/oxva-xlim-pro-3",
   "/resistencias/xros-corex-0-4",
   "/liquidos/vampire-vape-heisenberg-sales",
   "/componentes/celda-18650-alto-drenaje",

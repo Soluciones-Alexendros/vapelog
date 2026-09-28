@@ -64,6 +64,39 @@ describe("cruce", () => {
     assert.equal(compatibility(device, coil).kind, "nativa");
   });
 
+  it("la cápsula XROS es nativa en el XROS 6", () => {
+    const device = deviceBySlug("vaporesso-xros-6");
+    const coil = coilBySlug("xros-corex-0-8");
+    assert.ok(device && coil);
+    if (!device || !coil) return;
+    assert.equal(compatibility(device, coil).kind, "nativa");
+  });
+
+  it("la B 0,4 es nativa en el Hero 5", () => {
+    const device = deviceBySlug("geekvape-aegis-hero-5");
+    const coil = coilBySlug("geekvape-b-0-4");
+    assert.ok(device && coil);
+    if (!device || !coil) return;
+    assert.equal(compatibility(device, coil).kind, "nativa");
+  });
+
+  it("el cartucho XLIM es nativo en el XLIM Pro 3", () => {
+    const device = deviceBySlug("oxva-xlim-pro-3");
+    const coil = coilBySlug("xlim-0-8");
+    assert.ok(device && coil);
+    if (!device || !coil) return;
+    assert.equal(compatibility(device, coil).kind, "nativa");
+  });
+
+  it("la PnP no es nativa en el Drag 6 (va en el kit PnP X)", () => {
+    const device = deviceBySlug("voopoo-drag-6");
+    const coil = coilBySlug("voopoo-pnp-vm1");
+    assert.ok(device && coil);
+    if (!device || !coil) return;
+    const result = compatibility(device, coil);
+    assert.notEqual(result.kind, "nativa");
+  });
+
   it("la Z 0,2 va en el tanque del kit L200", () => {
     const device = deviceBySlug("geekvape-aegis-legend-2");
     const coil = coilBySlug("geekvape-z-0-2");
@@ -72,8 +105,8 @@ describe("cruce", () => {
     assert.equal(compatibility(device, coil).kind, "kit");
   });
 
-  it("la Z 0,2 no entra en el T18 II", () => {
-    const device = deviceBySlug("innokin-endura-t18-ii");
+  it("la Z 0,2 no entra en el XROS 4", () => {
+    const device = deviceBySlug("vaporesso-xros-4");
     const coil = coilBySlug("geekvape-z-0-2");
     assert.ok(device && coil);
     if (!device || !coil) return;
