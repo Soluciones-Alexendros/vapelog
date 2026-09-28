@@ -102,7 +102,7 @@ jobs:
         run: pnpm run build
 
       - name: Pack build output
-        run: tar -czf app-build.tgz .output dist
+        run: tar -czf app-build.tgz .output
 
       - name: Upload build output
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
