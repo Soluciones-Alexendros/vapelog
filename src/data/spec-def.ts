@@ -348,7 +348,7 @@ export const specDefs: SpecDef[] = [
       const row = coil(item);
       if (!row) return null;
       const kind = wireKind(row.wire, row.build);
-      return kind === "malla" ? "Malla" : kind === "alambre" ? "Alambre" : null;
+      return kind ? { malla: "Malla", alambre: "Alambre", ceramica: "Cerámica" }[kind] : null;
     },
   ),
   def(

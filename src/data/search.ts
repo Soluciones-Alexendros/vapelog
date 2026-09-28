@@ -16,7 +16,7 @@ import { EMPTY, relationRows, specFacts } from "./specs.ts";
 export type OhmBand = "baja" | "media" | "alta" | "muy";
 export type PowerBand = "baja" | "media" | "alta";
 export type BatteryKind = "integrada" | "externa";
-export type WireKind = "malla" | "alambre";
+export type WireKind = "malla" | "alambre" | "ceramica";
 
 export interface CatalogSearch {
   q?: string;
@@ -62,7 +62,7 @@ export function parseCatalogSearch(search: Record<string, unknown>): CatalogSear
   if (ohm) next.ohm = ohm;
   const conector = oneOf(search.conector, ["510", "propietario"] as const);
   if (conector) next.conector = conector;
-  const hilo = oneOf(search.hilo, ["malla", "alambre"] as const);
+  const hilo = oneOf(search.hilo, ["malla", "alambre", "ceramica"] as const);
   if (hilo) next.hilo = hilo;
   if (typeof search.plataforma === "string" && search.plataforma)
     next.plataforma = search.plataforma;
@@ -153,6 +153,7 @@ export function matches(
     const kind = wireKind(item.wire, item.build);
     if (search.hilo === "malla" && kind !== "malla") return false;
     if (search.hilo === "alambre" && kind !== "alambre") return false;
+    if (search.hilo === "ceramica" && kind !== "ceramica") return false;
   }
   if (on("conector") && search.conector) {
     const ok =
@@ -306,6 +307,7 @@ export function buildFacets(domain: Domain, search: CatalogSearch): Facet[] {
       fixed(domain, search, "hilo", "Hilo", [
         { id: "malla", label: "Malla" },
         { id: "alambre", label: "Alambre" },
+        { id: "ceramica", label: "Cerámica" },
       ]),
     );
   }
@@ -378,7 +380,10 @@ export function chipsFor(search: CatalogSearch): Chip[] {
   if (search.calada) chips.push({ key: "calada", label: search.calada });
   if (search.ohm) chips.push({ key: "ohm", label: OHM_LABEL[search.ohm] });
   if (search.hilo)
-    chips.push({ key: "hilo", label: search.hilo === "malla" ? "Malla" : "Alambre" });
+    chips.push({
+      key: "hilo",
+      label: { malla: "Malla", alambre: "Alambre", ceramica: "Cerámica" }[search.hilo],
+    });
   if (search.conector)
     chips.push({
       key: "conector",

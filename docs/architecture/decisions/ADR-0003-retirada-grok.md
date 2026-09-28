@@ -18,8 +18,14 @@ público sin cuentas.
 
 ## Decisión
 
-- Eliminar auth, multiplayer, app-data, migrations Grok y scripts de plataforma.
-- Conservar catálogo, fotos, lógica de cruce, calculadoras y smoke/brand/a11y.
+- Eliminar auth, multiplayer, app-data, migrations Grok y scripts de
+  plataforma. `write-atomic.mjs` (rutas legado `/workspace/.grok/`) se retira
+  en la limpieza posterior por cero importadores.
+- Conservar catálogo, fotos, lógica de cruce y calculadoras.
+- Conservar los pases de navegador independientes de plataforma
+  (`browser-smoke.mjs` + `browser-smoke-verdict.mjs` y `a11y-pass.mjs`) y
+  ejecutarlos en CI en el job `browser`; `brand-check.mjs` se conserva
+  ejercitado a través de `browser-smoke.mjs`.
 - Renombrar marca visible a **Vapelog**.
 
 ## Consecuencias

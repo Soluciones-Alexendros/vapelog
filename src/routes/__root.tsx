@@ -1,7 +1,11 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AppShell } from "@/components/chrome";
 import { themeBootScript } from "@/components/ui/theme-toggle";
+import { SITE_URL } from "@/lib/site";
 import appCss from "../styles.css?url";
+
+const DESCRIPTION =
+  "Catálogo técnico de dispositivos, resistencias y líquidos de vapeo para el mercado de la UE. Fichas con fuente, cruce y calculadoras. No es una tienda.";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -9,12 +13,16 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Vapelog" },
-      {
-        name: "description",
-        content:
-          "Catálogo técnico de dispositivos, resistencias y líquidos de vapeo para el mercado de la UE. Fichas con fuente, cruce y calculadoras. No es una tienda.",
-      },
-      { name: "theme-color", content: "#14120e" },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Vapelog" },
+      { property: "og:title", content: "Vapelog" },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:image", content: `${SITE_URL}/og.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#FCFAF6" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },

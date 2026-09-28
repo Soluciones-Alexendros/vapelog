@@ -35,6 +35,17 @@ function verdict(desktop = {}, mobile = {}) {
   return { viewports: { desktop: viewport(desktop), mobile: viewport(mobile) } };
 }
 
+function extended(overrides = {}) {
+  return {
+    darkDesktop: viewport(),
+    sheets: {
+      "/dispositivos/vaporesso-xros-6": viewport(),
+      "/liquidos/vampire-vape-heisenberg-sales": viewport(),
+    },
+    ...overrides,
+  };
+}
+
 test("normalizes whitespace before hashing", () => {
   assert.equal(normalizeBodyText("  a \n\t b  "), "a b");
   assert.equal(normalizedBodyTextHash("a \n b"), normalizedBodyTextHash("  a b "));
@@ -371,6 +382,58 @@ test("exitCodeFor: no viewport data is a failure", () => {
   assert.equal(exitCodeFor(undefined), 1);
 });
 
+test("exitCodeFor: pase extendido sano sale 0", () => {
+  assert.equal(exitCodeFor(verdict().viewports, extended()), 0);
+  assert.equal(exitCodeFor(verdict().viewports, undefined), 0);
+});
+
+test("exitCodeFor: darkDesktop con error HTTP sale 1", () => {
+  assert.equal(
+    exitCodeFor(verdict().viewports, extended({ darkDesktop: viewport({ status: 500 }) })),
+    1,
+  );
+  assert.equal(
+    exitCodeFor(verdict().viewports, extended({ darkDesktop: viewport({ status: 0 }) })),
+    1,
+  );
+});
+
+test("exitCodeFor: ficha extendida con 404 o sin respuesta sale 1", () => {
+  const notFound = extended();
+  notFound.sheets["/liquidos/vampire-vape-heisenberg-sales"] = {
+    status: 404,
+    consoleErrors: [],
+    pageErrors: [],
+  };
+  assert.equal(exitCodeFor(verdict().viewports, notFound), 1);
+
+  const dead = extended();
+  dead.sheets["/dispositivos/vaporesso-xros-6"] = {
+    status: 0,
+    error: "net::ERR_CONNECTION_REFUSED",
+  };
+  assert.equal(exitCodeFor(verdict().viewports, dead), 1);
+});
+
+test("exitCodeFor: errores de consola o de página en fichas extendidas salen 2", () => {
+  const consoleBoom = extended();
+  consoleBoom.sheets["/dispositivos/vaporesso-xros-6"] = viewport({ consoleErrors: ["boom"] });
+  assert.equal(exitCodeFor(verdict().viewports, consoleBoom), 2);
+
+  const pageBoom = extended();
+  pageBoom.sheets["/liquidos/vampire-vape-heisenberg-sales"] = viewport({ pageErrors: ["boom"] });
+  assert.equal(exitCodeFor(verdict().viewports, pageBoom), 2);
+});
+
+test("exitCodeFor: un 4xx en ficha vence a errores de consola (sale 1)", () => {
+  const mixed = extended();
+  mixed.sheets["/liquidos/vampire-vape-heisenberg-sales"] = viewport({
+    status: 404,
+    consoleErrors: ["boom"],
+  });
+  assert.equal(exitCodeFor(verdict().viewports, mixed), 1);
+});
+
 test("browser-smoke wires the guard and verdict helpers", () => {
   const src = readFileSync(join(TEMPLATE_ROOT, "scripts/browser-smoke.mjs"), "utf8");
   // The target guard used to live in browser-guard.mjs; it is inlined now.
@@ -388,7 +451,7 @@ test("browser-smoke wires the guard and verdict helpers", () => {
   assert.match(src, /normalizedBodyTextHash\(/);
   assert.match(src, /bodyTextPrefix\(/);
   assert.match(src, /baselineComparison\(/);
-  assert.match(src, /process\.exitCode = exitCodeFor\(viewports\)/);
+  assert.match(src, /process\.exitCode = exitCodeFor\(viewports, extended\)/);
   assert.match(src, /waitUntil: "domcontentloaded"/);
   assert.doesNotMatch(
     src,

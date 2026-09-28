@@ -113,8 +113,6 @@ const xrosSources = [
   },
 ];
 
-
-
 const xlimSources = [
   {
     label: "OXVA — PDF técnico XLIM Pro 2",
@@ -139,8 +137,6 @@ const zSources = [
     url: "https://store.geekvape.com/blogs/faq-products/faq-geekvape-z-series-coil",
   },
 ];
-
-
 
 export const devices: Device[] = [
   {
@@ -187,7 +183,7 @@ export const devices: Device[] = [
     year: null,
     draw: "MTL y RDL, según la cápsula",
   },
-    {
+  {
     domain: "device",
     id: "xlim-pro-2",
     slug: "oxva-xlim-pro-2",
@@ -229,7 +225,7 @@ export const devices: Device[] = [
     year: null,
     draw: "MTL y RDL, según el cartucho",
   },
-      {
+  {
     domain: "device",
     id: "l200",
     slug: "geekvape-aegis-legend-2",

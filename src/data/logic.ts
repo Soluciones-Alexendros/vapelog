@@ -140,6 +140,16 @@ export function compatibility(device: Device, coil: Coil): CompatResult {
         reasons: ["La plataforma coincide, pero la ventana de potencia no.", clash],
       };
     }
+    const ohm = ohmClash(device, coil);
+    if (ohm) {
+      return {
+        kind: "no",
+        reasons: [
+          "La plataforma coincide, pero la resistencia queda fuera de la ventana publicada.",
+          ohm,
+        ],
+      };
+    }
     return {
       kind: "nativa",
       reasons: [
@@ -161,6 +171,16 @@ export function compatibility(device: Device, coil: Coil): CompatResult {
         ],
       };
     }
+    const ohm = ohmClash(device, coil);
+    if (ohm) {
+      return {
+        kind: "no",
+        reasons: [
+          "El kit trae ese atomizador, pero la resistencia queda fuera de la ventana publicada.",
+          ohm,
+        ],
+      };
+    }
     return {
       kind: "kit",
       reasons: [
@@ -175,19 +195,17 @@ export function compatibility(device: Device, coil: Coil): CompatResult {
       "Los dos usan rosca 510. Eso no significa que la coil quepa en cualquier tanque.",
     ];
     if (kitBlocked) reasons.unshift(kitBlocked);
+    const ohm = ohmClash(device, coil);
+    if (ohm) {
+      reasons.push(ohm);
+      return { kind: "no", reasons };
+    }
     if (device.ohmMin != null && device.ohmMax != null) {
-      if (coil.ohms < device.ohmMin || coil.ohms > device.ohmMax) {
-        reasons.push(
-          `${coil.ohms} Ω queda fuera de la ventana del dispositivo (${device.ohmMin}–${device.ohmMax} Ω).`,
-        );
-        return { kind: "no", reasons };
-      }
       reasons.push(`La resistencia entra en la ventana ${device.ohmMin}–${device.ohmMax} Ω.`);
     }
-    if (device.powerMaxW != null && coil.wattMin != null && coil.wattMin > device.powerMaxW) {
-      reasons.push(
-        `La coil está recomendada desde ${coil.wattMin} W y el dispositivo publica un máximo de ${device.powerMaxW} W.`,
-      );
+    const clash = wattClash(device, coil);
+    if (clash) {
+      reasons.push(clash);
       return { kind: "no", reasons };
     }
     reasons.push(
@@ -206,6 +224,19 @@ function wattClash(device: Device, coil: Coil): string | null {
   if (device.powerMaxW != null && coil.wattMin != null && coil.wattMin > device.powerMaxW) {
     return `La coil está recomendada desde ${coil.wattMin} W y el dispositivo publica un máximo de ${device.powerMaxW} W.`;
   }
+  if (device.powerMinW != null && coil.wattMax != null && coil.wattMax < device.powerMinW) {
+    return `La coil se recomienda hasta ${coil.wattMax} W y el dispositivo publica un mínimo de ${device.powerMinW} W.`;
+  }
+  return null;
+}
+
+function ohmClash(device: Device, coil: Coil): string | null {
+  if (device.ohmMin != null && coil.ohms < device.ohmMin) {
+    return `${coil.ohms} Ω queda por debajo del mínimo publicado (${device.ohmMin} Ω).`;
+  }
+  if (device.ohmMax != null && coil.ohms > device.ohmMax) {
+    return `${coil.ohms} Ω supera el máximo publicado (${device.ohmMax} Ω).`;
+  }
   return null;
 }
 
@@ -214,7 +245,6 @@ export function partsForDevice(device: Device, parts: Part[]): Part[] {
     const platforms = [...device.platformIds, ...device.kitPlatformIds];
     if (part.fitsPlatformIds.some((id) => platforms.includes(id))) return true;
     if (part.fitsBattery === "18650" && device.battery.includes("18650")) return true;
-    if (part.fitsConnector === "510" && device.connector === "510") return true;
     return false;
   });
 }
@@ -231,15 +261,14 @@ export function recommendLiquids(coil: Coil, liquids: Liquid[]): LiquidFit[] {
   if (!coil.refillable) return [];
 
   return liquids.map((liquid) => {
-    if (liquid.nicotineMg >= 10 && coil.draw === "DL") {
+    if (liquid.nicotineMg >= 10 && (coil.draw === "DL" || coil.draw === "RDL")) {
       return {
         liquid,
         fit: "evitar" as const,
-        reason:
-          "Graduación alta para una coil de pulmón directo. El golpe y el consumo no acompañan.",
+        reason: "Graduación alta para una coil de calada abierta (RDL/DL).",
       };
     }
-    if (liquid.ratio === "70/30" && coil.draw === "MTL" && coil.ohms >= 0.9) {
+    if (liquid.ratio === "70/30" && coil.draw === "MTL") {
       return {
         liquid,
         fit: "posible" as const,

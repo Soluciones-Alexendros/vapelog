@@ -117,12 +117,20 @@ export function baselineComparison(current, rawText) {
   }
   return compareToBaseline(current, baseline);
 }
-export function exitCodeFor(viewports) {
+export function exitCodeFor(viewports, extended) {
   const list = Object.values(viewports ?? {});
   if (list.length === 0) return 1;
-  if (list.some((v) => (v.status ?? 0) >= 400 || (v.status ?? 0) === 0)) return 1;
-  if (list.some((v) => (v.consoleErrors?.length ?? 0) > 0 || (v.pageErrors?.length ?? 0) > 0)) {
-    return 2;
-  }
+  const badStatus = (status) => {
+    const value = status ?? 0;
+    return value >= 400 || value === 0;
+  };
+  const hasErrors = (entry) =>
+    (entry?.consoleErrors?.length ?? 0) > 0 || (entry?.pageErrors?.length ?? 0) > 0;
+  if (list.some((v) => badStatus(v.status))) return 1;
+  const sheets = Object.values(extended?.sheets ?? {});
+  if (extended?.darkDesktop && badStatus(extended.darkDesktop.status)) return 1;
+  if (sheets.some((sheet) => badStatus(sheet?.status))) return 1;
+  if (list.some(hasErrors)) return 2;
+  if (sheets.some(hasErrors)) return 2;
   return 0;
 }

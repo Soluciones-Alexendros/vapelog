@@ -401,9 +401,17 @@ begin
     from compat_exclusion x
     where x.device_slug = d.slug and x.coil_slug = c.slug and x.blocked_kind = 'nativa';
     if blocked is null then
-      if d.power_max_w is not null and c.watt_min is not null and c.watt_min > d.power_max_w then
+      if (d.power_max_w is not null and c.watt_min is not null and c.watt_min > d.power_max_w)
+         or (d.power_min_w is not null and c.watt_max is not null and c.watt_max < d.power_min_w) then
         kind := 'no';
-        reason := 'La plataforma coincide, pero la coil pide más potencia de la publicada';
+        reason := 'La plataforma coincide, pero la ventana de potencia no cuadra';
+        return next;
+        return;
+      end if;
+      if (d.ohm_min is not null and c.ohms < d.ohm_min)
+         or (d.ohm_max is not null and c.ohms > d.ohm_max) then
+        kind := 'no';
+        reason := 'La plataforma coincide, pero la resistencia queda fuera de la ventana publicada';
         return next;
         return;
       end if;
@@ -426,9 +434,17 @@ begin
     from compat_exclusion x
     where x.device_slug = d.slug and x.coil_slug = c.slug and x.blocked_kind = 'kit';
     if blocked is null then
-      if d.power_max_w is not null and c.watt_min is not null and c.watt_min > d.power_max_w then
+      if (d.power_max_w is not null and c.watt_min is not null and c.watt_min > d.power_max_w)
+         or (d.power_min_w is not null and c.watt_max is not null and c.watt_max < d.power_min_w) then
         kind := 'no';
-        reason := 'El kit trae el atomizador, pero la coil pide más potencia de la publicada';
+        reason := 'El kit trae el atomizador, pero la ventana de potencia no cuadra';
+        return next;
+        return;
+      end if;
+      if (d.ohm_min is not null and c.ohms < d.ohm_min)
+         or (d.ohm_max is not null and c.ohms > d.ohm_max) then
+        kind := 'no';
+        reason := 'El kit trae el atomizador, pero la resistencia queda fuera de la ventana publicada';
         return next;
         return;
       end if;
@@ -440,16 +456,17 @@ begin
   end if;
 
   if d.connector = '510' and c.connector = '510' then
-    if d.ohm_min is not null and d.ohm_max is not null
-       and (c.ohms < d.ohm_min or c.ohms > d.ohm_max) then
+    if (d.ohm_min is not null and c.ohms < d.ohm_min)
+       or (d.ohm_max is not null and c.ohms > d.ohm_max) then
       kind := 'no';
       reason := 'Fuera de la ventana de ohmios';
       return next;
       return;
     end if;
-    if d.power_max_w is not null and c.watt_min is not null and c.watt_min > d.power_max_w then
+    if (d.power_max_w is not null and c.watt_min is not null and c.watt_min > d.power_max_w)
+       or (d.power_min_w is not null and c.watt_max is not null and c.watt_max < d.power_min_w) then
       kind := 'no';
-      reason := 'La coil pide más potencia de la que publica el dispositivo';
+      reason := 'La ventana de potencia no cuadra con la publicada por el dispositivo';
       return next;
       return;
     end if;

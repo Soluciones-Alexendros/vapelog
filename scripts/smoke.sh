@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Smoke: sirve el build de producción y exige HTTP 200 + marcador en el body.
+# Smoke: sirve el build de producción y exige HTTP 200 + marcador de contenido
+# real por ruta, y HTTP 404 real en una ruta inexistente.
 # Determinista, ≤5 min. Fallar si el servidor no arranca.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -7,7 +8,21 @@ cd "$(dirname "$0")/.."
 PORT="${SMOKE_PORT:-4173}"
 BASE="http://127.0.0.1:${PORT}"
 LOG="$(mktemp)"
-MARKER="Vapelog"
+
+# Marcador por ruta: contenido real servido en SSR (ver src/routes y src/data).
+markerFor() {
+  case "$1" in
+    /) echo "El catálogo" ;;
+    /dispositivos) echo "XROS 4" ;;
+    /resistencias) echo "Z 0,2" ;;
+    /liquidos) echo "Heisenberg sales 20 mg" ;;
+    /buscar) echo "Buscar" ;;
+    /herramientas) echo "Cálculo" ;;
+    /compatibilidad) echo "Cruce" ;;
+    /archivo) echo "Tabla del archivo" ;;
+    *) return 1 ;;
+  esac
+}
 
 cleanup() {
   if [ -n "${SERVER_PID:-}" ]; then
@@ -54,7 +69,8 @@ if [ "$ready" != "1" ]; then
   exit 1
 fi
 
-for path in / /dispositivos; do
+for path in / /dispositivos /resistencias /liquidos /buscar /herramientas /compatibilidad /archivo; do
+  marker="$(markerFor "$path")"
   body="$(mktemp)"
   code="$(curl -sS -o "$body" -w "%{http_code}" "$BASE$path")"
   echo "smoke: GET $path -> $code"
@@ -63,11 +79,18 @@ for path in / /dispositivos; do
     rm -f "$body"
     exit 1
   fi
-  if ! grep -q "$MARKER" "$body"; then
-    echo "smoke: FAIL $path (falta marcador '$MARKER' en el body)" >&2
+  if ! grep -qF "$marker" "$body"; then
+    echo "smoke: FAIL $path (falta marcador '$marker' en el body)" >&2
     rm -f "$body"
     exit 1
   fi
   rm -f "$body"
 done
+
+notfound="$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/dispositivos/no-existo-404")"
+echo "smoke: GET /dispositivos/no-existo-404 -> $notfound"
+if [ "$notfound" != "404" ]; then
+  echo "smoke: FAIL /dispositivos/no-existo-404 (esperado 404, recibido $notfound)" >&2
+  exit 1
+fi
 echo "smoke: OK"

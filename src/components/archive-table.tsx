@@ -111,7 +111,7 @@ export function ArchiveTable() {
   const exportCsv = () => {
     const header = ["Tipo", "Marca", "Nombre", "Familia", "Dato", "Fuente", "Régimen"];
     const body = table
-      .getFilteredRowModel()
+      .getSortedRowModel()
       .rows.map((row) => [
         domainLabel(row.original.domain),
         row.original.brand,
@@ -124,7 +124,7 @@ export function ArchiveTable() {
     const csv = [header, ...body]
       .map((line) => line.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(","))
       .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;

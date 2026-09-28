@@ -829,9 +829,7 @@ export const extraDevices: Device[] = [
     summary:
       "Pod Soul con 2100 mAh, salida máxima 35 W y pantalla oculta de 0,99 pulgadas; cápsulas Soul propias.",
     confidence: "fabricante",
-    sources: [
-      { label: "Geekvape — Soul 2", url: "https://www.geekvape.com/product/soul-2/" },
-    ],
+    sources: [{ label: "Geekvape — Soul 2", url: "https://www.geekvape.com/product/soul-2/" }],
     caveats: [
       "Dimensiones, peso y corriente de carga no están en el extracto (solo «carga rápida en 40 minutos»).",
     ],
@@ -878,9 +876,7 @@ export const extraDevices: Device[] = [
         url: "https://www.geekvape.com/product/digi-q-vista/",
       },
     ],
-    caveats: [
-      "Dimensiones, peso y carga no detallados en el extracto usado.",
-    ],
+    caveats: ["Dimensiones, peso y carga no detallados en el extracto usado."],
     tags: ["pod", "digi", "q", "35w"],
     status: "referenciado",
     battery: "1600 mAh integrada",
@@ -1239,9 +1235,7 @@ export const extraDevices: Device[] = [
     summary:
       "Pod XLIM con 1500 mAh, 5–30 W, pantalla HD 1,05 pulgadas, Pulse System y cartuchos XLIM top-fill 3 ml / 2 ml TPD.",
     confidence: "fabricante",
-    sources: [
-      { label: "OXVA — XLIM Pro 3", url: "https://www.oxva.com/pages/xlim-pro-3" },
-    ],
+    sources: [{ label: "OXVA — XLIM Pro 3", url: "https://www.oxva.com/pages/xlim-pro-3" }],
     caveats: [
       "Intelligent Photon Chip y Pulse System figuran en la ficha; no se inventan más nombres de chipset.",
     ],
@@ -1326,9 +1320,7 @@ export const extraDevices: Device[] = [
     summary:
       "Pod NeXLIM con 2000 mAh, 5–40 W, carga 5 V/3 A, pantalla color 0,85 pulgadas y cartuchos Unitech 3.0 de 4 ml / 2 ml TPD.",
     confidence: "fabricante",
-    sources: [
-      { label: "OXVA — NeXLIM 2", url: "https://www.oxva.com/pages/nexlim-2" },
-    ],
+    sources: [{ label: "OXVA — NeXLIM 2", url: "https://www.oxva.com/pages/nexlim-2" }],
     caveats: [
       "Plataforma NeXLIM distinta de XLIM: no se mezclan cartuchos entre series salvo lo que publique OXVA.",
     ],
@@ -1369,9 +1361,7 @@ export const extraDevices: Device[] = [
     summary:
       "Pod NeXLIM con 1800 mAh, 5–40 W, carga 5 V/2 A y cartuchos NeXLIM Unitech 3.0 (4 ml / 2 ml TPD).",
     confidence: "fabricante",
-    sources: [
-      { label: "OXVA — NeXLIM GO", url: "https://www.oxva.com/pages/nexlim-go" },
-    ],
+    sources: [{ label: "OXVA — NeXLIM GO", url: "https://www.oxva.com/pages/nexlim-go" }],
     caveats: [],
     tags: ["pod", "nexlim", "usb-c", "40w", "tpd"],
     status: "referenciado",

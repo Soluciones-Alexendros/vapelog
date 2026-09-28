@@ -74,10 +74,11 @@ export function chargePort(value: string): string | null {
   return null;
 }
 
-export function wireKind(wire: string, build: string): "malla" | "alambre" | null {
+export function wireKind(wire: string, build: string): "malla" | "alambre" | "ceramica" | null {
   const text = `${wire} ${build}`;
   if (/malla|mesh/i.test(text)) return "malla";
-  if (/alambre|kanthal|nichrome|ni80|nicr/i.test(text)) return "alambre";
+  if (/ccell|cerámica|ceramica/i.test(text)) return "ceramica";
+  if (/alambre|kanthal|nichrome|ni80|nicr|\bhilo\b/i.test(text)) return "alambre";
   return null;
 }
 

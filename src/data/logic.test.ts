@@ -1,7 +1,113 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { coilBySlug, deviceBySlug } from "./catalog.ts";
-import { compatibility, mixNicotine, round, shotsForTarget, solveOhm } from "./logic.ts";
+import { coilBySlug, deviceBySlug, liquidBySlug, coils, devices, parts } from "./catalog.ts";
+import {
+  compatibility,
+  mixNicotine,
+  partsForDevice,
+  recommendLiquids,
+  round,
+  shotsForTarget,
+  solveOhm,
+} from "./logic.ts";
+import type { Coil, Device, Liquid } from "./types";
+
+function syntheticDevice(
+  overrides: Partial<Device> &
+    Pick<Device, "slug" | "powerMinW" | "powerMaxW" | "ohmMin" | "ohmMax">,
+): Device {
+  return {
+    domain: "device",
+    id: overrides.slug,
+    archiveId: "TEST-DEV",
+    brandId: "test",
+    name: overrides.slug,
+    familyId: "mod",
+    subId: "mod.dual",
+    format: "Box mod",
+    summary: "Dispositivo sintético para tests.",
+    confidence: "ficha",
+    sources: [],
+    caveats: [],
+    tags: [],
+    status: "referenciado",
+    battery: "Integrada",
+    charge: "USB-C",
+    power: "No publicada",
+    chipset: null,
+    modes: [],
+    display: null,
+    connector: "510",
+    platformIds: [],
+    kitPlatformIds: [],
+    materials: "",
+    airflow: "",
+    capacity: null,
+    dimensions: null,
+    weight: null,
+    tpd: "no-aplica",
+    year: null,
+    draw: "",
+    ...overrides,
+  };
+}
+
+function syntheticCoil(overrides: Partial<Coil> & Pick<Coil, "slug" | "ohms">): Coil {
+  return {
+    domain: "coil",
+    id: overrides.slug,
+    archiveId: "TEST-COIL",
+    brandId: "test",
+    name: overrides.slug,
+    familyId: "tanque",
+    subId: "tanque.z",
+    summary: "Coil sintética para tests.",
+    confidence: "ficha",
+    sources: [],
+    caveats: [],
+    tags: [],
+    status: "referenciado",
+    platformIds: [],
+    wattMin: null,
+    wattMax: null,
+    wattConfidence: null,
+    wire: "Malla",
+    build: "Malla",
+    draw: "DL",
+    connector: "510",
+    refillable: true,
+    pack: "",
+    ...overrides,
+  };
+}
+
+function syntheticLiquid(overrides: Partial<Liquid> & Pick<Liquid, "slug" | "ratio">): Liquid {
+  return {
+    domain: "liquid",
+    id: overrides.slug,
+    archiveId: "TEST-LIQ",
+    brandId: "test",
+    name: overrides.slug,
+    line: "test",
+    familyId: "shortfill",
+    subId: "shortfill.50",
+    summary: "Líquido sintético para tests.",
+    confidence: "ficha",
+    sources: [],
+    caveats: [],
+    tags: [],
+    status: "referenciado",
+    flavorIds: [],
+    volumeMl: 50,
+    nicotineMg: 0,
+    nicotineType: "ninguna",
+    bottle: "",
+    assumedBottleMl: null,
+    recommendedDraw: ["MTL"],
+    tpd: "si",
+    ...overrides,
+  };
+}
 
 describe("ley de Ohm", () => {
   it("cierra potencia y resistencia", () => {
@@ -146,5 +252,127 @@ describe("cruce", () => {
     assert.ok(device && coil);
     if (!device || !coil) return;
     assert.equal(compatibility(device, coil).kind, "nativa");
+  });
+});
+
+describe("ventana de potencia en ambos sentidos", () => {
+  it("una coil por debajo del mínimo del dispositivo cruza a no", () => {
+    const device = syntheticDevice({
+      slug: "mod-fijo-40",
+      powerMinW: 40,
+      powerMaxW: 40,
+      ohmMin: null,
+      ohmMax: null,
+    });
+    const coil = syntheticCoil({ slug: "coil-15-25", ohms: 0.4, wattMin: 15, wattMax: 25 });
+    const result = compatibility(device, coil);
+    assert.equal(result.kind, "no");
+    assert.match(
+      result.reasons.join(" "),
+      /se recomienda hasta 25 W y el dispositivo publica un mínimo de 40 W/,
+    );
+  });
+});
+
+describe("ventana de ohmios por extremos", () => {
+  it("una coil por debajo del mínimo publicado cruza a no aunque no haya máximo", () => {
+    const device = syntheticDevice({
+      slug: "mod-min-0-5",
+      powerMinW: null,
+      powerMaxW: null,
+      ohmMin: 0.5,
+      ohmMax: null,
+    });
+    const coil = syntheticCoil({ slug: "coil-0-3", ohms: 0.3 });
+    const result = compatibility(device, coil);
+    assert.equal(result.kind, "no");
+    assert.match(
+      result.reasons.join(" "),
+      /0\.3 Ω queda por debajo del mínimo publicado \(0\.5 Ω\)/,
+    );
+  });
+
+  it("una coil por encima del máximo publicado cruza a no aunque no haya mínimo", () => {
+    const device = syntheticDevice({
+      slug: "mod-max-3",
+      powerMinW: null,
+      powerMaxW: null,
+      ohmMin: null,
+      ohmMax: 3,
+    });
+    const coil = syntheticCoil({ slug: "coil-3-5", ohms: 3.5 });
+    const result = compatibility(device, coil);
+    assert.equal(result.kind, "no");
+    assert.match(result.reasons.join(" "), /3\.5 Ω supera el máximo publicado \(3 Ω\)/);
+  });
+});
+
+describe("regresión de catálogo", () => {
+  it("ningún cruce nativa, kit o eléctrica viola la ventana publicada de potencia u ohmios", () => {
+    for (const device of devices) {
+      for (const coil of coils) {
+        const result = compatibility(device, coil);
+        if (result.kind === "no") continue;
+        if (device.powerMaxW != null && coil.wattMin != null) {
+          assert.ok(
+            coil.wattMin <= device.powerMaxW,
+            `${device.slug} x ${coil.slug}: la coil pide desde ${coil.wattMin} W y el techo publicado es ${device.powerMaxW} W`,
+          );
+        }
+        if (device.powerMinW != null && coil.wattMax != null) {
+          assert.ok(
+            coil.wattMax >= device.powerMinW,
+            `${device.slug} x ${coil.slug}: la coil se recomienda hasta ${coil.wattMax} W y el suelo publicado es ${device.powerMinW} W`,
+          );
+        }
+        if (device.ohmMin != null) {
+          assert.ok(
+            coil.ohms >= device.ohmMin,
+            `${device.slug} x ${coil.slug}: ${coil.ohms} Ω queda bajo el mínimo publicado de ${device.ohmMin} Ω`,
+          );
+        }
+        if (device.ohmMax != null) {
+          assert.ok(
+            coil.ohms <= device.ohmMax,
+            `${device.slug} x ${coil.slug}: ${coil.ohms} Ω supera el máximo publicado de ${device.ohmMax} Ω`,
+          );
+        }
+      }
+    }
+  });
+
+  it("el L200 no lista la boquilla de rosca 510 genérica", () => {
+    const device = deviceBySlug("geekvape-aegis-legend-2");
+    assert.ok(device);
+    if (!device) return;
+    assert.ok(parts.some((part) => part.slug === "boquilla-rosca-510"));
+    const fitted = partsForDevice(device, parts);
+    assert.ok(fitted.every((part) => part.slug !== "boquilla-rosca-510"));
+  });
+});
+
+describe("líquidos por coil", () => {
+  it("una coil RDL real desaconseja graduaciones altas de freebase y de sales", () => {
+    const coil = coilBySlug("xros-corex-0-4");
+    const tribeca = liquidBySlug("halo-tribeca");
+    const sales = liquidBySlug("vampire-vape-heisenberg-sales");
+    assert.ok(coil && tribeca && sales);
+    if (!coil || !tribeca || !sales) return;
+    const fits = recommendLiquids(coil, [tribeca, sales]);
+    const tribecaFit = fits.find((fit) => fit.liquid.slug === tribeca.slug);
+    const salesFit = fits.find((fit) => fit.liquid.slug === sales.slug);
+    assert.equal(tribecaFit?.fit, "evitar");
+    assert.equal(salesFit?.fit, "evitar");
+    assert.match(tribecaFit?.reason ?? "", /calada abierta \(RDL\/DL\)/);
+  });
+
+  it("un 70/30 en una MTL de 0,8 Ω queda en posible con su aviso", () => {
+    const coil = coilBySlug("xros-corex-0-8");
+    assert.ok(coil);
+    if (!coil) return;
+    const liquid = syntheticLiquid({ slug: "liquido-70-30-test", ratio: "70/30" });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "posible");
+    assert.match(fit?.reason ?? "", /VG alto/);
   });
 });

@@ -65,13 +65,14 @@ src/data/         catálogo tipado + lógica + tests
 src/routes/       TanStack Router
 public/catalog/   fotos
 docs/             arquitectura, guías, runbooks
-scripts/          smoke, check-env, brand-check, browser-smoke
+scripts/          smoke, check-env, brand-check, browser-smoke(+verdict), a11y-pass, release
 ```
 
 ## Definition of Done
 
 - Typecheck, lint y tests verdes.
-- Cobertura de líneas ≥ 70 % en el job `test` de CI.
+- Cobertura de líneas ≥ 70 % (ámbito: `src/data/` + `scripts/`, runner
+  node:test) en el job `test` de CI.
 - Build + smoke OK si tocas rutas o el shell.
 - Docs/ADR actualizados si cambia arquitectura o contratos.
 

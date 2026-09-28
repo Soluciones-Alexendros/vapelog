@@ -14,15 +14,22 @@ page.on("pageerror", (err) => errors.push(String(err)));
 
 await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
 await page.waitForTimeout(500);
+// La puerta de edad se monta solo client-side cuando falta la sesión
+// (`vapelog-edad`); con SSR el contenido ya está visible y no hay diálogo.
 const dialog = page.getByRole("dialog");
-await dialog.waitFor({ timeout: 5000 });
-const confirm = page.getByRole("button", { name: "Tengo 18 años o más" });
-await confirm.focus();
-await page.keyboard.press("Enter");
-await page.waitForTimeout(400);
-if (await dialog.count()) {
-  const open = await dialog.isVisible().catch(() => false);
-  if (open) throw new Error("la puerta de edad sigue abierta");
+const gateShown = await dialog
+  .waitFor({ timeout: 3000 })
+  .then(() => true)
+  .catch(() => false);
+if (gateShown) {
+  const confirm = page.getByRole("button", { name: "Tengo 18 años o más" });
+  await confirm.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(400);
+  if (await dialog.count()) {
+    const open = await dialog.isVisible().catch(() => false);
+    if (open) throw new Error("la puerta de edad sigue abierta");
+  }
 }
 await page.getByRole("link", { name: "Dispositivos" }).first().waitFor();
 

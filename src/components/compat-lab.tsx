@@ -116,7 +116,11 @@ export function CompatLab({
       ) : null}
       <section className="mt-8">
         <h2 className="text-2xl text-foreground">Líquidos para esa resistencia</h2>
-        {!coil?.refillable ? (
+        {!coil ? (
+          <p className="mt-3 text-sm text-muted-foreground" role="alert">
+            Esa resistencia no está en el archivo. Revisa el enlace.
+          </p>
+        ) : !coil.refillable ? (
           <p className="mt-3 text-sm text-muted-foreground">
             La cápsula elegida llega precargada y no se rellena.
           </p>

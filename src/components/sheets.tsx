@@ -30,7 +30,14 @@ import { compatibility, partsForDevice, recommendLiquids } from "@/data/logic";
 import { EMPTY, relationRows, specFacts, specGroups } from "@/data/specs";
 import type { CatalogItem, Coil, Confidence, Device, Domain } from "@/data/types";
 import { useCompare } from "@/components/chrome";
-import { confidenceLabel, domainLabel, formatPlain, itemTpd, tpdLabel } from "@/components/labels";
+import {
+  confidenceLabel,
+  domainLabel,
+  domainPath,
+  formatPlain,
+  itemTpd,
+  tpdLabel,
+} from "@/components/labels";
 import { ProductPhoto } from "@/components/photo";
 import {
   Accordion,
@@ -50,14 +57,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const domainPath: Record<Domain, "/dispositivos" | "/resistencias" | "/liquidos" | "/componentes"> =
-  {
-    device: "/dispositivos",
-    coil: "/resistencias",
-    liquid: "/liquidos",
-    part: "/componentes",
-  };
 
 const heroKeys: Record<Domain, string[]> = {
   device: [
@@ -108,7 +107,7 @@ const chipIcons: Record<string, LucideIcon> = {
 export function DeviceSheet({ slug }: { slug: string }) {
   const device = deviceBySlug(slug);
   if (!device) return <Missing />;
-  return <DeviceBody device={device} />;
+  return <DeviceBody key={device.slug} device={device} />;
 }
 
 function DeviceBody({ device }: { device: Device }) {
@@ -315,7 +314,7 @@ export function PartSheet({ slug }: { slug: string }) {
 function Sheet({ item, fact, children }: { item: CatalogItem; fact: string; children: ReactNode }) {
   const compare = useCompare();
   const brand = brandById(item.brandId);
-  const path = domainPath[item.domain];
+  const path = domainPath(item.domain);
   const chips = heroChips(item);
 
   return (
@@ -586,7 +585,7 @@ function RelatedItems({ item }: { item: CatalogItem }) {
     )
     .slice(0, 6);
   if (related.length === 0) return null;
-  const path = domainPath[item.domain];
+  const path = domainPath(item.domain);
   return (
     <section className="mt-10">
       <h2 className="text-2xl text-foreground">Relacionados</h2>

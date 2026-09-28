@@ -243,26 +243,33 @@ function CompareDock() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const [allowed, setAllowed] = useState(false);
+  const [allowed, setAllowed] = useState(true);
+  const [checked, setChecked] = useState(false);
   useEffect(() => {
-    if (sessionStorage.getItem("vapelog-edad") === "ok") setAllowed(true);
+    // Sincronización post-hidratación con sessionStorage, que no existe en SSR:
+    // el contenido viaja en el HTML y el gate solo lo cubre como overlay.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (sessionStorage.getItem("vapelog-edad") !== "ok") setAllowed(false);
+    setChecked(true);
   }, []);
 
   return (
     <CompareProvider>
       <a
         href="#contenido"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-focus focus:px-3 focus:py-2 focus:text-bg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
       >
         Saltar al contenido
       </a>
-      {allowed ? <Header /> : null}
-      <AgeGate open={!allowed} onAllow={() => setAllowed(true)} />
-      <main id="contenido" className={allowed ? "pb-28" : "pb-8"}>
-        {allowed ? children : null}
+      <Header />
+      {/* Solo se monta cuando bloquea: montarlo cerrado y abrirlo después
+          dispara un race de react-remove-scroll (classList de null). */}
+      {checked && !allowed ? <AgeGate open onAllow={() => setAllowed(true)} /> : null}
+      <main id="contenido" className="pb-28">
+        {children}
       </main>
-      {allowed ? <Footer /> : null}
-      {allowed ? <CompareDock /> : null}
+      <Footer />
+      <CompareDock />
     </CompareProvider>
   );
 }

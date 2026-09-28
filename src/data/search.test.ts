@@ -51,3 +51,26 @@ describe("búsqueda por característica", () => {
     );
   });
 });
+
+describe("faceta de hilo", () => {
+  it("el hilo regular cuenta como alambre", () => {
+    const hits = query("coil", { hilo: "alambre" });
+    assert.ok(hits.some((item) => item.slug === "voopoo-pnp-r1"));
+  });
+
+  it("la cerámica CCELL es su propia clase y solo la GT la usa", () => {
+    const hits = query("coil", { hilo: "ceramica" });
+    assert.deepEqual(hits.map((item) => item.slug).sort(), [
+      "vaporesso-gt-ccell-0-3",
+      "vaporesso-gt-ccell-0-5",
+    ]);
+  });
+
+  it("la faceta Hilo publica Cerámica con su recuento", () => {
+    const facets = buildFacets("coil", {});
+    const hilo = facets.find((facet) => facet.key === "hilo");
+    const ceramica = hilo?.options.find((option) => option.id === "ceramica");
+    assert.equal(ceramica?.label, "Cerámica");
+    assert.equal(ceramica?.count, 2);
+  });
+});

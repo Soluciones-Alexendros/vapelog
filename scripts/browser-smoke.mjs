@@ -130,12 +130,14 @@ async function captureViewport(browser, vp, pageUrl, theme) {
   if (theme === "dark") {
     await page.addInitScript(() => {
       localStorage.setItem("vapelog-theme", "dark");
-      document.documentElement.classList.add("dark");
+      // En document_start documentElement aún no existe; el themeBootScript
+      // de la página aplica la clase tras crear el <html>.
+      document.documentElement?.classList.add("dark");
     });
   } else if (theme === "light") {
     await page.addInitScript(() => {
       localStorage.setItem("vapelog-theme", "light");
-      document.documentElement.classList.remove("dark");
+      document.documentElement?.classList.remove("dark");
     });
   }
   const resp = await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -245,7 +247,7 @@ try {
   // Set the code rather than aborting the process so the `finally` browser
   // teardown always runs (agents typically smoke twice per turn; leaking
   // Chromium accumulates across retries).
-  process.exitCode = exitCodeFor(viewports);
+  process.exitCode = exitCodeFor(viewports, extended);
 } catch (err) {
   const failure = { ok: false, url, error: String(err?.message || err) };
   try {

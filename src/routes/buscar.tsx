@@ -241,12 +241,12 @@ function Hit({ item }: { item: CatalogItem }) {
           ? "Componente"
           : "Líquido";
   const body = (
-    <span>
+    <div>
       <p className="text-xs tracking-widest text-primary uppercase">
         {brand} · {label}
       </p>
       <p className="mt-1 text-xl text-foreground">{item.name}</p>
-    </span>
+    </div>
   );
   if (item.domain === "device") {
     return (

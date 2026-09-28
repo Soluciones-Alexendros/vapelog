@@ -2,13 +2,6 @@ import type { CatalogItem, Confidence, Domain, TpdStatus } from "@/data/types";
 
 const numberFormat = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 });
 
-export function formatNum(value: number, digits = 2): string {
-  return new Intl.NumberFormat("es-ES", {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: digits > 0 && !Number.isInteger(value) ? Math.min(digits, 1) : 0,
-  }).format(value);
-}
-
 export function formatPlain(value: number): string {
   return numberFormat.format(value);
 }
