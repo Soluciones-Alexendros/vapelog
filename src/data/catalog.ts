@@ -1,14 +1,28 @@
-import type { Brand, Coil, Device, Liquid, Part, Platform, Taxon } from "./types";
+import type {
+  Brand,
+  Coil,
+  Device,
+  Liquid,
+  LiquidVariation,
+  Part,
+  Platform,
+  Taxon,
+  TpdStatus,
+} from "./types";
 import {
   extraBrands,
   extraCoils,
   extraDevices,
-  extraLiquids,
   extraParts,
   extraPlatforms,
   extraTaxa,
 } from "./expansion.ts";
 import { headCoils, headPlatforms, headTaxa } from "./heads.ts";
+import { bomboLiquids } from "./liquids-bombo.ts";
+import { drifterLiquids } from "./liquids-drifter.ts";
+import { herreraLiquids } from "./liquids-herrera.ts";
+import { kingsCrestLiquids } from "./liquids-kings-crest.ts";
+import { oxvaLiquids } from "./liquids-oxva.ts";
 
 export const brands: Brand[] = [
   { id: "vaporesso", name: "Vaporesso", country: "China" },
@@ -80,6 +94,7 @@ export const taxa: Taxon[] = [
   { id: "sal.10", domain: "liquid", parentId: "sal", es: "10 ml", en: "10 ml" },
   { id: "freebase", domain: "liquid", parentId: null, es: "Freebase", en: "Freebase" },
   { id: "freebase.10", domain: "liquid", parentId: "freebase", es: "10 ml", en: "10 ml" },
+  { id: "aroma", domain: "liquid", parentId: null, es: "Aromas concentrados", en: "Concentrates" },
   { id: "frutal", domain: "flavor", parentId: null, es: "Frutal", en: "Fruit" },
   { id: "frutal.bayas", domain: "flavor", parentId: "frutal", es: "Bayas", en: "Berries" },
   { id: "frutal.citricos", domain: "flavor", parentId: "frutal", es: "Cítricos", en: "Citrus" },
@@ -629,14 +644,21 @@ export const liquids: Liquid[] = [
     tags: ["sales", "10ml", "20mg", "heisenberg", "mtl"],
     status: "referenciado",
     flavorIds: ["frutal.bayas", "menta.frio", "complejo.anisado"],
-    volumeMl: 10,
-    nicotineMg: 20,
-    nicotineType: "sal",
-    ratio: "50/50",
-    bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     recommendedDraw: ["MTL", "RDL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "heisenberg-sal-20",
+        label: "20 mg/ml · 10 ml",
+        format: "sales",
+        volumeMl: 10,
+        nicotineMg: 20,
+        nicotineType: "sal",
+        ratio: "50/50",
+        bottle: "10 ml listo para vapear",
+        assumedBottleMl: 10,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -659,14 +681,21 @@ export const liquids: Liquid[] = [
     tags: ["shortfill", "0mg", "heisenberg"],
     status: "referenciado",
     flavorIds: ["frutal.bayas", "menta.frio", "complejo.anisado"],
-    volumeMl: 50,
-    nicotineMg: 0,
-    nicotineType: "ninguna",
-    ratio: null,
-    bottle: "Shortfill con espacio para nicokit",
-    assumedBottleMl: 60,
     recommendedDraw: ["MTL", "RDL", "DL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "heisenberg-short-0",
+        label: "0 mg/ml · 50 ml",
+        format: "shortfill",
+        volumeMl: 50,
+        nicotineMg: 0,
+        nicotineType: "ninguna",
+        ratio: null,
+        bottle: "Shortfill con espacio para nicokit",
+        assumedBottleMl: 60,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -686,14 +715,21 @@ export const liquids: Liquid[] = [
     tags: ["shortfill", "postre", "limon"],
     status: "referenciado",
     flavorIds: ["postre.tarta", "frutal.citricos"],
-    volumeMl: 50,
-    nicotineMg: 0,
-    nicotineType: "ninguna",
-    ratio: null,
-    bottle: "Shortfill con espacio para nicokit",
-    assumedBottleMl: 60,
     recommendedDraw: ["RDL", "DL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "lemon-tart-short-0",
+        label: "0 mg/ml · 50 ml",
+        format: "shortfill",
+        volumeMl: 50,
+        nicotineMg: 0,
+        nicotineType: "ninguna",
+        ratio: null,
+        bottle: "Shortfill con espacio para nicokit",
+        assumedBottleMl: 60,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -712,14 +748,21 @@ export const liquids: Liquid[] = [
     tags: ["sales", "10ml", "20mg", "postre"],
     status: "referenciado",
     flavorIds: ["postre.tarta", "frutal.citricos"],
-    volumeMl: 10,
-    nicotineMg: 20,
-    nicotineType: "sal",
-    ratio: "50/50",
-    bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     recommendedDraw: ["MTL", "RDL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "lemon-tart-sal-20",
+        label: "20 mg/ml · 10 ml",
+        format: "sales",
+        volumeMl: 10,
+        nicotineMg: 20,
+        nicotineType: "sal",
+        ratio: "50/50",
+        bottle: "10 ml listo para vapear",
+        assumedBottleMl: 10,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -738,14 +781,21 @@ export const liquids: Liquid[] = [
     tags: ["shortfill", "frutos rojos"],
     status: "referenciado",
     flavorIds: ["frutal.bayas"],
-    volumeMl: 50,
-    nicotineMg: 0,
-    nicotineType: "ninguna",
-    ratio: null,
-    bottle: "Shortfill con espacio para nicokit",
-    assumedBottleMl: 60,
     recommendedDraw: ["RDL", "DL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "bad-blood-0",
+        label: "0 mg/ml · 50 ml",
+        format: "shortfill",
+        volumeMl: 50,
+        nicotineMg: 0,
+        nicotineType: "ninguna",
+        ratio: null,
+        bottle: "Shortfill con espacio para nicokit",
+        assumedBottleMl: 60,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -768,14 +818,21 @@ export const liquids: Liquid[] = [
     tags: ["sales", "tropical", "10ml"],
     status: "referenciado",
     flavorIds: ["frutal.tropicales"],
-    volumeMl: 10,
-    nicotineMg: 20,
-    nicotineType: "sal",
-    ratio: "50/50",
-    bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     recommendedDraw: ["MTL", "RDL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "mango-20",
+        label: "20 mg/ml · 10 ml",
+        format: "sales",
+        volumeMl: 10,
+        nicotineMg: 20,
+        nicotineType: "sal",
+        ratio: "50/50",
+        bottle: "10 ml listo para vapear",
+        assumedBottleMl: 10,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -794,14 +851,21 @@ export const liquids: Liquid[] = [
     tags: ["sales", "ice", "10ml", "20mg"],
     status: "referenciado",
     flavorIds: ["frutal.bayas", "menta.frio"],
-    volumeMl: 10,
-    nicotineMg: 20,
-    nicotineType: "sal",
-    ratio: "50/50",
-    bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     recommendedDraw: ["MTL", "RDL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "ivg-blue-20",
+        label: "20 mg/ml · 10 ml",
+        format: "sales",
+        volumeMl: 10,
+        nicotineMg: 20,
+        nicotineType: "sal",
+        ratio: "50/50",
+        bottle: "10 ml listo para vapear",
+        assumedBottleMl: 10,
+        tpd: "si",
+      },
+    ],
   },
   {
     domain: "liquid",
@@ -824,19 +888,60 @@ export const liquids: Liquid[] = [
     tags: ["freebase", "tabaco", "10ml", "mtl"],
     status: "referenciado",
     flavorIds: ["tabaco.rubio"],
-    volumeMl: 10,
-    nicotineMg: 12,
-    nicotineType: "freebase",
-    ratio: "50/50",
-    bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     recommendedDraw: ["MTL", "RDL"],
-    tpd: "si",
+    variations: [
+      {
+        id: "tribeca-12",
+        label: "12 mg/ml · 10 ml",
+        format: "libre",
+        volumeMl: 10,
+        nicotineMg: 12,
+        nicotineType: "freebase",
+        ratio: "50/50",
+        bottle: "10 ml listo para vapear",
+        assumedBottleMl: 10,
+        tpd: "si",
+      },
+    ],
   },
-  ...extraLiquids,
+  ...bomboLiquids,
+  ...drifterLiquids,
+  ...herreraLiquids,
+  ...kingsCrestLiquids,
+  ...oxvaLiquids,
 ];
 
 export const parts: Part[] = extraParts;
+
+export function primaryVariation(liquid: Liquid): LiquidVariation | undefined {
+  return liquid.variations[0];
+}
+
+export interface VariationRange {
+  count: number;
+  volumeMl: { min: number; max: number };
+  nicotineMg: { min: number; max: number };
+}
+
+export function variationRange(liquid: Liquid): VariationRange | null {
+  if (liquid.variations.length === 0) return null;
+  const volumes = liquid.variations.map((variation) => variation.volumeMl);
+  const strengths = liquid.variations.map((variation) => variation.nicotineMg);
+  return {
+    count: liquid.variations.length,
+    volumeMl: { min: Math.min(...volumes), max: Math.max(...volumes) },
+    nicotineMg: { min: Math.min(...strengths), max: Math.max(...strengths) },
+  };
+}
+
+export function liquidTpd(liquid: Liquid): TpdStatus {
+  const statuses = liquid.variations
+    .map((variation) => variation.tpd)
+    .filter((status): status is TpdStatus => status != null);
+  if (statuses.length === 0) return "no-aplica";
+  if (statuses.every((status) => status === statuses[0])) return statuses[0]!;
+  return "parcial";
+}
 
 export function brandById(id: string): Brand | undefined {
   return brands.find((brand) => brand.id === id);

@@ -52,6 +52,27 @@ describe("búsqueda por característica", () => {
   });
 });
 
+describe("filtros de líquido por variación", () => {
+  it("encuentra un líquido si alguna variación tiene esa nicotina", () => {
+    const hits = query("liquid", { nicotina: "sal" });
+    assert.ok(hits.length > 0);
+    assert.ok(
+      hits.every(
+        (item) =>
+          item.domain === "liquid" &&
+          item.variations.some((variation) => variation.nicotineType === "sal"),
+      ),
+    );
+  });
+
+  it("la faceta de ratio sale de la unión de variaciones", () => {
+    const facets = buildFacets("liquid", {});
+    const ratio = facets.find((facet) => facet.key === "ratio");
+    assert.ok(ratio && ratio.options.length > 0);
+    assert.ok(ratio.options.every((option) => /^\d+\/\d+$/.test(option.id)));
+  });
+});
+
 describe("faceta de hilo", () => {
   it("el hilo regular cuenta como alambre", () => {
     const hits = query("coil", { hilo: "alambre" });
