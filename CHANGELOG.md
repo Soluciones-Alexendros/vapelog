@@ -12,6 +12,12 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambios
+
+- refactor(datos): modelo v3 que separa identidad, clasificación y variación, con géneros de líquido y nombres limpios sin sufijos de formato (#4)
+- feat(datos): catálogo de 327 líquidos y 1078 variaciones de las 5 marcas oficiales, con taxonomía de sabores ampliada (#4)
+- refactor(esquema): esquema SQL v3 con tabla `liquid_variation`, columna `genre` y `draws` unificado (#4)
+
 ## [0.3.0] - 2026-09-29
 
 ### Cambios
