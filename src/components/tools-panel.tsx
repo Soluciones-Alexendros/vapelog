@@ -277,17 +277,6 @@ function OhmForm({
           <Result label="Corriente" value={`${formatPlain(round(solved.amps, 2))} A`} />
           <Result label="Potencia" value={`${formatPlain(round(solved.watts, 2))} W`} />
           <Result label="Resistencia" value={`${formatPlain(round(solved.ohms, 2))} Ω`} />
-          {hasRange ? (
-            <Result
-              label="Recomendación"
-              value={
-                inRecommendedRange
-                  ? `Dentro del rango ${formatPlain(rangeMin)}–${formatPlain(rangeMax)} W`
-                  : `Fuera del rango ${formatPlain(rangeMin)}–${formatPlain(rangeMax)} W`
-              }
-              toneClass={toneTextClass(inRecommendedRange ? "success" : "warning")}
-            />
-          ) : null}
         </dl>
       )}
       {notes.length > 0 ? (
@@ -472,19 +461,11 @@ function Field({
   );
 }
 
-function Result({ label, value, toneClass }: { label: string; value: string; toneClass?: string }) {
+function Result({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-background p-3">
       <dt className="text-xs tracking-widest text-muted-foreground uppercase">{label}</dt>
-      <dd
-        className={
-          toneClass
-            ? `mt-2 font-display text-2xl tabular-nums ${toneClass}`
-            : "mt-2 font-display text-2xl text-foreground tabular-nums"
-        }
-      >
-        {value}
-      </dd>
+      <dd className="mt-2 font-display text-2xl text-foreground tabular-nums">{value}</dd>
     </div>
   );
 }
