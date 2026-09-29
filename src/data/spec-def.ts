@@ -187,18 +187,6 @@ export const specDefs: SpecDef[] = [
   ),
   def(
     "device",
-    "battery_note",
-    "alimentacion",
-    "Alimentación",
-    "Frase de batería",
-    null,
-    "text",
-    false,
-    150,
-    (item) => publishedText(device(item)?.battery),
-  ),
-  def(
-    "device",
     "charge_port",
     "alimentacion",
     "Alimentación",
@@ -330,18 +318,6 @@ export const specDefs: SpecDef[] = [
   ),
   def("device", "tpd", "regimen", "Fuente", "TPD", null, "enum", true, 280, (item) =>
     device(item) ? tpdLabel(device(item)!.tpd) : null,
-  ),
-  def(
-    "device",
-    "confidence",
-    "regimen",
-    "Fuente",
-    "Confianza de la ficha",
-    null,
-    "enum",
-    false,
-    290,
-    (item) => sheetConfidence(item),
   ),
 
   def(
@@ -497,18 +473,6 @@ export const specDefs: SpecDef[] = [
     130,
     (item) => num(coil(item)?.wattMax ?? null),
   ),
-  def(
-    "coil",
-    "confidence",
-    "regimen",
-    "Fuente",
-    "Confianza de la ficha",
-    null,
-    "enum",
-    false,
-    140,
-    (item) => sheetConfidence(item),
-  ),
 
   def("liquid", "line", "formato", "Formato", "Línea", null, "text", false, 10, (item) =>
     publishedText(liquid(item)?.line),
@@ -564,18 +528,6 @@ export const specDefs: SpecDef[] = [
   }),
   def("liquid", "tpd", "regimen", "Fuente", "TPD", null, "enum", true, 120, (item) =>
     liquid(item) ? tpdLabel(liquidTpd(liquid(item)!)) : null,
-  ),
-  def(
-    "liquid",
-    "confidence",
-    "regimen",
-    "Fuente",
-    "Confianza de la ficha",
-    null,
-    "enum",
-    false,
-    130,
-    (item) => sheetConfidence(item),
   ),
 
   def(
@@ -676,18 +628,6 @@ export const specDefs: SpecDef[] = [
     true,
     80,
     (item) => part(item)?.fitsConnector ?? null,
-  ),
-  def(
-    "part",
-    "confidence",
-    "regimen",
-    "Fuente",
-    "Confianza de la ficha",
-    null,
-    "enum",
-    false,
-    90,
-    (item) => sheetConfidence(item),
   ),
 ];
 

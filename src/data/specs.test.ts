@@ -87,14 +87,12 @@ describe("ficha plana", () => {
     }
   });
 
-  it("etiqueta el grupo de régimen como Fuente en todos los dominios", () => {
-    const samples: Record<Domain, CatalogItem> = {
+  it("etiqueta el grupo de régimen como Fuente en los dominios con TPD", () => {
+    const samples: Record<"device" | "liquid", CatalogItem> = {
       device: devices[0]!,
-      coil: coils[0]!,
       liquid: liquids[0]!,
-      part: parts[0]!,
     };
-    for (const domain of ["device", "coil", "liquid", "part"] as const) {
+    for (const domain of ["device", "liquid"] as const) {
       const regimen = specGroups(samples[domain]).find((group) => group.id === "regimen");
       assert.equal(regimen?.label, "Fuente");
     }

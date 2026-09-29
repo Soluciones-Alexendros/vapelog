@@ -136,40 +136,22 @@ function Header() {
             className="h-6 w-auto sm:h-8"
           />
         </Link>
-        <div className="flex min-w-0 flex-1 items-center gap-x-5 overflow-x-auto">
-          <nav className="flex shrink-0 items-center gap-x-4" aria-label="Catálogo">
-            {catalogNav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                aria-current={active(item.to, item.exact) ? "page" : undefined}
-                className={
-                  active(item.to, item.exact)
-                    ? "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-primary text-base font-medium text-foreground"
-                    : "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary focus-visible:border-primary"
-                }
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <nav className="flex shrink-0 items-center gap-x-4" aria-label="Otras secciones">
-            {secondaryNav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                aria-current={active(item.to, item.exact) ? "page" : undefined}
-                className={
-                  active(item.to, item.exact)
-                    ? "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground underline decoration-border underline-offset-4"
-                    : "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
-                }
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4" aria-label="Catálogo">
+          {catalogNav.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-current={active(item.to, item.exact) ? "page" : undefined}
+              className={
+                active(item.to, item.exact)
+                  ? "inline-flex min-h-11 items-center border-b-2 border-primary text-base font-medium text-foreground"
+                  : "inline-flex min-h-11 items-center border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary focus-visible:border-primary"
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <div className="flex shrink-0 items-center gap-1">
           <ThemeToggle />
           <Link
@@ -183,6 +165,27 @@ function Header() {
             ) : null}
           </Link>
         </div>
+      </div>
+      <div className="border-t border-border">
+        <nav
+          className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 px-4"
+          aria-label="Otras secciones"
+        >
+          {secondaryNav.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-current={active(item.to, item.exact) ? "page" : undefined}
+              className={
+                active(item.to, item.exact)
+                  ? "inline-flex min-h-9 items-center text-sm text-muted-foreground underline decoration-border underline-offset-4"
+                  : "inline-flex min-h-9 items-center text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </header>
   );

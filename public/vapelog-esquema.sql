@@ -303,7 +303,6 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('device', 'battery_kind', 'alimentacion', 'Alimentación', 'Tipo de batería', null, 'enum', true, 120),
   ('device', 'battery_mah', 'alimentacion', 'Alimentación', 'Capacidad de batería', 'mAh', 'number', true, 130),
   ('device', 'cell', 'alimentacion', 'Alimentación', 'Celda', null, 'enum', true, 140),
-  ('device', 'battery_note', 'alimentacion', 'Alimentación', 'Frase de batería', null, 'text', false, 150),
   ('device', 'charge_port', 'alimentacion', 'Alimentación', 'Puerto de carga', null, 'enum', true, 160),
   ('device', 'charge_note', 'alimentacion', 'Alimentación', 'Frase de carga', null, 'text', false, 170),
   ('device', 'power_note', 'alimentacion', 'Alimentación', 'Potencia publicada', null, 'text', false, 180),
@@ -317,7 +316,6 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('device', 'airflow', 'atomizador', 'Atomizador', 'Aire', null, 'text', false, 260),
   ('device', 'draw', 'atomizador', 'Atomizador', 'Calada', null, 'enum', true, 270),
   ('device', 'tpd', 'regimen', 'Fuente', 'TPD', null, 'enum', true, 280),
-  ('device', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 290),
   ('coil', 'family', 'construccion', 'Construcción', 'Montaje', null, 'text', true, 10),
   ('coil', 'series', 'construccion', 'Construcción', 'Serie', null, 'text', true, 20),
   ('coil', 'wire_kind', 'construccion', 'Construcción', 'Hilo', null, 'enum', true, 30),
@@ -331,7 +329,6 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('coil', 'ohms', 'electrico', 'Eléctrico', 'Resistencia', 'Ω', 'number', true, 110),
   ('coil', 'watt_min', 'electrico', 'Eléctrico', 'Vatios mínimos', 'W', 'number', true, 120),
   ('coil', 'watt_max', 'electrico', 'Eléctrico', 'Vatios máximos', 'W', 'number', true, 130),
-  ('coil', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 140),
   ('liquid', 'line', 'formato', 'Formato', 'Línea', null, 'text', false, 10),
   ('liquid', 'genre', 'formato', 'Formato', 'Género', null, 'enum', true, 20),
   ('liquid', 'volume_ml', 'formato', 'Formato', 'Cantidad', 'ml', 'number', true, 30),
@@ -341,7 +338,6 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('liquid', 'draw', 'uso', 'Uso', 'Calada recomendada', null, 'enum', true, 100),
   ('liquid', 'flavors', 'uso', 'Uso', 'Perfil', null, 'text', false, 110),
   ('liquid', 'tpd', 'regimen', 'Fuente', 'TPD', null, 'enum', true, 120),
-  ('liquid', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 130),
   ('part', 'family', 'encaje', 'Encaje', 'Familia', null, 'text', true, 10),
   ('part', 'series', 'encaje', 'Encaje', 'Serie', null, 'text', true, 15),
   ('part', 'spec', 'encaje', 'Encaje', 'Especificación publicada', null, 'text', false, 20),
@@ -350,8 +346,7 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('part', 'chemistry', 'encaje', 'Encaje', 'Química de la celda', null, 'text', false, 50),
   ('part', 'amps', 'encaje', 'Encaje', 'Amperaje continuo', 'A', 'number', false, 60),
   ('part', 'fits_battery', 'encaje', 'Encaje', 'Pide celda', null, 'enum', true, 70),
-  ('part', 'fits_connector', 'encaje', 'Encaje', 'Pide conector', null, 'enum', true, 80),
-  ('part', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 90);
+  ('part', 'fits_connector', 'encaje', 'Encaje', 'Pide conector', null, 'enum', true, 80);
 
 create index device_search_idx on device using gin (search_vector);
 create index coil_search_idx on coil using gin (search_vector);
