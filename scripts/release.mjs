@@ -77,7 +77,12 @@ const notes = body.length
 
 const section = `## [${version}] - ${date}\n\n${notes}\n`;
 const updated =
-  changelog.slice(0, start) + UNRELEASED + "\n\n" + section + changelog.slice(end).trimStart();
+  changelog.slice(0, start) +
+  UNRELEASED +
+  "\n\n" +
+  section +
+  "\n" +
+  changelog.slice(end).trimStart();
 
 console.log(`release: ${tag ?? "(sin tag)"} → v${version} (${bump}) con ${commits.length} commits`);
 
