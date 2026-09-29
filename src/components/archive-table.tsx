@@ -13,6 +13,7 @@ import {
   brandById,
   coils,
   devices,
+  genreById,
   liquids,
   parts,
   taxonById,
@@ -29,7 +30,7 @@ interface Row {
   slug: string;
   brand: string;
   name: string;
-  family: string;
+  genre: string;
   detail: string;
   confidence: string;
   tpd: string;
@@ -44,7 +45,13 @@ function liquidDetail(item: Liquid): string {
     values.min === values.max
       ? formatPlain(values.min)
       : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
-  return `${span(range.volumeMl)} ml · ${span(range.nicotineMg)} mg/ml`;
+  const strengths = item.variations
+    .filter((variation) => variation.hasNicotine && variation.nicotineMg != null)
+    .map((variation) => variation.nicotineMg as number);
+  const nicotine = strengths.length
+    ? `${span({ min: Math.min(...strengths), max: Math.max(...strengths) })} mg/ml`
+    : "sin nicotina";
+  return `${span(range.volumeMl)} ml · ${nicotine}`;
 }
 
 export function ArchiveTable() {
@@ -55,7 +62,7 @@ export function ArchiveTable() {
       slug: item.slug,
       brand: brandById(item.brandId)?.name ?? item.brandId,
       name: item.name,
-      family: taxonById(item.subId)?.es ?? "",
+      genre: taxonById(item.subId ?? "")?.es ?? "",
       detail: item.power,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
@@ -66,8 +73,8 @@ export function ArchiveTable() {
       slug: item.slug,
       brand: brandById(item.brandId)?.name ?? item.brandId,
       name: item.name,
-      family: taxonById(item.subId)?.es ?? "",
-      detail: `${formatPlain(item.ohms)} Ω · ${item.draw}`,
+      genre: taxonById(item.subId ?? "")?.es ?? "",
+      detail: [`${formatPlain(item.ohms)} Ω`, item.draws.join(" · ")].filter(Boolean).join(" · "),
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
     }));
@@ -77,7 +84,7 @@ export function ArchiveTable() {
       slug: item.slug,
       brand: brandById(item.brandId)?.name ?? item.brandId,
       name: item.name,
-      family: taxonById(item.subId)?.es ?? "",
+      genre: genreById(item.genreId)?.es ?? "",
       detail: liquidDetail(item),
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
@@ -88,7 +95,7 @@ export function ArchiveTable() {
       slug: item.slug,
       brand: brandById(item.brandId)?.name ?? item.brandId,
       name: item.name,
-      family: taxonById(item.subId)?.es ?? "",
+      genre: taxonById(item.subId ?? "")?.es ?? "",
       detail: item.spec,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
@@ -107,7 +114,7 @@ export function ArchiveTable() {
       }),
       column.accessor("brand", { header: "Marca" }),
       column.accessor("name", { header: "Nombre" }),
-      column.accessor("family", { header: "Familia" }),
+      column.accessor("genre", { header: "Género" }),
       column.accessor("detail", { header: "Dato" }),
       column.accessor("confidence", { header: "Fuente" }),
       column.accessor("tpd", { header: "Régimen" }),
@@ -127,14 +134,14 @@ export function ArchiveTable() {
   });
 
   const exportCsv = () => {
-    const header = ["Tipo", "Marca", "Nombre", "Familia", "Dato", "Fuente", "Régimen"];
+    const header = ["Tipo", "Marca", "Nombre", "Género", "Dato", "Fuente", "Régimen"];
     const body = table
       .getSortedRowModel()
       .rows.map((row) => [
         domainLabel(row.original.domain),
         row.original.brand,
         row.original.name,
-        row.original.family,
+        row.original.genre,
         row.original.detail,
         row.original.confidence,
         row.original.tpd,

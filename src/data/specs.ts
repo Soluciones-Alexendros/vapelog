@@ -1,7 +1,7 @@
 import { platformById } from "./catalog.ts";
 import { defsFor } from "./spec-def.ts";
 import { formatPlain } from "../components/labels.ts";
-import type { CatalogItem, Device, Liquid, LiquidVariation, NicotineType, Part } from "./types.ts";
+import type { CatalogItem, Device, Liquid, LiquidVariation, Part } from "./types.ts";
 
 export const EMPTY = "Sin dato publicado";
 
@@ -92,12 +92,6 @@ function names(ids: string[]): string | null {
   return ids.map((id) => platformById(id)?.name ?? id).join(", ");
 }
 
-function nicotineTypeLabel(type: NicotineType): string {
-  if (type === "sal") return "Sales";
-  if (type === "freebase") return "Freebase";
-  return "Sin nicotina";
-}
-
 export function variationRows(liquid: Liquid): SpecFact[] {
   return liquid.variations.map((variation) => ({
     key: variation.id,
@@ -114,13 +108,10 @@ export function variationRows(liquid: Liquid): SpecFact[] {
 function variationDisplay(variation: LiquidVariation): string {
   const parts: string[] = [`${formatPlain(variation.volumeMl)} ml`];
   parts.push(
-    variation.nicotineMg > 0
-      ? `${formatPlain(variation.nicotineMg)} mg/ml ${nicotineTypeLabel(variation.nicotineType)}`
-      : "0 mg/ml",
+    variation.hasNicotine ? `${formatPlain(variation.nicotineMg ?? 0)} mg/ml` : "sin nicotina",
   );
   if (variation.ratio) parts.push(variation.ratio);
   if (variation.bottle) parts.push(variation.bottle);
-  if (variation.assumedBottleMl) parts.push(`botella ${formatPlain(variation.assumedBottleMl)} ml`);
   return parts.join(" · ");
 }
 

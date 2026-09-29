@@ -15,7 +15,7 @@ markerFor() {
     /) echo "El catálogo" ;;
     /dispositivos) echo "XROS 4" ;;
     /resistencias) echo "Z 0,2" ;;
-    /liquidos) echo "Heisenberg sales 20 mg" ;;
+    /liquidos) echo "Heisenberg" ;;
     /buscar) echo "Buscar" ;;
     /herramientas) echo "Cálculo" ;;
     /compatibilidad) echo "Cruce" ;;

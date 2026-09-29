@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { coils } from "./catalog.ts";
-import { buildFacets, hasDraw, matches, query } from "./search.ts";
+import { TABLE_KEYS, buildFacets, hasDraw, matches, query } from "./search.ts";
 
 describe("búsqueda por característica", () => {
   it("no confunde DL con RDL", () => {
@@ -45,7 +45,7 @@ describe("búsqueda por característica", () => {
         (item) =>
           item.domain === "coil" &&
           item.familyId === "tanque" &&
-          item.draw === "DL" &&
+          item.draws.includes("DL") &&
           /malla|mesh/i.test(`${item.wire} ${item.build}`),
       ),
     );
@@ -53,14 +53,19 @@ describe("búsqueda por característica", () => {
 });
 
 describe("filtros de líquido por variación", () => {
-  it("encuentra un líquido si alguna variación tiene esa nicotina", () => {
-    const hits = query("liquid", { nicotina: "sal" });
+  it("encuentra un líquido por su género", () => {
+    const hits = query("liquid", { genero: "sales" });
+    assert.ok(hits.length > 0);
+    assert.ok(hits.every((item) => item.domain === "liquid" && item.genreId === "sales"));
+  });
+
+  it("encuentra un líquido si alguna variación tiene nicotina", () => {
+    const hits = query("liquid", { tieneNicotina: true });
     assert.ok(hits.length > 0);
     assert.ok(
       hits.every(
         (item) =>
-          item.domain === "liquid" &&
-          item.variations.some((variation) => variation.nicotineType === "sal"),
+          item.domain === "liquid" && item.variations.some((variation) => variation.hasNicotine),
       ),
     );
   });
@@ -70,6 +75,31 @@ describe("filtros de líquido por variación", () => {
     const ratio = facets.find((facet) => facet.key === "ratio");
     assert.ok(ratio && ratio.options.length > 0);
     assert.ok(ratio.options.every((option) => /^\d+\/\d+$/.test(option.id)));
+  });
+
+  it("la faceta de género sale de liquidGenres y sustituye a familia", () => {
+    const facets = buildFacets("liquid", {});
+    assert.equal(
+      facets.find((facet) => facet.key === "familia"),
+      undefined,
+    );
+    assert.equal(
+      facets.find((facet) => facet.key === "sub"),
+      undefined,
+    );
+    const genero = facets.find((facet) => facet.key === "genero");
+    assert.ok(genero && genero.options.length > 0);
+  });
+
+  it("la tabla de líquidos usa las claves de la v3", () => {
+    assert.deepEqual(TABLE_KEYS.liquid, [
+      "genre",
+      "volume_ml",
+      "has_nicotine",
+      "nicotine_mg",
+      "draw",
+      "tpd",
+    ]);
   });
 });
 

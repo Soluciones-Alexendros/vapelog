@@ -28,17 +28,16 @@ function composition(ratio: Ratio): LiquidVariation["composition"] {
 }
 
 function saltProduct(p: DrifterProduct): Liquid {
-  const slug = `drifter-bar-salts-${p.code}`;
+  const slug = `drifter-${p.code}-sales`;
   return {
     domain: "liquid",
     id: slug,
     slug,
-    archiveId: `A510-LIQ-DRF-S-${p.code.toUpperCase()}`,
+    archiveId: `A510-LIQ-DRF-${p.code.toUpperCase()}-SALES`,
     brandId: "drifter",
-    name: `${p.flavor} sales 10 ml`,
+    name: p.flavor,
     line: "Bar Salts",
-    familyId: "sal",
-    subId: "sal.10",
+    genreId: "sales",
     summary: `Bar Salts sabor ${p.flavor}: ${p.blurb} La web oficial lo declara bote de 10 ml y ratio ${p.ratio}, en graduaciones de 10 y 20 mg/ml.`,
     confidence: "fabricante",
     sources: source(`${p.flavor} 10ml`, p.handle),
@@ -50,14 +49,13 @@ function saltProduct(p: DrifterProduct): Liquid {
     tags: ["sales", "10ml", "10mg", "20mg", "drifter", "bar-salts", p.ratio],
     status: "referenciado",
     flavorIds: p.flavorIds,
-    recommendedDraw: ["MTL", "RDL"],
+    draws: ["MTL", "RDL"],
     variations: [10, 20].map((mg): LiquidVariation => ({
-      id: `${mg}mg`,
+      id: `${slug}-${mg}`,
       label: `${mg} mg/ml · 10 ml`,
-      format: "sales",
       volumeMl: 10,
+      hasNicotine: true,
       nicotineMg: mg,
-      nicotineType: "sal",
       ratio: p.ratio,
       bottle: "Bote de 10 ml listo para vapear",
       assumedBottleMl: 10,
@@ -68,17 +66,16 @@ function saltProduct(p: DrifterProduct): Liquid {
 }
 
 function shortfillProduct(p: DrifterProduct): Liquid {
-  const slug = `drifter-bar-juice-${p.code}`;
+  const slug = `drifter-${p.code}-shortfill`;
   return {
     domain: "liquid",
     id: slug,
     slug,
-    archiveId: `A510-LIQ-DRF-J-${p.code.toUpperCase()}`,
+    archiveId: `A510-LIQ-DRF-${p.code.toUpperCase()}-SHORTFILL`,
     brandId: "drifter",
-    name: `${p.flavor} shortfill 120 ml`,
+    name: p.flavor,
     line: "Bar Juice",
-    familyId: "shortfill",
-    subId: "shortfill.50",
+    genreId: "shortfill",
     summary: `Bar Juice sabor ${p.flavor}: ${p.blurb} La web oficial lo declara shortfill de 120 ml sin nicotina y ratio ${p.ratio}, con espacio para shots.`,
     confidence: "fabricante",
     sources: source(`${p.flavor} 120ml Shortfill`, p.handle),
@@ -91,15 +88,13 @@ function shortfillProduct(p: DrifterProduct): Liquid {
     tags: ["shortfill", "120ml", "0mg", "drifter", "bar-juice", p.ratio],
     status: "referenciado",
     flavorIds: p.flavorIds,
-    recommendedDraw: ["MTL", "RDL"],
+    draws: ["MTL", "RDL", "DL"],
     variations: [
       {
-        id: "120ml",
+        id: `${slug}-0`,
         label: "120 ml · 0 mg/ml",
-        format: "shortfill",
         volumeMl: 120,
-        nicotineMg: 0,
-        nicotineType: "ninguna",
+        hasNicotine: false,
         ratio: p.ratio,
         bottle: "Shortfill de 120 ml sin nicotina, con espacio para shots",
         tpd: "no",
@@ -115,7 +110,7 @@ const barSalts: DrifterProduct[] = [
     code: "pineapple-ice",
     handle: "pineapple-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "menta.frio"],
+    flavorIds: ["frutal.tropicales", "frutal.pina", "menta.frio"],
     blurb: "Piña tropical con un acabado helado.",
   },
   {
@@ -139,7 +134,7 @@ const barSalts: DrifterProduct[] = [
     code: "lychee",
     handle: "lychee-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales"],
+    flavorIds: ["frutal.tropicales", "frutal.lychee"],
     blurb: "Lichi dulce y aromático.",
   },
   {
@@ -147,7 +142,7 @@ const barSalts: DrifterProduct[] = [
     code: "grape",
     handle: "grape-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal"],
+    flavorIds: ["frutal.uva"],
     blurb: "Uva madura y dulce.",
   },
   {
@@ -155,7 +150,7 @@ const barSalts: DrifterProduct[] = [
     code: "banana-ice",
     handle: "banana-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.platano", "menta.frio"],
     blurb: "Plátano con acabado helado.",
   },
   {
@@ -163,7 +158,7 @@ const barSalts: DrifterProduct[] = [
     code: "cola",
     handle: "cola-10ml",
     ratio: "40/60",
-    flavorIds: ["complejo"],
+    flavorIds: ["bebida.refresco"],
     blurb: "Refresco de cola clásico.",
     extraCaveats: ["Ratio publicado 40 VG / 60 PG, distinto del 50/50 del resto de la línea."],
   },
@@ -172,7 +167,7 @@ const barSalts: DrifterProduct[] = [
     code: "sour-apple-ice",
     handle: "sour-apple-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.manzana", "menta.frio"],
     blurb: "Manzana ácida con golpe frío.",
   },
   {
@@ -180,7 +175,7 @@ const barSalts: DrifterProduct[] = [
     code: "mojito-ice",
     handle: "mojito-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["menta.frio", "complejo"],
+    flavorIds: ["bebida.mojito", "menta.frio"],
     blurb: "Lima, menta fresca y una brisa de mentol.",
   },
   {
@@ -196,7 +191,7 @@ const barSalts: DrifterProduct[] = [
     code: "blueberry-bubblegum",
     handle: "blueberry-bubblegum-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas"],
+    flavorIds: ["frutal.bayas", "frutal.arandano", "golosina.chicle"],
     blurb: "Arándano con chicle dulce.",
   },
   {
@@ -204,7 +199,7 @@ const barSalts: DrifterProduct[] = [
     code: "watermelon-ice",
     handle: "watermelon-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.sandia", "menta.frio"],
     blurb: "Sandía jugosa con acabado helado.",
   },
   {
@@ -212,7 +207,7 @@ const barSalts: DrifterProduct[] = [
     code: "sweet-strawberry-ice",
     handle: "sweet-strawberry-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.fresa", "menta.frio"],
     blurb: "Fresa dulce con acabado helado.",
   },
   {
@@ -220,7 +215,7 @@ const barSalts: DrifterProduct[] = [
     code: "sweet-blueberry-ice",
     handle: "sweet-blueberry-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.arandano", "menta.frio"],
     blurb: "Arándano dulce con acabado helado.",
   },
   {
@@ -228,7 +223,7 @@ const barSalts: DrifterProduct[] = [
     code: "strawberry-banana-ice",
     handle: "strawberry-banana-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "frutal", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.fresa", "frutal.platano", "menta.frio"],
     blurb: "Fresa y plátano con acabado helado.",
   },
   {
@@ -236,7 +231,7 @@ const barSalts: DrifterProduct[] = [
     code: "pineapple-peach-mango",
     handle: "pineapple-peach-mango-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "frutal"],
+    flavorIds: ["frutal.tropicales", "frutal.pina", "frutal.melocoton", "frutal.mango"],
     blurb: "Piña, melocotón y mango.",
   },
   {
@@ -252,7 +247,7 @@ const barSalts: DrifterProduct[] = [
     code: "mango-ice",
     handle: "mango-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "menta.frio"],
+    flavorIds: ["frutal.tropicales", "frutal.mango", "menta.frio"],
     blurb: "Mango maduro con toque helado.",
   },
   {
@@ -260,7 +255,7 @@ const barSalts: DrifterProduct[] = [
     code: "kiwi-passionfruit-guava",
     handle: "kiwi-passionfruit-guava-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales"],
+    flavorIds: ["frutal.tropicales", "frutal.kiwi", "frutal.guayaba"],
     blurb: "Kiwi, maracuyá y guayaba.",
   },
   {
@@ -268,7 +263,7 @@ const barSalts: DrifterProduct[] = [
     code: "cotton-candy-ice",
     handle: "cotton-candy-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["complejo", "menta.frio"],
+    flavorIds: ["golosina", "golosina.caramelo", "menta.frio"],
     blurb: "Algodón de azúcar con acabado helado.",
   },
   {
@@ -276,7 +271,7 @@ const barSalts: DrifterProduct[] = [
     code: "blue-razz-lemonade-ice",
     handle: "blue-razz-lemonade-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "frutal.citricos", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.frambuesa", "frutal.citricos", "menta.frio"],
     blurb: "Frambuesa azul y limonada con hielo.",
   },
   {
@@ -284,7 +279,7 @@ const barSalts: DrifterProduct[] = [
     code: "apple-peach",
     handle: "apple-peach-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal"],
+    flavorIds: ["frutal.manzana", "frutal.melocoton"],
     blurb: "Manzana y melocotón.",
   },
   {
@@ -292,7 +287,7 @@ const barSalts: DrifterProduct[] = [
     code: "peach-ice",
     handle: "peach-ice-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.melocoton", "menta.frio"],
     blurb: "Melocotón con acabado helado.",
   },
   {
@@ -300,7 +295,7 @@ const barSalts: DrifterProduct[] = [
     code: "cherry",
     handle: "cherry-10ml",
     ratio: "50/50",
-    flavorIds: ["frutal"],
+    flavorIds: ["frutal.cereza"],
     blurb: "Cereza dulce.",
   },
   {
@@ -319,7 +314,7 @@ const barJuice: DrifterProduct[] = [
     code: "pineapple-ice",
     handle: "pineapple-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "menta.frio"],
+    flavorIds: ["frutal.tropicales", "frutal.pina", "menta.frio"],
     blurb: "Piña tropical con un acabado helado.",
   },
   {
@@ -327,7 +322,7 @@ const barJuice: DrifterProduct[] = [
     code: "lychee",
     handle: "lychee-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales"],
+    flavorIds: ["frutal.tropicales", "frutal.lychee"],
     blurb: "Lichi dulce y aromático, sin hielo.",
   },
   {
@@ -343,7 +338,7 @@ const barJuice: DrifterProduct[] = [
     code: "grape",
     handle: "grape-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal"],
+    flavorIds: ["frutal.uva"],
     blurb: "Uva madura y dulce.",
   },
   {
@@ -351,7 +346,7 @@ const barJuice: DrifterProduct[] = [
     code: "banana-ice",
     handle: "banana-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.platano", "menta.frio"],
     blurb: "Plátano con acabado helado.",
   },
   {
@@ -359,7 +354,7 @@ const barJuice: DrifterProduct[] = [
     code: "cola",
     handle: "cola-120ml-shortfill",
     ratio: "40/60",
-    flavorIds: ["complejo"],
+    flavorIds: ["bebida.refresco"],
     blurb: "Refresco de cola clásico.",
     extraCaveats: ["Ratio publicado 40 VG / 60 PG, distinto del 50/50 del resto de la línea."],
   },
@@ -368,7 +363,7 @@ const barJuice: DrifterProduct[] = [
     code: "blueberry-bubblegum",
     handle: "blueberry-bubblegum-120ml",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas"],
+    flavorIds: ["frutal.bayas", "frutal.arandano", "golosina.chicle"],
     blurb: "Arándano con chicle dulce.",
     extraCaveats: [
       "La descripción oficial copia texto de 10 ml y de «Nicotine Salt»; el título y la etiqueta lo declaran shortfill de 120 ml. Se archiva como shortfill.",
@@ -379,7 +374,7 @@ const barJuice: DrifterProduct[] = [
     code: "mojito-ice",
     handle: "mojito-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["menta.frio", "complejo"],
+    flavorIds: ["bebida.mojito", "menta.frio"],
     blurb: "Lima, menta fresca y una brisa de mentol.",
   },
   {
@@ -387,7 +382,7 @@ const barJuice: DrifterProduct[] = [
     code: "sour-apple-ice",
     handle: "sour-apple-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.manzana", "menta.frio"],
     blurb: "Manzana ácida con golpe frío.",
   },
   {
@@ -403,7 +398,7 @@ const barJuice: DrifterProduct[] = [
     code: "watermelon-ice",
     handle: "watermelon-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.sandia", "menta.frio"],
     blurb: "Sandía jugosa con acabado helado.",
   },
   {
@@ -411,7 +406,7 @@ const barJuice: DrifterProduct[] = [
     code: "sweet-strawberry-ice",
     handle: "sweet-strawberry-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.fresa", "menta.frio"],
     blurb: "Fresa dulce con acabado helado.",
   },
   {
@@ -419,7 +414,7 @@ const barJuice: DrifterProduct[] = [
     code: "sweet-blueberry-ice",
     handle: "sweet-blueberry-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.arandano", "menta.frio"],
     blurb: "Arándano dulce con acabado helado.",
   },
   {
@@ -427,7 +422,7 @@ const barJuice: DrifterProduct[] = [
     code: "strawberry-banana-ice",
     handle: "strawberry-banana-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "frutal", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.fresa", "frutal.platano", "menta.frio"],
     blurb: "Fresa y plátano con acabado helado.",
   },
   {
@@ -444,7 +439,7 @@ const barJuice: DrifterProduct[] = [
     code: "pineapple-peach-mango",
     handle: "pineapple-peach-mango-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "frutal"],
+    flavorIds: ["frutal.tropicales", "frutal.pina", "frutal.melocoton", "frutal.mango"],
     blurb: "Piña, melocotón y mango.",
     extraCaveats: ["La ficha oficial solo publica el tamaño y el ratio; no añade descripción."],
   },
@@ -453,7 +448,7 @@ const barJuice: DrifterProduct[] = [
     code: "peach-ice",
     handle: "peach-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal", "menta.frio"],
+    flavorIds: ["frutal.melocoton", "menta.frio"],
     blurb: "Melocotón con acabado helado.",
   },
   {
@@ -461,7 +456,7 @@ const barJuice: DrifterProduct[] = [
     code: "mango-ice",
     handle: "mango-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "menta.frio"],
+    flavorIds: ["frutal.tropicales", "frutal.mango", "menta.frio"],
     blurb: "Mango maduro con toque helado.",
   },
   {
@@ -477,7 +472,7 @@ const barJuice: DrifterProduct[] = [
     code: "kiwi-passionfruit-guava-ice",
     handle: "kiwi-passionfruit-guava-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.tropicales", "menta.frio"],
+    flavorIds: ["frutal.tropicales", "frutal.kiwi", "frutal.guayaba", "menta.frio"],
     blurb: "Kiwi, maracuyá y guayaba con acabado helado.",
   },
   {
@@ -485,7 +480,7 @@ const barJuice: DrifterProduct[] = [
     code: "cotton-candy-ice",
     handle: "cotton-candy-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["complejo", "menta.frio"],
+    flavorIds: ["golosina", "golosina.caramelo", "menta.frio"],
     blurb: "Algodón de azúcar con acabado helado.",
   },
   {
@@ -493,7 +488,7 @@ const barJuice: DrifterProduct[] = [
     code: "blue-razz-lemonade-ice",
     handle: "blue-razz-lemonade-ice-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal.bayas", "frutal.citricos", "menta.frio"],
+    flavorIds: ["frutal.bayas", "frutal.frambuesa", "frutal.citricos", "menta.frio"],
     blurb: "Frambuesa azul y limonada con hielo.",
   },
   {
@@ -501,7 +496,7 @@ const barJuice: DrifterProduct[] = [
     code: "cherry",
     handle: "cherry-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal"],
+    flavorIds: ["frutal.cereza"],
     blurb: "Cereza dulce.",
   },
   {
@@ -509,7 +504,7 @@ const barJuice: DrifterProduct[] = [
     code: "apple-peach",
     handle: "apple-peach-120ml-shortfill",
     ratio: "50/50",
-    flavorIds: ["frutal"],
+    flavorIds: ["frutal.manzana", "frutal.melocoton"],
     blurb: "Manzana y melocotón.",
   },
 ];

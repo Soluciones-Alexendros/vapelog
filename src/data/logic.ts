@@ -270,7 +270,8 @@ export interface LiquidFit {
 
 export function leadVariation(liquid: Liquid): LiquidVariation | undefined {
   return liquid.variations.reduce<LiquidVariation | undefined>(
-    (lead, variation) => (!lead || variation.nicotineMg > lead.nicotineMg ? variation : lead),
+    (lead, variation) =>
+      !lead || (variation.nicotineMg ?? 0) > (lead.nicotineMg ?? 0) ? variation : lead,
     undefined,
   );
 }
@@ -283,8 +284,8 @@ export function liquidNicotineMg(liquid: Liquid): number | null {
   return leadVariation(liquid)?.nicotineMg ?? null;
 }
 
-export function liquidNicotineType(liquid: Liquid): LiquidVariation["nicotineType"] | null {
-  return leadVariation(liquid)?.nicotineType ?? null;
+export function hasNicotineVariation(variation: LiquidVariation): boolean {
+  return variation.hasNicotine;
 }
 
 export function liquidRatio(liquid: Liquid): LiquidVariation["ratio"] {
@@ -303,13 +304,6 @@ export function liquidTpd(liquid: Liquid): TpdStatus {
   return leadVariation(liquid)?.tpd ?? "no-aplica";
 }
 
-export function liquidHasNicotineType(
-  liquid: Liquid,
-  type: LiquidVariation["nicotineType"],
-): boolean {
-  return liquid.variations.some((variation) => variation.nicotineType === type);
-}
-
 export function liquidHasRatio(liquid: Liquid, ratio: LiquidVariation["ratio"]): boolean {
   return liquid.variations.some((variation) => variation.ratio === ratio);
 }
@@ -319,26 +313,31 @@ const FIT_RANK: Record<LiquidFitKind, number> = { evitar: 0, posible: 1, directo
 function fitVariation(
   coil: Coil,
   variation: LiquidVariation,
-  recommendedDraw: Draw[],
+  draws: Draw[],
 ): { fit: LiquidFitKind; reason: string } {
-  if (variation.nicotineMg >= 10 && (coil.draw === "DL" || coil.draw === "RDL")) {
-    return {
-      fit: "evitar",
-      reason: "Graduación alta para una coil de calada abierta (RDL/DL).",
-    };
+  if (variation.hasNicotine && (variation.nicotineMg ?? 0) > 12) {
+    if (coil.draws.includes("MTL")) {
+      return { fit: "evitar", reason: "Graduación alta de nicotina para una calada MTL." };
+    }
+    if (coil.draws.some((draw) => draw === "RDL" || draw === "DL")) {
+      return {
+        fit: "evitar",
+        reason: "Graduación alta para una calada abierta (RDL/DL).",
+      };
+    }
   }
   const parts = ratioParts(variation.ratio);
-  if (parts && parts.vg >= 70 && coil.draw === "MTL") {
+  if (parts && parts.vg >= 70 && coil.draws.includes("MTL")) {
     return {
       fit: "posible",
       reason:
         "El VG alto puede ir justo en un MTL cerrado. Mejor un 50/50 si la cápsula es estrecha.",
     };
   }
-  if (recommendedDraw.includes(coil.draw)) {
+  if (coil.draws.some((draw) => draws.includes(draw))) {
     return {
       fit: "directo",
-      reason: `El formato encaja con un uso ${coil.draw}.`,
+      reason: `La calada encaja con el montaje ${coil.draws.join("/")}.`,
     };
   }
   return {
@@ -354,7 +353,7 @@ export function recommendLiquids(coil: Coil, liquids: Liquid[]): LiquidFit[] {
   for (const liquid of liquids) {
     let best: LiquidFit | null = null;
     for (const variation of liquid.variations) {
-      const evaluation = fitVariation(coil, variation, liquid.recommendedDraw);
+      const evaluation = fitVariation(coil, variation, liquid.draws);
       if (!best || FIT_RANK[evaluation.fit] > FIT_RANK[best.fit]) {
         best = { liquid, variation, fit: evaluation.fit, reason: evaluation.reason };
       }
