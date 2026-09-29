@@ -12,6 +12,11 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-29
+
+### Cambios
+
+- feat(liquidos): modelo de variaciones y catálogo oficial de 5 marcas (#1)
 ## [0.1.0] - 2026-09-28
 
 ### Added
