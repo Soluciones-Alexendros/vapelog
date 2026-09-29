@@ -37,6 +37,7 @@ const secondaryNav = [
   { to: "/compatibilidad", label: "Cruce", exact: false },
   { to: "/herramientas", label: "Cálculo", exact: false },
   { to: "/archivo", label: "Tabla", exact: false },
+  { to: "/blog", label: "Blog", exact: false },
   { to: "/modelo", label: "Modelo", exact: false },
 ] as const;
 

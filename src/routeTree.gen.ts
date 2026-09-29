@@ -16,6 +16,8 @@ import { Route as CompararRouteImport } from './routes/comparar'
 import { Route as CompatibilidadRouteImport } from './routes/compatibilidad'
 import { Route as HerramientasRouteImport } from './routes/herramientas'
 import { Route as ModeloRouteImport } from './routes/modelo'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as ComponentesIndexRouteImport } from './routes/componentes/index'
 import { Route as ComponentesSlugRouteImport } from './routes/componentes/$slug'
 import { Route as DispositivosIndexRouteImport } from './routes/dispositivos/index'
@@ -58,6 +60,16 @@ const HerramientasRoute = HerramientasRouteImport.update({
 const ModeloRoute = ModeloRouteImport.update({
   id: '/modelo',
   path: '/modelo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComponentesIndexRoute = ComponentesIndexRouteImport.update({
@@ -109,10 +121,12 @@ export interface FileRoutesByFullPath {
   '/compatibilidad': typeof CompatibilidadRoute
   '/herramientas': typeof HerramientasRoute
   '/modelo': typeof ModeloRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/componentes/$slug': typeof ComponentesSlugRoute
   '/dispositivos/$slug': typeof DispositivosSlugRoute
   '/liquidos/$slug': typeof LiquidosSlugRoute
   '/resistencias/$slug': typeof ResistenciasSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/componentes/': typeof ComponentesIndexRoute
   '/dispositivos/': typeof DispositivosIndexRoute
   '/liquidos/': typeof LiquidosIndexRoute
@@ -126,10 +140,12 @@ export interface FileRoutesByTo {
   '/compatibilidad': typeof CompatibilidadRoute
   '/herramientas': typeof HerramientasRoute
   '/modelo': typeof ModeloRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/componentes/$slug': typeof ComponentesSlugRoute
   '/dispositivos/$slug': typeof DispositivosSlugRoute
   '/liquidos/$slug': typeof LiquidosSlugRoute
   '/resistencias/$slug': typeof ResistenciasSlugRoute
+  '/blog': typeof BlogIndexRoute
   '/componentes': typeof ComponentesIndexRoute
   '/dispositivos': typeof DispositivosIndexRoute
   '/liquidos': typeof LiquidosIndexRoute
@@ -144,10 +160,12 @@ export interface FileRoutesById {
   '/compatibilidad': typeof CompatibilidadRoute
   '/herramientas': typeof HerramientasRoute
   '/modelo': typeof ModeloRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/componentes/$slug': typeof ComponentesSlugRoute
   '/dispositivos/$slug': typeof DispositivosSlugRoute
   '/liquidos/$slug': typeof LiquidosSlugRoute
   '/resistencias/$slug': typeof ResistenciasSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/componentes/': typeof ComponentesIndexRoute
   '/dispositivos/': typeof DispositivosIndexRoute
   '/liquidos/': typeof LiquidosIndexRoute
@@ -163,10 +181,12 @@ export interface FileRouteTypes {
     | '/compatibilidad'
     | '/herramientas'
     | '/modelo'
+    | '/blog/$slug'
     | '/componentes/$slug'
     | '/dispositivos/$slug'
     | '/liquidos/$slug'
     | '/resistencias/$slug'
+    | '/blog/'
     | '/componentes/'
     | '/dispositivos/'
     | '/liquidos/'
@@ -180,10 +200,12 @@ export interface FileRouteTypes {
     | '/compatibilidad'
     | '/herramientas'
     | '/modelo'
+    | '/blog/$slug'
     | '/componentes/$slug'
     | '/dispositivos/$slug'
     | '/liquidos/$slug'
     | '/resistencias/$slug'
+    | '/blog'
     | '/componentes'
     | '/dispositivos'
     | '/liquidos'
@@ -197,10 +219,12 @@ export interface FileRouteTypes {
     | '/compatibilidad'
     | '/herramientas'
     | '/modelo'
+    | '/blog/$slug'
     | '/componentes/$slug'
     | '/dispositivos/$slug'
     | '/liquidos/$slug'
     | '/resistencias/$slug'
+    | '/blog/'
     | '/componentes/'
     | '/dispositivos/'
     | '/liquidos/'
@@ -215,10 +239,12 @@ export interface RootRouteChildren {
   CompatibilidadRoute: typeof CompatibilidadRoute
   HerramientasRoute: typeof HerramientasRoute
   ModeloRoute: typeof ModeloRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   ComponentesSlugRoute: typeof ComponentesSlugRoute
   DispositivosSlugRoute: typeof DispositivosSlugRoute
   LiquidosSlugRoute: typeof LiquidosSlugRoute
   ResistenciasSlugRoute: typeof ResistenciasSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   ComponentesIndexRoute: typeof ComponentesIndexRoute
   DispositivosIndexRoute: typeof DispositivosIndexRoute
   LiquidosIndexRoute: typeof LiquidosIndexRoute
@@ -274,6 +300,20 @@ declare module '@tanstack/react-router' {
       path: '/modelo'
       fullPath: '/modelo'
       preLoaderRoute: typeof ModeloRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/componentes/': {
@@ -343,10 +383,12 @@ const rootRouteChildren: RootRouteChildren = {
   CompatibilidadRoute: CompatibilidadRoute,
   HerramientasRoute: HerramientasRoute,
   ModeloRoute: ModeloRoute,
+  BlogSlugRoute: BlogSlugRoute,
   ComponentesSlugRoute: ComponentesSlugRoute,
   DispositivosSlugRoute: DispositivosSlugRoute,
   LiquidosSlugRoute: LiquidosSlugRoute,
   ResistenciasSlugRoute: ResistenciasSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
   ComponentesIndexRoute: ComponentesIndexRoute,
   DispositivosIndexRoute: DispositivosIndexRoute,
   LiquidosIndexRoute: LiquidosIndexRoute,
