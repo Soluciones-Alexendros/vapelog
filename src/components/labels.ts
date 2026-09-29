@@ -13,16 +13,15 @@ export function confidenceLabel(confidence: Confidence): string {
 }
 
 export function itemTpd(item: CatalogItem): TpdStatus {
-  if (item.domain === "coil" || item.domain === "part") return "no-aplica";
-  if (item.domain === "liquid") {
-    const statuses = item.variations
-      .map((variation) => variation.tpd)
-      .filter((status): status is TpdStatus => status != null);
-    if (statuses.length === 0) return "no-aplica";
-    if (statuses.every((status) => status === statuses[0])) return statuses[0]!;
-    return "parcial";
-  }
-  return item.tpd;
+  if (item.domain === "device") return item.tpd;
+  if (item.domain === "coil") return item.tpd ?? "no-aplica";
+  if (item.domain === "part") return "no-aplica";
+  const statuses = item.variations
+    .map((variation) => variation.tpd)
+    .filter((status): status is TpdStatus => status != null);
+  if (statuses.length === 0) return "no-aplica";
+  if (statuses.every((status) => status === statuses[0])) return statuses[0]!;
+  return "parcial";
 }
 
 export function tpdLabel(status: TpdStatus): string {

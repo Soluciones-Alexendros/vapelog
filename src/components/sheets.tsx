@@ -21,6 +21,7 @@ import {
   coils,
   deviceBySlug,
   devices,
+  genreById,
   liquidBySlug,
   liquids,
   partBySlug,
@@ -73,8 +74,8 @@ const heroKeys: Record<Domain, string[]> = {
     "year",
   ],
   coil: ["ohms", "watt_max", "watt_min", "wire_kind", "draw", "pack_count", "connector"],
-  liquid: ["volume_ml", "nicotine_mg", "nicotine_type", "vg", "pg", "draw", "family"],
-  part: ["kind", "spec", "quantity"],
+  liquid: ["genre", "volume_ml", "has_nicotine", "nicotine_mg", "draw", "flavors"],
+  part: ["family", "spec", "quantity"],
 };
 
 const chipIcons: Record<string, LucideIcon> = {
@@ -95,12 +96,10 @@ const chipIcons: Record<string, LucideIcon> = {
   pack_count: Package,
   volume_ml: Droplets,
   nicotine_mg: Percent,
-  nicotine_type: Percent,
-  vg: Droplets,
-  pg: Droplets,
-  format: Package,
+  genre: Package,
+  has_nicotine: Percent,
+  flavors: Droplets,
   family: Package,
-  kind: Package,
   spec: CircuitBoard,
   quantity: Package,
 };
@@ -132,7 +131,10 @@ function DeviceBody({ device }: { device: Device }) {
   const required = partsForDevice(device, parts);
 
   return (
-    <Sheet item={device} fact={`${device.power} · ${device.draw}`}>
+    <Sheet
+      item={device}
+      fact={[device.power, device.draws.join(" · ")].filter(Boolean).join(" · ")}
+    >
       <Ficha item={device} />
       <section className="mt-10">
         <h2 className="text-2xl text-foreground">Componentes para usarlo</h2>
@@ -232,7 +234,10 @@ export function CoilSheet({ slug }: { slug: string }) {
     .map((device) => ({ device, result: compatibility(device, coil) }))
     .filter((row) => row.result.kind !== "no");
   return (
-    <Sheet item={coil} fact={`${formatPlain(coil.ohms)} Ω · ${coil.draw}`}>
+    <Sheet
+      item={coil}
+      fact={[`${formatPlain(coil.ohms)} Ω`, coil.draws.join(" · ")].filter(Boolean).join(" · ")}
+    >
       <Ficha item={coil} />
       <section className="mt-10">
         <h2 className="text-2xl text-foreground">Dispositivos del archivo</h2>
@@ -264,14 +269,19 @@ export function LiquidSheet({ slug }: { slug: string }) {
       ? formatPlain(values.min)
       : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
   const volumeText = range ? spanText(range.volumeMl) : "Sin dato";
-  const nicotineText = range ? spanText(range.nicotineMg) : "Sin dato";
+  const strengths = liquid.variations
+    .filter((variation) => variation.hasNicotine && variation.nicotineMg != null)
+    .map((variation) => variation.nicotineMg as number);
+  const nicotineText = strengths.length
+    ? spanText({ min: Math.min(...strengths), max: Math.max(...strengths) })
+    : null;
   const nicokit = liquid.variations.find(
-    (variation) => variation.nicotineMg === 0 && variation.assumedBottleMl,
+    (variation) => !variation.hasNicotine && variation.assumedBottleMl != null,
   );
-  const countText =
-    liquid.variations.length === 1 ? "1 variación" : `${liquid.variations.length} variaciones`;
+  const genreText = genreById(liquid.genreId)?.es ?? liquid.genreId;
+  const nicotineSuffix = nicotineText ? ` · ${nicotineText} mg/ml` : " · sin nicotina";
   return (
-    <Sheet item={liquid} fact={`${countText} · ${volumeText} ml · ${nicotineText} mg/ml`}>
+    <Sheet item={liquid} fact={`${genreText} · ${volumeText} ml${nicotineSuffix}`}>
       <Ficha item={liquid} />
       <section className="mt-10">
         <h2 className="text-2xl text-foreground">Variaciones</h2>
@@ -598,7 +608,8 @@ function RelatedItems({ item }: { item: CatalogItem }) {
   const related = pool
     .filter(
       (row) =>
-        row.id !== item.id && (row.brandId === item.brandId || row.familyId === item.familyId),
+        row.id !== item.id &&
+        (row.brandId === item.brandId || (item.familyId != null && row.familyId === item.familyId)),
     )
     .slice(0, 6);
   if (related.length === 0) return null;

@@ -2,6 +2,8 @@ import {
   brandById,
   devices,
   coils,
+  genreById,
+  liquidGenres,
   liquidTpd,
   liquids,
   parts,
@@ -19,7 +21,7 @@ import {
   ratioParts,
   wireKind,
 } from "./measures.ts";
-import type { CatalogItem, Domain, Draw, NicotineType, Ratio } from "./types.ts";
+import type { CatalogItem, Domain, Draw, Ratio } from "./types.ts";
 import { EMPTY, relationRows, specFacts } from "./specs.ts";
 
 export type OhmBand = "baja" | "media" | "alta" | "muy";
@@ -41,7 +43,8 @@ export interface CatalogSearch {
   plataforma?: string;
   bateria?: BatteryKind;
   potencia?: PowerBand;
-  nicotina?: NicotineType;
+  genero?: string;
+  tieneNicotina?: boolean;
   ratio?: Ratio;
   orden?: "nombre" | "marca" | "ohm" | "vatios";
 }
@@ -79,8 +82,22 @@ export function parseCatalogSearch(search: Record<string, unknown>): CatalogSear
   if (bateria) next.bateria = bateria;
   const potencia = oneOf(search.potencia, POWER);
   if (potencia) next.potencia = potencia;
-  const nicotina = oneOf(search.nicotina, ["freebase", "sal", "ninguna"] as const);
-  if (nicotina) next.nicotina = nicotina;
+  if (typeof search.genero === "string" && search.genero) next.genero = search.genero;
+  if (
+    search.tieneNicotina === true ||
+    search.tieneNicotina === "true" ||
+    search.tieneNicotina === "si" ||
+    search.tieneNicotina === "con"
+  ) {
+    next.tieneNicotina = true;
+  } else if (
+    search.tieneNicotina === false ||
+    search.tieneNicotina === "false" ||
+    search.tieneNicotina === "no" ||
+    search.tieneNicotina === "sin"
+  ) {
+    next.tieneNicotina = false;
+  }
   if (typeof search.ratio === "string" && /^\d+(?:[.,]\d+)?\/\d+(?:[.,]\d+)?$/.test(search.ratio))
     next.ratio = search.ratio as Ratio;
   const orden = oneOf(search.orden, ["nombre", "marca", "ohm", "vatios"] as const);
@@ -109,28 +126,30 @@ function platformIds(item: CatalogItem): string[] {
 }
 
 function itemTpd(item: CatalogItem) {
-  if (item.domain === "coil" || item.domain === "part") return "no-aplica" as const;
+  if (item.domain === "coil") return item.tpd ?? ("no-aplica" as const);
+  if (item.domain === "part") return "no-aplica" as const;
   if (item.domain === "liquid") return liquidTpd(item);
   return item.tpd;
 }
 
 function liquidBlob(item: Extract<CatalogItem, { domain: "liquid" }>): string {
-  const types = [...new Set(item.variations.map((variation) => variation.nicotineType))];
   const ratios = item.variations.map((variation) => variation.ratio ?? "");
   const volumes = item.variations.map((variation) => variation.volumeMl);
-  const strengths = item.variations.map((variation) => variation.nicotineMg);
-  return `${types.join(" ")} ${ratios.join(" ")} ${volumes.join(" ")} ${strengths.join(" ")}`;
+  const strengths = item.variations
+    .filter((variation) => variation.nicotineMg != null)
+    .map((variation) => variation.nicotineMg);
+  return `${item.genreId} ${ratios.join(" ")} ${volumes.join(" ")} ${strengths.join(" ")}`;
 }
 
 function blob(item: CatalogItem): string {
   const brand = brandById(item.brandId)?.name ?? "";
-  const family = taxonById(item.familyId)?.es ?? "";
-  const sub = taxonById(item.subId)?.es ?? "";
+  const family = taxonById(item.familyId ?? "")?.es ?? "";
+  const sub = taxonById(item.subId ?? "")?.es ?? "";
   const specs =
     item.domain === "coil"
-      ? `${item.ohms} ${item.wire} ${item.build} ${item.draw}`
+      ? `${item.ohms} ${item.wire} ${item.build} ${item.draws.join(" ")}`
       : item.domain === "device"
-        ? `${item.power} ${item.battery} ${item.draw} ${item.connector}`
+        ? `${item.power} ${item.battery} ${item.draws.join(" ")} ${item.connector}`
         : item.domain === "liquid"
           ? liquidBlob(item)
           : item.spec;
@@ -153,14 +172,7 @@ export function matches(
   if (on("tpd") && search.tpd === "si" && itemTpd(item) !== "si") return false;
   if (on("calada") && search.calada) {
     const draw = search.calada;
-    const ok =
-      item.domain === "coil"
-        ? item.draw === draw
-        : item.domain === "device"
-          ? hasDraw(item.draw, draw)
-          : item.domain === "liquid"
-            ? item.recommendedDraw.includes(draw)
-            : false;
+    const ok = item.domain === "part" ? false : item.draws.includes(draw);
     if (!ok) return false;
   }
   if (on("ohm") && search.ohm) {
@@ -195,10 +207,13 @@ export function matches(
     )
       return false;
   }
-  if (on("nicotina") && search.nicotina) {
+  if (on("genero") && search.genero) {
+    if (item.domain !== "liquid" || item.genreId !== search.genero) return false;
+  }
+  if (on("tieneNicotina") && search.tieneNicotina != null) {
     if (item.domain !== "liquid") return false;
-    if (!item.variations.some((variation) => variation.nicotineType === search.nicotina))
-      return false;
+    const wanted = search.tieneNicotina;
+    if (item.variations.some((variation) => variation.hasNicotine) !== wanted) return false;
   }
   if (on("ratio") && search.ratio) {
     if (item.domain !== "liquid") return false;
@@ -260,6 +275,7 @@ function countOptions(
       count: itemsFor(domain).filter((item) => {
         const probe: CatalogSearch = { ...search, [key]: seed.id };
         if (key === "familia") delete probe.sub;
+        if (key === "tieneNicotina") probe.tieneNicotina = seed.id === "con";
         return matches(item, probe);
       }).length,
     }))
@@ -320,8 +336,12 @@ export function buildFacets(domain: Domain, search: CatalogSearch): Facet[] {
   ].map((id) => ({ id, label: ratioLabel(id) }));
 
   const facets: Array<Facet | null> = [
-    fixed(domain, search, "familia", domain === "coil" ? "Montaje" : "Formato", families),
-    fixed(domain, search, "sub", domain === "coil" ? "Serie" : "Variante", subs),
+    domain === "liquid"
+      ? null
+      : fixed(domain, search, "familia", domain === "coil" ? "Montaje" : "Formato", families),
+    domain === "liquid"
+      ? null
+      : fixed(domain, search, "sub", domain === "coil" ? "Serie" : "Variante", subs),
     fixed(domain, search, "marca", "Marca", brands, "select"),
   ];
 
@@ -367,10 +387,16 @@ export function buildFacets(domain: Domain, search: CatalogSearch): Facet[] {
   }
   if (domain === "liquid") {
     facets.push(
-      fixed(domain, search, "nicotina", "Nicotina", [
-        { id: "sal", label: "Sales" },
-        { id: "freebase", label: "Freebase" },
-        { id: "ninguna", label: "Sin nicotina" },
+      fixed(
+        domain,
+        search,
+        "genero",
+        "Género",
+        liquidGenres.map((genre) => ({ id: genre.id, label: genre.es })),
+      ),
+      fixed(domain, search, "tieneNicotina", "Nicotina", [
+        { id: "con", label: "Con nicotina" },
+        { id: "sin", label: "Sin nicotina" },
       ]),
       fixed(domain, search, "ratio", "PG/VG", ratios),
     );
@@ -436,15 +462,13 @@ export function chipsFor(search: CatalogSearch): Chip[] {
       label: search.bateria === "integrada" ? "Batería integrada" : "Celda externa",
     });
   if (search.potencia) chips.push({ key: "potencia", label: POWER_LABEL[search.potencia] });
-  if (search.nicotina) {
-    const label =
-      search.nicotina === "sal"
-        ? "Sales"
-        : search.nicotina === "freebase"
-          ? "Freebase"
-          : "Sin nicotina";
-    chips.push({ key: "nicotina", label });
-  }
+  if (search.genero)
+    chips.push({ key: "genero", label: genreById(search.genero)?.es ?? search.genero });
+  if (search.tieneNicotina != null)
+    chips.push({
+      key: "tieneNicotina",
+      label: search.tieneNicotina ? "Con nicotina" : "Sin nicotina",
+    });
   if (search.ratio) chips.push({ key: "ratio", label: ratioLabel(search.ratio) });
   if (search.tpd === "si") chips.push({ key: "tpd", label: "TPD estricta" });
   return chips;
@@ -513,7 +537,7 @@ export const exampleQueries: ExampleQuery[] = [
     domain: "liquid",
     title: "Sales de nicotina",
     text: "Formato de sales, no el shortfill a 0 mg.",
-    search: { familia: "sal", nicotina: "sal", vista: "tabla" },
+    search: { genero: "sales", vista: "tabla" },
   },
 ];
 
@@ -526,11 +550,11 @@ export interface SpecCell {
   value: string;
 }
 
-const TABLE_KEYS: Record<Domain, string[]> = {
+export const TABLE_KEYS: Record<Domain, string[]> = {
   coil: ["family", "ohms", "draw", "watt_min", "watt_max", "wire_kind"],
   device: ["family", "battery_kind", "connector", "draw", "power_min_w", "power_max_w"],
-  liquid: ["family", "volume_ml", "nicotine_mg", "nicotine_type", "vg", "pg"],
-  part: ["kind", "spec", "quantity"],
+  liquid: ["genre", "volume_ml", "has_nicotine", "nicotine_mg", "draw", "tpd"],
+  part: ["spec", "quantity"],
 };
 
 export function specCells(item: CatalogItem): SpecCell[] {

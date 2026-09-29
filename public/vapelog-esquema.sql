@@ -60,6 +60,7 @@ create table device (
   tpd archivo_tpd not null,
   status text not null check (status in ('referenciado', 'historico')),
   connector archivo_connector not null,
+  draws archivo_draw[] not null default '{}',
   power_min_w numeric(6, 1),
   power_max_w numeric(6, 1),
   ohm_min numeric(6, 2),
@@ -98,8 +99,7 @@ create table coil (
   ohms numeric(6, 2) not null check (ohms > 0),
   watt_min numeric(6, 1),
   watt_max numeric(6, 1),
-  watt_confidence archivo_confidence,
-  draw archivo_draw not null,
+  draws archivo_draw[] not null default '{}',
   connector archivo_connector not null,
   refillable boolean not null,
   wire text,
@@ -155,27 +155,41 @@ create table liquid (
   archive_id citext not null unique,
   slug citext not null unique,
   brand_id uuid not null references brand (id),
-  taxon_path ltree not null,
+  genre text not null check (genre in ('sales', 'freebase', 'shortfill', 'aroma')),
   name text not null,
   summary text not null,
   confidence archivo_confidence not null,
   tpd archivo_tpd not null,
-  volume_ml numeric(7, 2) not null check (volume_ml > 0),
-  nicotine_mg_ml numeric(6, 2) not null check (nicotine_mg_ml >= 0 and nicotine_mg_ml <= 20),
-  nicotine_type text not null check (nicotine_type in ('freebase', 'sal', 'ninguna')),
-  ratio text check (ratio in ('50/50', '70/30')),
+  draws archivo_draw[] not null default '{}',
   search_vector tsvector generated always as (
     setweight(to_tsvector('spanish', coalesce(name, '')), 'A') ||
     setweight(to_tsvector('spanish', coalesce(summary, '')), 'B')
   ) stored,
   created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Cada ficha agrupa variaciones (volumen × nicotina) del mismo género.
+-- Una fila por variación; has_nicotine decide si nicotine_mg_ml se publica.
+create table liquid_variation (
+  id uuid primary key default gen_random_uuid(),
+  liquid_id uuid not null references liquid (id) on delete cascade,
+  slug citext not null,
+  label text not null,
+  volume_ml numeric(7, 2) not null check (volume_ml > 0),
+  has_nicotine boolean not null default false,
+  nicotine_mg_ml numeric(6, 2) check (nicotine_mg_ml >= 0 and nicotine_mg_ml <= 20),
+  ratio text check (ratio in ('50/50', '70/30')),
+  bottle text,
+  assumed_bottle_ml numeric(7, 2) check (assumed_bottle_ml is null or assumed_bottle_ml > 0),
+  tpd archivo_tpd,
+  note text,
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint liquid_zero_nicotine_type check (
-    (nicotine_mg_ml = 0 and nicotine_type = 'ninguna')
-    or (nicotine_mg_ml > 0 and nicotine_type <> 'ninguna')
-  ),
-  constraint liquid_tpd_pack check (
-    nicotine_mg_ml = 0 or volume_ml <= 10
+  unique (liquid_id, slug),
+  constraint liquid_variation_nicotine check (
+    (not has_nicotine and nicotine_mg_ml is null)
+    or (has_nicotine and nicotine_mg_ml is not null and nicotine_mg_ml > 0)
   )
 );
 
@@ -195,7 +209,6 @@ create table part (
   summary text not null,
   confidence archivo_confidence not null,
   status text not null check (status in ('referenciado', 'historico')),
-  kind text not null check (kind in ('bateria', 'boquilla')),
   spec text not null,
   quantity_note text not null,
   fits_battery text check (fits_battery in ('18650')),
@@ -303,8 +316,8 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('device', 'capacity_note', 'atomizador', 'Atomizador', 'Frase de depósito', null, 'text', false, 250),
   ('device', 'airflow', 'atomizador', 'Atomizador', 'Aire', null, 'text', false, 260),
   ('device', 'draw', 'atomizador', 'Atomizador', 'Calada', null, 'enum', true, 270),
-  ('device', 'tpd', 'regimen', 'Régimen y fuente', 'TPD', null, 'enum', true, 280),
-  ('device', 'confidence', 'regimen', 'Régimen y fuente', 'Confianza de la ficha', null, 'enum', false, 290),
+  ('device', 'tpd', 'regimen', 'Fuente', 'TPD', null, 'enum', true, 280),
+  ('device', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 290),
   ('coil', 'family', 'construccion', 'Construcción', 'Montaje', null, 'text', true, 10),
   ('coil', 'series', 'construccion', 'Construcción', 'Serie', null, 'text', true, 20),
   ('coil', 'wire_kind', 'construccion', 'Construcción', 'Hilo', null, 'enum', true, 30),
@@ -320,19 +333,17 @@ insert into spec_def (domain, slug, group_slug, group_label, label, unit, value_
   ('coil', 'watt_max', 'electrico', 'Eléctrico', 'Vatios máximos', 'W', 'number', true, 130),
   ('coil', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 140),
   ('liquid', 'line', 'formato', 'Formato', 'Línea', null, 'text', false, 10),
-  ('liquid', 'family', 'formato', 'Formato', 'Formato', null, 'text', true, 20),
-  ('liquid', 'volume_ml', 'formato', 'Formato', 'Volumen', 'ml', 'number', true, 30),
-  ('liquid', 'bottle', 'formato', 'Formato', 'Botella', null, 'text', false, 40),
-  ('liquid', 'assumed_bottle_ml', 'formato', 'Formato', 'Botella resultante', 'ml', 'number', false, 50),
-  ('liquid', 'nicotine_mg', 'nicotina', 'Nicotina', 'Nicotina', 'mg/ml', 'number', true, 60),
-  ('liquid', 'nicotine_type', 'nicotina', 'Nicotina', 'Tipo', null, 'enum', true, 70),
-  ('liquid', 'vg', 'nicotina', 'Nicotina', 'VG', '%', 'number', true, 80),
-  ('liquid', 'pg', 'nicotina', 'Nicotina', 'PG', '%', 'number', true, 90),
+  ('liquid', 'genre', 'formato', 'Formato', 'Género', null, 'enum', true, 20),
+  ('liquid', 'volume_ml', 'formato', 'Formato', 'Cantidad', 'ml', 'number', true, 30),
+  ('liquid', 'ratio', 'formato', 'Formato', 'VG/PG', null, 'text', false, 40),
+  ('liquid', 'has_nicotine', 'nicotina', 'Nicotina', 'Nicotina', null, 'enum', true, 60),
+  ('liquid', 'nicotine_mg', 'nicotina', 'Nicotina', 'Cantidad de nicotina', 'mg/ml', 'number', true, 70),
   ('liquid', 'draw', 'uso', 'Uso', 'Calada recomendada', null, 'enum', true, 100),
   ('liquid', 'flavors', 'uso', 'Uso', 'Perfil', null, 'text', false, 110),
-  ('liquid', 'tpd', 'regimen', 'Régimen y fuente', 'TPD', null, 'enum', true, 120),
-  ('liquid', 'confidence', 'regimen', 'Régimen y fuente', 'Confianza de la ficha', null, 'enum', false, 130),
-  ('part', 'kind', 'encaje', 'Encaje', 'Tipo', null, 'enum', true, 10),
+  ('liquid', 'tpd', 'regimen', 'Fuente', 'TPD', null, 'enum', true, 120),
+  ('liquid', 'confidence', 'regimen', 'Fuente', 'Confianza de la ficha', null, 'enum', false, 130),
+  ('part', 'family', 'encaje', 'Encaje', 'Familia', null, 'text', true, 10),
+  ('part', 'series', 'encaje', 'Encaje', 'Serie', null, 'text', true, 15),
   ('part', 'spec', 'encaje', 'Encaje', 'Especificación publicada', null, 'text', false, 20),
   ('part', 'quantity', 'encaje', 'Encaje', 'Cantidad', null, 'text', false, 30),
   ('part', 'drip_mm', 'encaje', 'Encaje', 'Diámetro de boquilla', 'mm', 'number', false, 40),
@@ -363,6 +374,8 @@ create trigger device_updated before update on device
 create trigger coil_updated before update on coil
   for each row execute function archivo_set_updated_at();
 create trigger liquid_updated before update on liquid
+  for each row execute function archivo_set_updated_at();
+create trigger liquid_variation_updated before update on liquid_variation
   for each row execute function archivo_set_updated_at();
 create trigger brand_updated before update on brand
   for each row execute function archivo_set_updated_at();
@@ -491,6 +504,7 @@ alter table coil enable row level security;
 alter table coil_platform enable row level security;
 alter table liquid enable row level security;
 alter table liquid_flavor enable row level security;
+alter table liquid_variation enable row level security;
 alter table part enable row level security;
 alter table part_platform enable row level security;
 alter table source_citation enable row level security;
@@ -508,6 +522,7 @@ create policy coil_read on coil for select using (true);
 create policy coil_platform_read on coil_platform for select using (true);
 create policy liquid_read on liquid for select using (true);
 create policy liquid_flavor_read on liquid_flavor for select using (true);
+create policy liquid_variation_read on liquid_variation for select using (true);
 create policy part_read on part for select using (true);
 create policy part_platform_read on part_platform for select using (true);
 create policy source_read on source_citation for select using (true);
@@ -519,7 +534,9 @@ create policy item_spec_read on item_spec for select using (true);
 comment on function archivo_compatibility is
   'Cruce honesto: plataforma nativa, atomizador de kit, electricidad 510 o incompatibilidad.';
 comment on table liquid is
-  'El check liquid_tpd_pack impide guardar un líquido con nicotina de más de 10 ml. Un shortfill a 0 mg sí puede ser mayor.';
+  'Ficha de líquido: identidad (nombre, marca, género) sin sufijos de formato. Las variaciones viven en liquid_variation.';
+comment on table liquid_variation is
+  'Una fila por combinación volumen × nicotina del mismo género. has_nicotine decide si nicotine_mg_ml está publicado.';
 comment on table spec_def is
   'Diccionario plano de la ficha. Añadir una característica es una fila, no un alter ni un jsonb.';
 comment on table item_spec is

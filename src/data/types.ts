@@ -30,14 +30,20 @@ export interface Platform {
   name: string;
 }
 
+export interface Genre {
+  id: string;
+  es: string;
+  en: string;
+}
+
 interface ItemBase {
   id: string;
   slug: string;
   archiveId: string;
   brandId: string;
   name: string;
-  familyId: string;
-  subId: string;
+  familyId?: string;
+  subId?: string;
   summary: string;
   confidence: Confidence;
   sources: SourceRef[];
@@ -48,7 +54,6 @@ interface ItemBase {
 
 export interface Device extends ItemBase {
   domain: "device";
-  format: string;
   battery: string;
   charge: string;
   power: string;
@@ -69,7 +74,7 @@ export interface Device extends ItemBase {
   weight: string | null;
   tpd: TpdStatus;
   year: number | null;
-  draw: string;
+  draws: Draw[];
 }
 
 export interface Coil extends ItemBase {
@@ -78,18 +83,14 @@ export interface Coil extends ItemBase {
   ohms: number;
   wattMin: number | null;
   wattMax: number | null;
-  wattConfidence: Confidence | null;
   wire: string;
   build: string;
-  draw: Draw;
+  draws: Draw[];
   connector: "510" | "propietario";
   refillable: boolean;
   pack: string;
+  tpd?: TpdStatus;
 }
-
-export type NicotineType = "freebase" | "sal" | "ninguna";
-
-export type LiquidFormat = "libre" | "sales" | "aroma" | "shortfill";
 
 export type Ratio = `${number}/${number}`;
 
@@ -105,10 +106,9 @@ export interface LiquidComposition {
 export interface LiquidVariation {
   id: string;
   label: string;
-  format: LiquidFormat;
   volumeMl: number;
-  nicotineMg: number;
-  nicotineType: NicotineType;
+  hasNicotine: boolean;
+  nicotineMg?: number;
   ratio: Ratio | null;
   bottle?: string;
   assumedBottleMl?: number;
@@ -118,19 +118,17 @@ export interface LiquidVariation {
 
 export interface Liquid extends ItemBase {
   domain: "liquid";
+  genreId: string;
   line: string;
   flavorIds: string[];
-  recommendedDraw: Draw[];
+  draws: Draw[];
   variations: LiquidVariation[];
 }
 
 export type CatalogItem = Device | Coil | Liquid | Part;
 
-export type PartKind = "bateria" | "boquilla";
-
 export interface Part extends ItemBase {
   domain: "part";
-  kind: PartKind;
   fitsPlatformIds: string[];
   fitsBattery: "18650" | null;
   fitsConnector: "510" | null;

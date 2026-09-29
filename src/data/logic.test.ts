@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { coilBySlug, deviceBySlug, liquidBySlug, coils, devices, parts } from "./catalog.ts";
+import { coilBySlug, deviceBySlug, coils, devices, parts } from "./catalog.ts";
 import {
   compatibility,
   mixNicotine,
@@ -24,7 +24,6 @@ function syntheticDevice(
     name: overrides.slug,
     familyId: "mod",
     subId: "mod.dual",
-    format: "Box mod",
     summary: "Dispositivo sintético para tests.",
     confidence: "ficha",
     sources: [],
@@ -47,7 +46,7 @@ function syntheticDevice(
     weight: null,
     tpd: "no-aplica",
     year: null,
-    draw: "",
+    draws: [],
     ...overrides,
   };
 }
@@ -70,10 +69,9 @@ function syntheticCoil(overrides: Partial<Coil> & Pick<Coil, "slug" | "ohms">): 
     platformIds: [],
     wattMin: null,
     wattMax: null,
-    wattConfidence: null,
     wire: "Malla",
     build: "Malla",
-    draw: "DL",
+    draws: ["DL"],
     connector: "510",
     refillable: true,
     pack: "",
@@ -91,9 +89,8 @@ function syntheticLiquid(
     archiveId: "TEST-LIQ",
     brandId: "test",
     name: overrides.slug,
+    genreId: "shortfill",
     line: "test",
-    familyId: "shortfill",
-    subId: "shortfill.50",
     summary: "Líquido sintético para tests.",
     confidence: "ficha",
     sources: [],
@@ -101,15 +98,14 @@ function syntheticLiquid(
     tags: [],
     status: "referenciado",
     flavorIds: [],
-    recommendedDraw: ["MTL"],
+    draws: ["MTL"],
     variations: [
       {
         id: "base",
         label: "50 ml · 0 mg/ml",
-        format: "shortfill",
         volumeMl: 50,
+        hasNicotine: false,
         nicotineMg: 0,
-        nicotineType: "ninguna",
         ratio,
         bottle: "",
         tpd: "si",
@@ -362,24 +358,52 @@ describe("regresión de catálogo", () => {
 });
 
 describe("líquidos por coil", () => {
-  it("una coil RDL real desaconseja graduaciones altas de freebase y de sales", () => {
-    const coil = coilBySlug("xros-corex-0-4");
-    const tribeca = liquidBySlug("halo-tribeca");
-    const sales = liquidBySlug("vampire-vape-heisenberg-sales");
-    assert.ok(coil && tribeca && sales);
-    if (!coil || !tribeca || !sales) return;
-    const fits = recommendLiquids(coil, [tribeca, sales]);
-    const tribecaFit = fits.find((fit) => fit.liquid.slug === tribeca.slug);
-    const salesFit = fits.find((fit) => fit.liquid.slug === sales.slug);
-    assert.equal(tribecaFit?.fit, "evitar");
-    assert.equal(salesFit?.fit, "evitar");
-    assert.match(tribecaFit?.reason ?? "", /calada abierta \(RDL\/DL\)/);
+  it("una coil MTL con graduación alta cruza a evitar", () => {
+    const coil = syntheticCoil({ slug: "coil-mtl", ohms: 0.8, draws: ["MTL"] });
+    const liquid = syntheticLiquid({
+      slug: "sales-20",
+      draws: ["MTL"],
+      variations: [
+        {
+          id: "sal-20",
+          label: "20 mg/ml · 10 ml",
+          volumeMl: 10,
+          hasNicotine: true,
+          nicotineMg: 20,
+          ratio: "50/50",
+          tpd: "si",
+        },
+      ],
+    });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "evitar");
+    assert.match(fit?.reason ?? "", /MTL/);
+  });
+
+  it("una coil de calada abierta desaconseja graduaciones altas", () => {
+    const coil = syntheticCoil({ slug: "coil-rdl", ohms: 0.4, draws: ["RDL"] });
+    const liquid = syntheticLiquid({
+      slug: "sales-20",
+      draws: ["MTL", "RDL"],
+      variations: [
+        {
+          id: "sal-20",
+          label: "20 mg/ml · 10 ml",
+          volumeMl: 10,
+          hasNicotine: true,
+          nicotineMg: 20,
+          ratio: "50/50",
+          tpd: "si",
+        },
+      ],
+    });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "evitar");
+    assert.match(fit?.reason ?? "", /calada abierta \(RDL\/DL\)/);
   });
 
   it("un 70/30 en una MTL de 0,8 Ω queda en posible con su aviso", () => {
-    const coil = coilBySlug("xros-corex-0-8");
-    assert.ok(coil);
-    if (!coil) return;
+    const coil = syntheticCoil({ slug: "coil-mtl", ohms: 0.8, draws: ["MTL"] });
     const liquid = syntheticLiquid({ slug: "liquido-70-30-test", ratio: "70/30" });
     const [fit] = recommendLiquids(coil, [liquid]);
     assert.equal(fit?.fit, "posible");
@@ -387,30 +411,26 @@ describe("líquidos por coil", () => {
   });
 
   it("elige por variación la que mejor encaja con la calada", () => {
-    const coil = coilBySlug("xros-corex-0-4");
-    assert.ok(coil);
-    if (!coil) return;
+    const coil = syntheticCoil({ slug: "coil-rdl", ohms: 0.4, draws: ["RDL"] });
     const liquid = syntheticLiquid({
       slug: "doble-variacion",
-      recommendedDraw: ["MTL", "RDL", "DL"],
+      draws: ["MTL", "RDL", "DL"],
       variations: [
         {
           id: "sal-20",
           label: "20 mg/ml · 10 ml",
-          format: "sales",
           volumeMl: 10,
+          hasNicotine: true,
           nicotineMg: 20,
-          nicotineType: "sal",
           ratio: "50/50",
           tpd: "si",
         },
         {
           id: "short-0",
           label: "0 mg/ml · 50 ml",
-          format: "shortfill",
           volumeMl: 50,
+          hasNicotine: false,
           nicotineMg: 0,
-          nicotineType: "ninguna",
           ratio: "70/30",
           tpd: "si",
         },

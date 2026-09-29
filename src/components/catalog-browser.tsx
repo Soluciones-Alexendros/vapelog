@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { brandById, taxonById } from "@/data/catalog";
+import { brandById, genreById, taxonById } from "@/data/catalog";
 import {
   buildFacets,
   chipsFor,
@@ -379,7 +379,10 @@ export function CatalogBrowser({
                       </p>
                       <h2 className="mt-2 text-2xl text-foreground">{item.name}</h2>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        {taxonById(item.subId)?.es} · {factLine(item)}
+                        {item.domain === "liquid"
+                          ? genreById(item.genreId)?.es
+                          : taxonById(item.subId ?? "")?.es}{" "}
+                        · {factLine(item)}
                       </p>
                       {domain === "device" || domain === "liquid" ? (
                         <p className="mt-1 text-xs tracking-wide text-muted-foreground uppercase">

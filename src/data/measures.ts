@@ -1,4 +1,4 @@
-import type { Draw, Ratio } from "./types.ts";
+import type { Ratio } from "./types.ts";
 
 const UNPUBLISHED = /no publicad|sin dato|no fijad|leer la etiqueta/i;
 
@@ -7,16 +7,6 @@ export function publishedText(value: string | null | undefined): string | null {
   const trimmed = value.trim();
   if (!trimmed || UNPUBLISHED.test(trimmed)) return null;
   return trimmed;
-}
-
-export function parseDraws(value: string | null | undefined): Draw[] {
-  const tokens = value?.toUpperCase().match(/MTL|RDL|DL/g) ?? [];
-  const found: Draw[] = [];
-  for (const token of tokens) {
-    if ((token === "MTL" || token === "RDL" || token === "DL") && !found.includes(token))
-      found.push(token);
-  }
-  return found;
 }
 
 export function batteryKind(value: string): "integrada" | "externa" | null {

@@ -71,7 +71,7 @@ function coilOf(input: {
   ohms: number;
   wattMin: number;
   wattMax: number;
-  draw: Draw;
+  draws: Draw[];
   connector: Coil["connector"];
   wire: string;
   summary: string;
@@ -93,16 +93,15 @@ function coilOf(input: {
     confidence: "fabricante",
     sources: [{ label: input.sourceLabel, url: input.sourceUrl }],
     caveats: input.caveats,
-    tags: [input.draw.toLowerCase(), `${input.ohms}ohm`, input.brandId],
+    tags: [...input.draws.map((d) => d.toLowerCase()), `${input.ohms}ohm`, input.brandId],
     status: "referenciado",
     platformIds: input.platformIds,
     ohms: input.ohms,
     wattMin: input.wattMin,
     wattMax: input.wattMax,
-    wattConfidence: "fabricante",
     wire: input.wire,
     build: "Malla",
-    draw: input.draw,
+    draws: input.draws,
     connector: input.connector,
     refillable: true,
     pack: input.pack,
@@ -131,7 +130,7 @@ export const extraCoils: Coil[] = [
       ohms: ohms as number,
       wattMin: min as number,
       wattMax: max as number,
-      draw: draw as Draw,
+      draws: [draw as Draw],
       connector: "510",
       wire: `Malla ${wire}`,
       summary: `Coil GTX de ${String(ohms).replace(".", ",")} Ω. ${note} No entra en un pod XROS: esa serie sella la resistencia dentro de la cápsula COREX.`,
@@ -167,7 +166,7 @@ export const extraCoils: Coil[] = [
       ohms: ohms as number,
       wattMin: min as number,
       wattMax: max as number,
-      draw: draw as Draw,
+      draws: [draw as Draw],
       connector: "propietario",
       wire: String(wire),
       summary: `${name}, ${String(ohms).replace(".", ",")} Ω, encaje a presión de la plataforma PnP. No es una coil de rosca: va dentro del pod o del tanque PnP.`,
@@ -203,7 +202,7 @@ export const extraCoils: Coil[] = [
       ohms: ohms as number,
       wattMin: min as number,
       wattMax: max as number,
-      draw: draw as Draw,
+      draws: [draw as Draw],
       connector: "510",
       wire: "Malla",
       summary: `Coil serie B de ${String(ohms).replace(".", ",")} Ω (${version}). Misma interfaz que la versión anterior: Geekvape dice que son intercambiables. No es una coil Z.`,
@@ -228,7 +227,6 @@ export const extraDevices: Device[] = [
     name: "XLIM Go 2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod de la serie XLIM sin botón. OXVA publica 1500 mAh y cartucho de 3 ml, 2 ml en versión TPD, con cápsulas de la misma plataforma que el Pro 2.",
     confidence: "fabricante",
@@ -259,7 +257,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "si",
     year: null,
-    draw: "MTL y RDL, según el cartucho",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -270,7 +268,6 @@ export const extraDevices: Device[] = [
     name: "XLIM SQ Pro 2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod XLIM con pantalla táctil. OXVA publica 1600 mAh, 30 W y carga USB-C a 5 V / 2 A. Usa los cartuchos XLIM, incluido el de 0,4 Ω.",
     confidence: "fabricante",
@@ -301,7 +298,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "MTL y RDL, según el cartucho",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -312,7 +309,6 @@ export const extraDevices: Device[] = [
     name: "LUXE X",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Vaporesso de 1500 mAh y 40 W, con cápsula de 5 ml o 2 ml en versión TPD. La ficha de la serie lista pods de malla y coils GTX: no es un XROS.",
     confidence: "fabricante",
@@ -349,7 +345,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "si",
     year: null,
-    draw: "MTL a RDL, según la coil",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -360,7 +356,6 @@ export const extraDevices: Device[] = [
     name: "Drag X",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod mod",
     summary:
       "Pod mod de una 18650 externa, 5–80 W y ventana 0,1–3,0 Ω. El pod es PnP: la coil no se enrosca al mod.",
     confidence: "fabricante",
@@ -392,7 +387,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "MTL a DL, según la coil PnP",
+    draws: ["MTL", "DL"],
   },
   {
     domain: "device",
@@ -403,7 +398,6 @@ export const extraDevices: Device[] = [
     name: "XROS 5",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod XROS con 1500 mAh, carga Type-C a 3 A, pantalla HD de 0,88 pulgadas y cápsulas de la plataforma XROS (3 ml / 2 ml TPD).",
     confidence: "fabricante",
@@ -439,7 +433,7 @@ export const extraDevices: Device[] = [
     weight: "73,7 g",
     tpd: "si",
     year: null,
-    draw: "MTL y RDL, según la cápsula",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -450,7 +444,6 @@ export const extraDevices: Device[] = [
     name: "XROS 6",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod XROS con 1800 mAh, salida máxima 30 W, carga Type-C (9 V/2 A o 5 V/3 A) y pantalla TFT de 0,88 pulgadas.",
     confidence: "fabricante",
@@ -485,7 +478,7 @@ export const extraDevices: Device[] = [
     weight: "65 g",
     tpd: "si",
     year: null,
-    draw: "MTL y RDL, según la cápsula",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -496,7 +489,6 @@ export const extraDevices: Device[] = [
     name: "LUXE XR MAX 2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod de la serie LUXE X con 3200 mAh, 5–80 W, pantalla TFT 0,96 pulgadas y pods LUXE XR / coils GTX.",
     confidence: "fabricante",
@@ -532,7 +524,7 @@ export const extraDevices: Device[] = [
     weight: "117 g",
     tpd: "si",
     year: null,
-    draw: "MTL a DL, según la coil",
+    draws: ["MTL", "DL"],
   },
   {
     domain: "device",
@@ -543,7 +535,6 @@ export const extraDevices: Device[] = [
     name: "LUXE X3",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod LUXE X con 2600 mAh, 5–45 W, pantalla digital 0,8 pulgadas y pods de malla de la familia LUXE X (también GTX vía pods XR vacíos).",
     confidence: "fabricante",
@@ -578,7 +569,7 @@ export const extraDevices: Device[] = [
     weight: "100 g",
     tpd: "si",
     year: null,
-    draw: "MTL a DL, según la cápsula",
+    draws: ["MTL", "DL"],
   },
   {
     domain: "device",
@@ -589,7 +580,6 @@ export const extraDevices: Device[] = [
     name: "ARMOUR G",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod mod",
     summary:
       "Pod mod con 3000 mAh, 5–80 W, pantalla TFT 0,96 pulgadas y pods de la serie ARMOUR G con coils GTX.",
     confidence: "fabricante",
@@ -624,7 +614,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "si",
     year: null,
-    draw: "MTL a DL, según la coil GTX",
+    draws: ["MTL", "DL"],
   },
   {
     domain: "device",
@@ -635,7 +625,6 @@ export const extraDevices: Device[] = [
     name: "ARMOUR OCTA",
     familyId: "mod",
     subId: "mod.dual",
-    format: "Box mod",
     summary:
       "Mod dual 18650 hasta 220 W, conector 510, pantalla TFT 0,96 pulgadas. El kit cita iTank T y coils GTi.",
     confidence: "fabricante",
@@ -671,7 +660,7 @@ export const extraDevices: Device[] = [
     weight: "362 g",
     tpd: "parcial",
     year: null,
-    draw: "La marca el atomizador, no el mod",
+    draws: ["DL"],
   },
   {
     domain: "device",
@@ -682,7 +671,6 @@ export const extraDevices: Device[] = [
     name: "PRIX",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod con 2600 mAh, salida máxima 40 W, pantalla TFT 0,87 pulgadas y cápsulas Dual Mesh IMPACT propias (5,5 ml).",
     confidence: "fabricante",
@@ -718,7 +706,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "no",
     year: null,
-    draw: "Según el modo IMPACT/POWER de la cápsula",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -729,7 +717,6 @@ export const extraDevices: Device[] = [
     name: "Aegis Hero 5",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod mod",
     summary:
       "Pod compacto con 2000 mAh, salida 50 W, carga 5 V/2 A y cartucho HERO de 6,5 ml con coils serie B (Boost).",
     confidence: "fabricante",
@@ -765,7 +752,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "MTL a DL, según la coil B",
+    draws: ["MTL", "DL"],
   },
   {
     domain: "device",
@@ -776,7 +763,6 @@ export const extraDevices: Device[] = [
     name: "Wenax Q2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Wenax con 1250 mAh y carga 5 V/2 A. Usa cápsulas de la plataforma Q; el techo de vatios no está en el extracto de la ficha.",
     confidence: "fabricante",
@@ -812,7 +798,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "Según la cápsula Q",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -823,7 +809,6 @@ export const extraDevices: Device[] = [
     name: "Soul 2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Soul con 2100 mAh, salida máxima 35 W y pantalla oculta de 0,99 pulgadas; cápsulas Soul propias.",
     confidence: "fabricante",
@@ -853,7 +838,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "Según la cápsula Soul",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -864,7 +849,6 @@ export const extraDevices: Device[] = [
     name: "Digi Q Vista",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Digi con 1600 mAh, salida máxima 35 W (modo Dynamic con Q pod 0,4 Ω), pantalla curva 3D y A-Lock.",
     confidence: "fabricante",
@@ -897,7 +881,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "Según la cápsula Q",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -908,7 +892,6 @@ export const extraDevices: Device[] = [
     name: "Aegis Nano 3",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Aegis Nano con 1600 mAh, activación por botón y calada. El techo de vatios no está en el extracto de la ficha.",
     confidence: "fabricante",
@@ -943,7 +926,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "Según la cápsula Nano",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -954,7 +937,6 @@ export const extraDevices: Device[] = [
     name: "GEEKVAPE GO",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod GO con 1500 mAh y cápsulas recargables/reemplazables. El techo de vatios no está en el extracto de la ficha.",
     confidence: "fabricante",
@@ -989,7 +971,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "Según la cápsula GO",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1000,7 +982,6 @@ export const extraDevices: Device[] = [
     name: "Drag 6",
     familyId: "mod",
     subId: "mod.dual",
-    format: "Box mod",
     summary:
       "Mod con batería integrada 2×2200 mAh (4400 mAh), 5–220 W, chip GENE TT 3.0, pantalla TFT 1,66 pulgadas y kit UFORCE-X / PnP X.",
     confidence: "fabricante",
@@ -1035,7 +1016,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "MTL a DL, según la coil PnP X",
+    draws: ["MTL", "DL"],
   },
   {
     domain: "device",
@@ -1046,7 +1027,6 @@ export const extraDevices: Device[] = [
     name: "Argus G4",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Argus con 1650 mAh, 5–35 W, pantalla 0,85 pulgadas y cartucho Multi-Ohm (0,4 / 0,7 / 1,0 Ω).",
     confidence: "fabricante",
@@ -1082,7 +1062,7 @@ export const extraDevices: Device[] = [
     weight: "65 g",
     tpd: "si",
     year: null,
-    draw: "MTL a RDL, según la resistencia Multi-Ohm",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1093,7 +1073,6 @@ export const extraDevices: Device[] = [
     name: "Argus Z3",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod Argus compacto con 1100 mAh y cartucho Multi-Ohm (cambio 0,7 / 1,0 Ω). El techo de vatios no está en el extracto de Device Parameters.",
     confidence: "fabricante",
@@ -1128,7 +1107,7 @@ export const extraDevices: Device[] = [
     weight: "41,6 g",
     tpd: "parcial",
     year: null,
-    draw: "MTL, según el cartucho Multi-Ohm",
+    draws: ["MTL"],
   },
   {
     domain: "device",
@@ -1139,7 +1118,6 @@ export const extraDevices: Device[] = [
     name: "VMATE MAX2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod VMATE con 2100 mAh, 5–30 W, pantalla HD 0,85 pulgadas y cartuchos VMATE V4 (0,4 / 0,7 / 1,0 Ω).",
     confidence: "fabricante",
@@ -1172,7 +1150,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "parcial",
     year: null,
-    draw: "MTL a RDL, según el cartucho",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1183,7 +1161,6 @@ export const extraDevices: Device[] = [
     name: "VRIZZ 2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod VRIZZ con 1350 mAh, 12–30 W y cartuchos VRIZZ V2 de 15 ml (0,4 / 0,7 Ω y Dual Mesh).",
     confidence: "fabricante",
@@ -1218,7 +1195,7 @@ export const extraDevices: Device[] = [
     weight: null,
     tpd: "no",
     year: null,
-    draw: "MTL a RDL, según el modo del cartucho",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1229,7 +1206,6 @@ export const extraDevices: Device[] = [
     name: "XLIM Pro 3",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod XLIM con 1500 mAh, 5–30 W, pantalla HD 1,05 pulgadas, Pulse System y cartuchos XLIM top-fill 3 ml / 2 ml TPD.",
     confidence: "fabricante",
@@ -1259,7 +1235,7 @@ export const extraDevices: Device[] = [
     weight: "77,4 g",
     tpd: "si",
     year: null,
-    draw: "MTL y RDL, según el cartucho",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1270,7 +1246,6 @@ export const extraDevices: Device[] = [
     name: "XLIM 3 Ultra",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod XLIM con 1500 mAh, 5–30 W, pantalla táctil HD 2,2 pulgadas, Super Pulse System y cartuchos XLIM top-fill.",
     confidence: "fabricante",
@@ -1303,7 +1278,7 @@ export const extraDevices: Device[] = [
     weight: "90 g",
     tpd: "si",
     year: null,
-    draw: "MTL y RDL, según el cartucho",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1314,7 +1289,6 @@ export const extraDevices: Device[] = [
     name: "NeXLIM 2",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod NeXLIM con 2000 mAh, 5–40 W, carga 5 V/3 A, pantalla color 0,85 pulgadas y cartuchos Unitech 3.0 de 4 ml / 2 ml TPD.",
     confidence: "fabricante",
@@ -1344,7 +1318,7 @@ export const extraDevices: Device[] = [
     weight: "88,5 g",
     tpd: "si",
     year: null,
-    draw: "MTL a RDL, según cartucho y modo",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1355,7 +1329,6 @@ export const extraDevices: Device[] = [
     name: "NeXLIM GO",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod NeXLIM con 1800 mAh, 5–40 W, carga 5 V/2 A y cartuchos NeXLIM Unitech 3.0 (4 ml / 2 ml TPD).",
     confidence: "fabricante",
@@ -1383,7 +1356,7 @@ export const extraDevices: Device[] = [
     weight: "87,5 g",
     tpd: "si",
     year: null,
-    draw: "MTL a RDL, según cartucho y modo",
+    draws: ["MTL", "RDL"],
   },
   {
     domain: "device",
@@ -1394,7 +1367,6 @@ export const extraDevices: Device[] = [
     name: "XLIM GO Lite",
     familyId: "pod",
     subId: "pod.abierto",
-    format: "Pod",
     summary:
       "Pod XLIM de entrada con 1000 mAh, 5–30 W, carga 5 V/1 A e indicador RGB; cartuchos XLIM top-fill 3 ml / 2 ml TPD.",
     confidence: "fabricante",
@@ -1427,7 +1399,7 @@ export const extraDevices: Device[] = [
     weight: "41,5 g",
     tpd: "si",
     year: null,
-    draw: "MTL y RDL, según el cartucho",
+    draws: ["MTL", "RDL"],
   },
 ];
 
@@ -1457,7 +1429,6 @@ function mouthpiece(input: {
     ],
     tags: ["boquilla", input.platformId],
     status: "referenciado",
-    kind: "boquilla",
     fitsPlatformIds: [input.platformId],
     fitsBattery: null,
     fitsConnector: null,
@@ -1493,7 +1464,6 @@ export const extraParts: Part[] = [
     ],
     tags: ["18650", "bateria", "cdr"],
     status: "referenciado",
-    kind: "bateria",
     fitsPlatformIds: [],
     fitsBattery: "18650",
     fitsConnector: null,
@@ -1519,7 +1489,6 @@ export const extraParts: Part[] = [
     ],
     tags: ["boquilla", "510"],
     status: "referenciado",
-    kind: "boquilla",
     fitsPlatformIds: [],
     fitsBattery: null,
     fitsConnector: "510",

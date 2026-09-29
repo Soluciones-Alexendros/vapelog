@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { coils, devices, liquids, parts } from "./catalog.ts";
-import { compareFacts, specFacts, variationRows } from "./specs.ts";
+import { compareFacts, specFacts, specGroups, variationRows } from "./specs.ts";
 import type { CatalogItem, Domain } from "./types.ts";
 
 function sqlKeys(domain: Domain): string[] {
@@ -54,7 +54,7 @@ describe("ficha plana", () => {
     assert.ok(ohms?.values.every((value) => value.endsWith("Ω")));
   });
 
-  it("cada variación de líquido tiene su fila con volumen y graduación", () => {
+  it("cada variación de líquido tiene su fila con volumen y nicotina", () => {
     for (const liquid of liquids) {
       const rows = variationRows(liquid);
       assert.equal(rows.length, liquid.variations.length);
@@ -62,7 +62,41 @@ describe("ficha plana", () => {
         rows.map((row) => row.key),
         liquid.variations.map((variation) => variation.id),
       );
-      assert.ok(rows.every((row) => row.display.includes("ml") && row.display.includes("mg/ml")));
+      assert.ok(rows.every((row) => row.display.includes("ml")));
+      rows.forEach((row, index) => {
+        const variation = liquid.variations[index]!;
+        if (variation.hasNicotine) {
+          assert.ok(row.display.includes("mg/ml"));
+        } else {
+          assert.ok(row.display.includes("sin nicotina"));
+        }
+      });
+    }
+  });
+
+  it("la ficha de líquido usa las claves del modelo de variaciones", () => {
+    const keys = specFacts(liquids[0]!).map((fact) => fact.key);
+    assert.ok(keys.includes("genre"));
+    assert.ok(keys.includes("volume_ml"));
+    assert.ok(keys.includes("ratio"));
+    assert.ok(keys.includes("has_nicotine"));
+    assert.ok(keys.includes("nicotine_mg"));
+    assert.ok(keys.includes("draw"));
+    for (const disabled of ["family", "nicotine_type", "vg", "pg", "bottle", "assumed_bottle_ml"]) {
+      assert.equal(keys.includes(disabled), false);
+    }
+  });
+
+  it("etiqueta el grupo de régimen como Fuente en todos los dominios", () => {
+    const samples: Record<Domain, CatalogItem> = {
+      device: devices[0]!,
+      coil: coils[0]!,
+      liquid: liquids[0]!,
+      part: parts[0]!,
+    };
+    for (const domain of ["device", "coil", "liquid", "part"] as const) {
+      const regimen = specGroups(samples[domain]).find((group) => group.id === "regimen");
+      assert.equal(regimen?.label, "Fuente");
     }
   });
 
