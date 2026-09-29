@@ -36,7 +36,7 @@ import {
   type LiquidFitKind,
 } from "@/data/logic";
 import { EMPTY, relationRows, specFacts, specGroups, variationRows } from "@/data/specs";
-import type { CatalogItem, Coil, CompatKind, Confidence, Device, Domain } from "@/data/types";
+import type { CatalogItem, Coil, CompatKind, Device, Domain } from "@/data/types";
 import { useCompare } from "@/components/chrome";
 import {
   compatLabel,
@@ -53,6 +53,7 @@ import {
   toneTextClass,
   tpdLabel,
 } from "@/components/labels";
+import { Carousel } from "@/components/carousel";
 import { ProductPhoto } from "@/components/photo";
 import {
   Accordion,
@@ -111,8 +112,6 @@ const PART_SECTIONS: SheetSection[] = [
   { id: "relacionados", label: "Relacionados" },
   { id: "fuentes", label: "Fuentes" },
 ];
-
-const LIQUID_PREVIEW = 10;
 
 const heroKeys: Record<Domain, string[]> = {
   device: [
@@ -696,7 +695,7 @@ function CompatBlock({
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-0">
-              <CompatRows rows={grouped.no} tone={compatTone("no")} />
+              <CompatRows rows={grouped.no} tone={compatTone("no")} label={compatLabel("no")} />
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -719,7 +718,7 @@ function CompatGroup({
         <h3 className={cn("text-lg", toneTextClass(tone))}>{compatLabel(kind)}</h3>
         <Badge variant="muted">{rows.length}</Badge>
       </div>
-      <CompatRows rows={rows} tone={tone} className="mt-3" />
+      <CompatRows rows={rows} tone={tone} label={compatLabel(kind)} className="mt-3" />
     </div>
   );
 }
@@ -727,43 +726,46 @@ function CompatGroup({
 function CompatRows({
   rows,
   tone,
+  label,
   className,
 }: {
   rows: { coil: Coil; reasons: string[] }[];
   tone: ReturnType<typeof compatTone>;
+  label?: string;
   className?: string;
 }) {
+  if (rows.length === 0) {
+    return (
+      <p className={cn("text-sm", toneTextClass(tone), className)}>
+        Sin resistencias en este grupo.
+      </p>
+    );
+  }
   return (
-    <ul className={cn("flex flex-col gap-2", className)}>
+    <Carousel className={className} ariaLabel={label}>
       {rows.map((row) => (
-        <li
-          key={row.coil.id}
-          className="flex items-center gap-3 rounded-md border border-border bg-surface-2 p-2"
-        >
-          <ProductPhoto slug={row.coil.slug} alt={row.coil.name} frame="thumb" missing="note" />
-          <div className="min-w-0">
-            <Link
-              to="/resistencias/$slug"
-              params={{ slug: row.coil.slug }}
-              className="text-foreground underline decoration-border underline-offset-4"
-            >
-              {row.coil.name}
-            </Link>
-            <p className="mt-1 text-sm text-muted-foreground">{row.reasons[0]}</p>
-          </div>
+        <li key={row.coil.id} className="w-72 shrink-0 snap-start">
+          <Link
+            to="/resistencias/$slug"
+            params={{ slug: row.coil.slug }}
+            className="flex h-full items-center gap-3 rounded-md border border-border bg-surface-2 p-2 text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+          >
+            <ProductPhoto slug={row.coil.slug} alt={row.coil.name} frame="thumb" missing="note" />
+            <div className="min-w-0">
+              <span className="block underline decoration-border underline-offset-4">
+                {row.coil.name}
+              </span>
+              <p className="mt-1 text-sm text-muted-foreground">{row.reasons[0]}</p>
+            </div>
+          </Link>
         </li>
       ))}
-      {rows.length === 0 ? (
-        <li className={cn("text-sm", toneTextClass(tone))}>Sin resistencias en este grupo.</li>
-      ) : null}
-    </ul>
+    </Carousel>
   );
 }
 
 function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) {
-  const [showAll, setShowAll] = useState(false);
   const direct = byKind.directo;
-  const visible = showAll ? direct : direct.slice(0, LIQUID_PREVIEW);
   const total = direct.length + byKind.posible.length + byKind.evitar.length;
 
   if (total === 0) {
@@ -790,18 +792,7 @@ function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) 
           </h3>
           <Badge variant="muted">{direct.length}</Badge>
         </div>
-        <LiquidRows rows={visible} className="mt-3" />
-        {direct.length > LIQUID_PREVIEW ? (
-          <Button
-            type="button"
-            variant="quiet"
-            className="mt-2 px-0"
-            aria-expanded={showAll}
-            onClick={() => setShowAll((value) => !value)}
-          >
-            {showAll ? "Ver solo los primeros" : `Ver los ${direct.length} del cruce directo`}
-          </Button>
-        ) : null}
+        <LiquidRows rows={direct} className="mt-3" label={fitLabel("directo")} />
       </div>
 
       {groups.some((group) => group.rows.length > 0) ? (
@@ -818,7 +809,7 @@ function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) 
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="px-0">
-                  <LiquidRows rows={group.rows} />
+                  <LiquidRows rows={group.rows} label={fitLabel(group.kind)} />
                 </AccordionContent>
               </AccordionItem>
             ) : null,
@@ -834,32 +825,39 @@ function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) 
   );
 }
 
-function LiquidRows({ rows, className }: { rows: LiquidFit[]; className?: string }) {
+function LiquidRows({
+  rows,
+  className,
+  label,
+}: {
+  rows: LiquidFit[];
+  className?: string;
+  label?: string;
+}) {
   return (
-    <ul className={cn("flex flex-col gap-2", className)}>
+    <Carousel className={className} ariaLabel={label}>
       {rows.map((fit) => (
-        <li
-          key={fit.liquid.id}
-          className="rounded-md border border-border bg-surface-2 p-3 shadow-1"
-        >
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <Link
-              to="/liquidos/$slug"
-              params={{ slug: fit.liquid.slug }}
-              className="text-foreground underline decoration-border underline-offset-4"
-            >
-              {fit.liquid.name}
-            </Link>
-            <span
-              className={cn("text-xs tracking-widest uppercase", toneTextClass(fitTone(fit.fit)))}
-            >
-              {fitLabel(fit.fit)}
+        <li key={fit.liquid.id} className="w-72 shrink-0 snap-start">
+          <Link
+            to="/liquidos/$slug"
+            params={{ slug: fit.liquid.slug }}
+            className="flex h-full flex-col gap-1 rounded-md border border-border bg-surface-2 p-3 text-foreground shadow-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+          >
+            <span className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="underline decoration-border underline-offset-4">
+                {fit.liquid.name}
+              </span>
+              <span
+                className={cn("text-xs tracking-widest uppercase", toneTextClass(fitTone(fit.fit)))}
+              >
+                {fitLabel(fit.fit)}
+              </span>
             </span>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">{fit.reason}</p>
+            <span className="text-sm text-muted-foreground">{fit.reason}</span>
+          </Link>
         </li>
       ))}
-    </ul>
+    </Carousel>
   );
 }
 
@@ -891,7 +889,6 @@ function Ficha({ item }: { item: CatalogItem }) {
                 label: row.label,
                 display: row.value,
                 published: row.value !== EMPTY,
-                confidence: null,
               }))}
             />
           </div>
@@ -919,7 +916,6 @@ function SpecTable({
     label: string;
     display: string;
     published: boolean;
-    confidence: string | null;
   }[];
 }) {
   return (
@@ -929,30 +925,21 @@ function SpecTable({
           <TableRow>
             <TableHead>Dato</TableHead>
             <TableHead>Valor</TableHead>
-            <TableHead>Confianza</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => {
-            const confidence = publishedConfidence(row.confidence);
-            return (
-              <TableRow key={row.key}>
-                <TableHead scope="row" className="w-[12rem] text-muted-foreground">
-                  {row.label}
-                </TableHead>
-                <TableCell
-                  className={
-                    row.published ? "text-foreground tabular-nums" : "text-muted-foreground"
-                  }
-                >
-                  {row.display}
-                </TableCell>
-                <TableCell className="text-xs tracking-wide text-muted-foreground uppercase">
-                  {row.published && confidence ? confidenceLabel(confidence) : "—"}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {rows.map((row) => (
+            <TableRow key={row.key}>
+              <TableHead scope="row" className="w-[12rem] text-muted-foreground">
+                {row.label}
+              </TableHead>
+              <TableCell
+                className={row.published ? "text-foreground tabular-nums" : "text-muted-foreground"}
+              >
+                {row.display}
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
@@ -1010,11 +997,6 @@ function RelatedItems({ item }: { item: CatalogItem }) {
       </ul>
     </SheetSectionBlock>
   );
-}
-
-function publishedConfidence(value: string | null): Confidence | null {
-  if (value === "fabricante" || value === "ficha" || value === "distribuidor") return value;
-  return null;
 }
 
 function Missing() {

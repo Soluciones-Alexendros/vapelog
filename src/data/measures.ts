@@ -19,9 +19,14 @@ export function batteryKind(value: string): "integrada" | "externa" | null {
 }
 
 export function batteryMah(value: string): number | null {
-  const matches = [...value.matchAll(/(\d+(?:[.,]\d+)?)\s*mah/gi)];
+  const normalized = value.replace(/,/g, ".");
+  const parenthesized = normalized.match(/\(\s*(\d+(?:\.\d+)?)\s*mah/i);
+  if (parenthesized) return Number(parenthesized[1]!);
+  const multiplied = normalized.match(/(\d+(?:\.\d+)?)\s*[×x*]\s*(\d+(?:\.\d+)?)\s*mah/i);
+  if (multiplied) return Number(multiplied[1]!) * Number(multiplied[2]!);
+  const matches = [...normalized.matchAll(/(\d+(?:\.\d+)?)\s*mah/gi)];
   if (matches.length !== 1) return null;
-  return Number(matches[0]![1]!.replace(",", "."));
+  return Number(matches[0]![1]!);
 }
 
 export function cellFormat(value: string): "18650" | "21700" | null {

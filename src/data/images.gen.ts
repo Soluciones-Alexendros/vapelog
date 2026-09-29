@@ -15,6 +15,790 @@ export const catalogImageManifest: Record<
     variants: { width: number; src: string; bytes: number }[];
   }
 > = {
+  "bombo-bj-apple-peach-max-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-apple-peach-max-sales-350.avif",
+        "bytes": 5878
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-apple-peach-max-sales-350.webp",
+        "bytes": 9248
+      }
+    ]
+  },
+  "bombo-bj-blueberry-cherry-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-blueberry-cherry-sales-350.avif",
+        "bytes": 6512
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-blueberry-cherry-sales-350.webp",
+        "bytes": 10850
+      }
+    ]
+  },
+  "bombo-bj-cola-strawberry-ice-cream-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-cola-strawberry-ice-cream-sales-350.avif",
+        "bytes": 6402
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-cola-strawberry-ice-cream-sales-350.webp",
+        "bytes": 10808
+      }
+    ]
+  },
+  "bombo-bj-cranberry-cherry-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-cranberry-cherry-sales-350.avif",
+        "bytes": 6383
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-cranberry-cherry-sales-350.webp",
+        "bytes": 10530
+      }
+    ]
+  },
+  "bombo-bj-super-blackcurrant-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-super-blackcurrant-sales-350.avif",
+        "bytes": 6236
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-super-blackcurrant-sales-350.webp",
+        "bytes": 9884
+      }
+    ]
+  },
+  "bombo-bj-twisty-fruity-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-twisty-fruity-sales-350.avif",
+        "bytes": 6168
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-bj-twisty-fruity-sales-350.webp",
+        "bytes": 10122
+      }
+    ]
+  },
+  "bombo-pt-cookie-supra-reserve-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-cookie-supra-reserve-sales-350.avif",
+        "bytes": 4562
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-cookie-supra-reserve-sales-350.webp",
+        "bytes": 7164
+      }
+    ]
+  },
+  "bombo-pt-culmen-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-culmen-sales-350.avif",
+        "bytes": 4193
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-culmen-sales-350.webp",
+        "bytes": 6858
+      }
+    ]
+  },
+  "bombo-pt-nutty-supra-reserve-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-nutty-supra-reserve-sales-350.avif",
+        "bytes": 4560
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-nutty-supra-reserve-sales-350.webp",
+        "bytes": 7044
+      }
+    ]
+  },
+  "bombo-pt-pompeii-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-pompeii-sales-350.avif",
+        "bytes": 4233
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-pompeii-sales-350.webp",
+        "bytes": 6958
+      }
+    ]
+  },
+  "bombo-pt-supra-aldonza-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-supra-aldonza-sales-350.avif",
+        "bytes": 4308
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-supra-aldonza-sales-350.webp",
+        "bytes": 7000
+      }
+    ]
+  },
+  "bombo-pt-supra-reserve-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-supra-reserve-sales-350.avif",
+        "bytes": 4548
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-pt-supra-reserve-sales-350.webp",
+        "bytes": 7134
+      }
+    ]
+  },
+  "bombo-solo-blue-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-blue-sales-350.avif",
+        "bytes": 3659
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-blue-sales-350.webp",
+        "bytes": 6072
+      }
+    ]
+  },
+  "bombo-solo-lime-soda-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-lime-soda-sales-350.avif",
+        "bytes": 3803
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-lime-soda-sales-350.webp",
+        "bytes": 6550
+      }
+    ]
+  },
+  "bombo-solo-mango-ice-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-mango-ice-sales-350.avif",
+        "bytes": 3755
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-mango-ice-sales-350.webp",
+        "bytes": 6352
+      }
+    ]
+  },
+  "bombo-solo-menthol-ice-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-menthol-ice-sales-350.avif",
+        "bytes": 3776
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-menthol-ice-sales-350.webp",
+        "bytes": 6462
+      }
+    ]
+  },
+  "bombo-solo-strawberry-cream-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-strawberry-cream-sales-350.avif",
+        "bytes": 3773
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-strawberry-cream-sales-350.webp",
+        "bytes": 6206
+      }
+    ]
+  },
+  "bombo-solo-sweet-tobacco-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-sweet-tobacco-sales-350.avif",
+        "bytes": 3797
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-sweet-tobacco-sales-350.webp",
+        "bytes": 6468
+      }
+    ]
+  },
+  "bombo-solo-watermelon-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-watermelon-sales-350.avif",
+        "bytes": 3715
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-solo-watermelon-sales-350.webp",
+        "bytes": 6166
+      }
+    ]
+  },
+  "bombo-tr-tabaco-rubio-almendrado-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-tr-tabaco-rubio-almendrado-sales-350.avif",
+        "bytes": 4748
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-tr-tabaco-rubio-almendrado-sales-350.webp",
+        "bytes": 6936
+      }
+    ]
+  },
+  "bombo-tr-tabaco-rubio-creme-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-tr-tabaco-rubio-creme-sales-350.avif",
+        "bytes": 4273
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-tr-tabaco-rubio-creme-sales-350.webp",
+        "bytes": 6004
+      }
+    ]
+  },
+  "bombo-tr-tabaco-rubio-virginia-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-tr-tabaco-rubio-virginia-sales-350.avif",
+        "bytes": 4725
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-tr-tabaco-rubio-virginia-sales-350.webp",
+        "bytes": 6650
+      }
+    ]
+  },
+  "bombo-wj-banana-ice-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-banana-ice-sales-350.avif",
+        "bytes": 4600
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-banana-ice-sales-350.webp",
+        "bytes": 7134
+      }
+    ]
+  },
+  "bombo-wj-blueberry-and-raspberry-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-blueberry-and-raspberry-sales-350.avif",
+        "bytes": 4442
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-blueberry-and-raspberry-sales-350.webp",
+        "bytes": 7184
+      }
+    ]
+  },
+  "bombo-wj-melon-and-watermelon-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-melon-and-watermelon-sales-350.avif",
+        "bytes": 4643
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-melon-and-watermelon-sales-350.webp",
+        "bytes": 7404
+      }
+    ]
+  },
+  "bombo-wj-melon-lime-and-coco-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-melon-lime-and-coco-sales-350.avif",
+        "bytes": 4660
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-melon-lime-and-coco-sales-350.webp",
+        "bytes": 7412
+      }
+    ]
+  },
+  "bombo-wj-peach-and-mango-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-peach-and-mango-sales-350.avif",
+        "bytes": 4391
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-peach-and-mango-sales-350.webp",
+        "bytes": 7078
+      }
+    ]
+  },
+  "bombo-wj-pina-colada-ice-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-pina-colada-ice-sales-350.avif",
+        "bytes": 4833
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-pina-colada-ice-sales-350.webp",
+        "bytes": 7480
+      }
+    ]
+  },
+  "bombo-wj-pina-colada-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-pina-colada-sales-350.avif",
+        "bytes": 4585
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-pina-colada-sales-350.webp",
+        "bytes": 7200
+      }
+    ]
+  },
+  "bombo-wj-pink-berries-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-pink-berries-sales-350.avif",
+        "bytes": 4284
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-pink-berries-sales-350.webp",
+        "bytes": 6992
+      }
+    ]
+  },
+  "bombo-wj-strawberry-and-pear-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-strawberry-and-pear-sales-350.avif",
+        "bytes": 4363
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-strawberry-and-pear-sales-350.webp",
+        "bytes": 7054
+      }
+    ]
+  },
+  "bombo-wj-strawberry-mojito-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-strawberry-mojito-sales-350.avif",
+        "bytes": 4444
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-strawberry-mojito-sales-350.webp",
+        "bytes": 7170
+      }
+    ]
+  },
+  "bombo-wj-sweet-melon-ice-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-sweet-melon-ice-sales-350.avif",
+        "bytes": 4626
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-sweet-melon-ice-sales-350.webp",
+        "bytes": 7208
+      }
+    ]
+  },
+  "bombo-wj-watermelon-mojito-sales.png": {
+    "width": 350,
+    "height": 452,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-watermelon-mojito-sales-350.avif",
+        "bytes": 4607
+      },
+      {
+        "width": 350,
+        "src": "/catalog/bombo-wj-watermelon-mojito-sales-350.webp",
+        "bytes": 7316
+      }
+    ]
+  },
+  "drifter-apple-peach-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-apple-peach-sales-350.avif",
+        "bytes": 9491
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-apple-peach-sales-350.webp",
+        "bytes": 14558
+      }
+    ]
+  },
+  "drifter-blue-razz-lemonade-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-blue-razz-lemonade-ice-sales-350.avif",
+        "bytes": 9677
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-blue-razz-lemonade-ice-sales-350.webp",
+        "bytes": 15362
+      }
+    ]
+  },
+  "drifter-cherry-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-cherry-sales-350.avif",
+        "bytes": 9336
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-cherry-sales-350.webp",
+        "bytes": 14470
+      }
+    ]
+  },
+  "drifter-cotton-candy-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-cotton-candy-ice-sales-350.avif",
+        "bytes": 8855
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-cotton-candy-ice-sales-350.webp",
+        "bytes": 13834
+      }
+    ]
+  },
+  "drifter-kiwi-passionfruit-guava-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-kiwi-passionfruit-guava-sales-350.avif",
+        "bytes": 9296
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-kiwi-passionfruit-guava-sales-350.webp",
+        "bytes": 14830
+      }
+    ]
+  },
+  "drifter-mad-blue-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-mad-blue-sales-350.avif",
+        "bytes": 11284
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-mad-blue-sales-350.webp",
+        "bytes": 16968
+      }
+    ]
+  },
+  "drifter-mango-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-mango-ice-sales-350.avif",
+        "bytes": 9522
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-mango-ice-sales-350.webp",
+        "bytes": 14818
+      }
+    ]
+  },
+  "drifter-peach-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-peach-ice-sales-350.avif",
+        "bytes": 8610
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-peach-ice-sales-350.webp",
+        "bytes": 13280
+      }
+    ]
+  },
+  "drifter-pineapple-peach-mango-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-pineapple-peach-mango-sales-350.avif",
+        "bytes": 11066
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-pineapple-peach-mango-sales-350.webp",
+        "bytes": 17010
+      }
+    ]
+  },
+  "drifter-pink-lemonade-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-pink-lemonade-sales-350.avif",
+        "bytes": 10355
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-pink-lemonade-sales-350.webp",
+        "bytes": 15962
+      }
+    ]
+  },
+  "drifter-strawberry-banana-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-strawberry-banana-ice-sales-350.avif",
+        "bytes": 9085
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-strawberry-banana-ice-sales-350.webp",
+        "bytes": 14336
+      }
+    ]
+  },
+  "drifter-sweet-blueberry-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-sweet-blueberry-ice-sales-350.avif",
+        "bytes": 9789
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-sweet-blueberry-ice-sales-350.webp",
+        "bytes": 15482
+      }
+    ]
+  },
+  "drifter-sweet-strawberry-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-sweet-strawberry-ice-sales-350.avif",
+        "bytes": 10665
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-sweet-strawberry-ice-sales-350.webp",
+        "bytes": 16222
+      }
+    ]
+  },
+  "drifter-watermelon-ice-sales.jpg": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/drifter-watermelon-ice-sales-350.avif",
+        "bytes": 9002
+      },
+      {
+        "width": 350,
+        "src": "/catalog/drifter-watermelon-ice-sales-350.webp",
+        "bytes": 14344
+      }
+    ]
+  },
+  "geekvape-aegis-hero-5.png": {
+    "width": 300,
+    "height": 340,
+    "variants": [
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-aegis-hero-5-300.avif",
+        "bytes": 3707
+      },
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-aegis-hero-5-300.webp",
+        "bytes": 4430
+      }
+    ]
+  },
   "geekvape-aegis-legend-2.jpg": {
     "width": 2953,
     "height": 2269,
@@ -38,6 +822,22 @@ export const catalogImageManifest: Record<
         "width": 1440,
         "src": "/catalog/geekvape-aegis-legend-2-1440.webp",
         "bytes": 26196
+      }
+    ]
+  },
+  "geekvape-aegis-nano-3.jpg": {
+    "width": 640,
+    "height": 757,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/geekvape-aegis-nano-3-480.avif",
+        "bytes": 13574
+      },
+      {
+        "width": 480,
+        "src": "/catalog/geekvape-aegis-nano-3-480.webp",
+        "bytes": 19894
       }
     ]
   },
@@ -160,6 +960,22 @@ export const catalogImageManifest: Record<
         "width": 960,
         "src": "/catalog/geekvape-b-1-2-960.webp",
         "bytes": 38120
+      }
+    ]
+  },
+  "geekvape-digi-q-vista.png": {
+    "width": 300,
+    "height": 340,
+    "variants": [
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-digi-q-vista-300.avif",
+        "bytes": 3547
+      },
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-digi-q-vista-300.webp",
+        "bytes": 4374
       }
     ]
   },
@@ -302,6 +1118,22 @@ export const catalogImageManifest: Record<
         "width": 1440,
         "src": "/catalog/geekvape-g-1-8-1440.webp",
         "bytes": 29208
+      }
+    ]
+  },
+  "geekvape-go.png": {
+    "width": 300,
+    "height": 340,
+    "variants": [
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-go-300.avif",
+        "bytes": 3381
+      },
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-go-300.webp",
+        "bytes": 4564
       }
     ]
   },
@@ -502,6 +1334,22 @@ export const catalogImageManifest: Record<
       }
     ]
   },
+  "geekvape-soul-2.png": {
+    "width": 300,
+    "height": 340,
+    "variants": [
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-soul-2-300.avif",
+        "bytes": 2069
+      },
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-soul-2-300.webp",
+        "bytes": 2496
+      }
+    ]
+  },
   "geekvape-u-0-7.jpg": {
     "width": 2500,
     "height": 2500,
@@ -577,6 +1425,22 @@ export const catalogImageManifest: Record<
         "width": 1440,
         "src": "/catalog/geekvape-u-pod-1440.webp",
         "bytes": 11384
+      }
+    ]
+  },
+  "geekvape-wenax-q2.png": {
+    "width": 300,
+    "height": 340,
+    "variants": [
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-wenax-q2-300.avif",
+        "bytes": 2266
+      },
+      {
+        "width": 300,
+        "src": "/catalog/geekvape-wenax-q2-300.webp",
+        "bytes": 2614
       }
     ]
   },
@@ -681,6 +1545,246 @@ export const catalogImageManifest: Record<
       }
     ]
   },
+  "herrera-abarra-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-abarra-sales-350.avif",
+        "bytes": 12763
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-abarra-sales-350.webp",
+        "bytes": 24728
+      }
+    ]
+  },
+  "herrera-boj-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-boj-sales-350.avif",
+        "bytes": 14623
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-boj-sales-350.webp",
+        "bytes": 24576
+      }
+    ]
+  },
+  "herrera-churdinas-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-churdinas-sales-350.avif",
+        "bytes": 10652
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-churdinas-sales-350.webp",
+        "bytes": 17162
+      }
+    ]
+  },
+  "herrera-penas-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-penas-sales-350.avif",
+        "bytes": 11531
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-penas-sales-350.webp",
+        "bytes": 19834
+      }
+    ]
+  },
+  "herrera-tolono-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-tolono-sales-350.avif",
+        "bytes": 13480
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-tolono-sales-350.webp",
+        "bytes": 24060
+      }
+    ]
+  },
+  "herrera-ultramenthol-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-ultramenthol-sales-350.avif",
+        "bytes": 15821
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-ultramenthol-sales-350.webp",
+        "bytes": 24788
+      }
+    ]
+  },
+  "herrera-viura-sales.png": {
+    "width": 350,
+    "height": 350,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/herrera-viura-sales-350.avif",
+        "bytes": 17689
+      },
+      {
+        "width": 350,
+        "src": "/catalog/herrera-viura-sales-350.webp",
+        "bytes": 29836
+      }
+    ]
+  },
+  "kings-crest-blueberry-ice-sales.jpg": {
+    "width": 350,
+    "height": 167,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-blueberry-ice-sales-350.avif",
+        "bytes": 4168
+      },
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-blueberry-ice-sales-350.webp",
+        "bytes": 5332
+      }
+    ]
+  },
+  "kings-crest-cherry-ice-sales.jpg": {
+    "width": 350,
+    "height": 167,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-cherry-ice-sales-350.avif",
+        "bytes": 5161
+      },
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-cherry-ice-sales-350.webp",
+        "bytes": 6448
+      }
+    ]
+  },
+  "kings-crest-mango-ice-sales.jpg": {
+    "width": 350,
+    "height": 167,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-mango-ice-sales-350.avif",
+        "bytes": 4279
+      },
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-mango-ice-sales-350.webp",
+        "bytes": 5236
+      }
+    ]
+  },
+  "kings-crest-peach-ice-sales.jpg": {
+    "width": 350,
+    "height": 167,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-peach-ice-sales-350.avif",
+        "bytes": 3091
+      },
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-peach-ice-sales-350.webp",
+        "bytes": 3876
+      }
+    ]
+  },
+  "kings-crest-watermelon-ice-sales.jpg": {
+    "width": 350,
+    "height": 167,
+    "variants": [
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-watermelon-ice-sales-350.avif",
+        "bytes": 5282
+      },
+      {
+        "width": 350,
+        "src": "/catalog/kings-crest-watermelon-ice-sales-350.webp",
+        "bytes": 6384
+      }
+    ]
+  },
+  "oxva-nexlim-2.png": {
+    "width": 800,
+    "height": 800,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/oxva-nexlim-2-480.avif",
+        "bytes": 9003
+      },
+      {
+        "width": 480,
+        "src": "/catalog/oxva-nexlim-2-480.webp",
+        "bytes": 17056
+      }
+    ]
+  },
+  "oxva-nexlim-go.png": {
+    "width": 800,
+    "height": 800,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/oxva-nexlim-go-480.avif",
+        "bytes": 8999
+      },
+      {
+        "width": 480,
+        "src": "/catalog/oxva-nexlim-go-480.webp",
+        "bytes": 15930
+      }
+    ]
+  },
+  "oxva-xlim-3-ultra.png": {
+    "width": 800,
+    "height": 800,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/oxva-xlim-3-ultra-480.avif",
+        "bytes": 10815
+      },
+      {
+        "width": 480,
+        "src": "/catalog/oxva-xlim-3-ultra-480.webp",
+        "bytes": 21792
+      }
+    ]
+  },
   "oxva-xlim-go-2.png": {
     "width": 450,
     "height": 761,
@@ -694,6 +1798,22 @@ export const catalogImageManifest: Record<
         "width": 450,
         "src": "/catalog/oxva-xlim-go-2-450.webp",
         "bytes": 11270
+      }
+    ]
+  },
+  "oxva-xlim-go-lite.png": {
+    "width": 800,
+    "height": 800,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/oxva-xlim-go-lite-480.avif",
+        "bytes": 5437
+      },
+      {
+        "width": 480,
+        "src": "/catalog/oxva-xlim-go-lite-480.webp",
+        "bytes": 10850
       }
     ]
   },
@@ -713,6 +1833,22 @@ export const catalogImageManifest: Record<
       }
     ]
   },
+  "oxva-xlim-pro-3.png": {
+    "width": 800,
+    "height": 800,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/oxva-xlim-pro-3-480.avif",
+        "bytes": 10997
+      },
+      {
+        "width": 480,
+        "src": "/catalog/oxva-xlim-pro-3-480.webp",
+        "bytes": 21068
+      }
+    ]
+  },
   "oxva-xlim-sq-pro-2.png": {
     "width": 450,
     "height": 761,
@@ -726,6 +1862,48 @@ export const catalogImageManifest: Record<
         "width": 450,
         "src": "/catalog/oxva-xlim-sq-pro-2-450.webp",
         "bytes": 28856
+      }
+    ]
+  },
+  "vaporesso-armour-g.jpg": {
+    "width": 1100,
+    "height": 456,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-armour-g-480.webp",
+        "bytes": 12770
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-armour-g-960.avif",
+        "bytes": 21850
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-armour-g-960.webp",
+        "bytes": 32836
+      }
+    ]
+  },
+  "vaporesso-armour-octa.png": {
+    "width": 960,
+    "height": 960,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-armour-octa-480.webp",
+        "bytes": 7380
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-armour-octa-960.avif",
+        "bytes": 10953
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-armour-octa-960.webp",
+        "bytes": 14896
       }
     ]
   },
@@ -1275,6 +2453,69 @@ export const catalogImageManifest: Record<
       }
     ]
   },
+  "vaporesso-luxe-x3.png": {
+    "width": 960,
+    "height": 960,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-luxe-x3-480.webp",
+        "bytes": 7592
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-luxe-x3-960.avif",
+        "bytes": 8888
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-luxe-x3-960.webp",
+        "bytes": 13352
+      }
+    ]
+  },
+  "vaporesso-luxe-xr-max-2.png": {
+    "width": 960,
+    "height": 960,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-luxe-xr-max-2-480.webp",
+        "bytes": 7094
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-luxe-xr-max-2-960.avif",
+        "bytes": 9097
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-luxe-xr-max-2-960.webp",
+        "bytes": 13996
+      }
+    ]
+  },
+  "vaporesso-prix.png": {
+    "width": 960,
+    "height": 960,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-prix-480.webp",
+        "bytes": 2624
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-prix-960.avif",
+        "bytes": 2982
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-prix-960.webp",
+        "bytes": 4958
+      }
+    ]
+  },
   "vaporesso-xros-4.png": {
     "width": 999,
     "height": 999,
@@ -1293,6 +2534,96 @@ export const catalogImageManifest: Record<
         "width": 960,
         "src": "/catalog/vaporesso-xros-4-960.webp",
         "bytes": 11560
+      }
+    ]
+  },
+  "vaporesso-xros-5.png": {
+    "width": 960,
+    "height": 960,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-xros-5-480.webp",
+        "bytes": 5280
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-xros-5-960.avif",
+        "bytes": 8286
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-xros-5-960.webp",
+        "bytes": 13072
+      }
+    ]
+  },
+  "vaporesso-xros-6.png": {
+    "width": 960,
+    "height": 960,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/vaporesso-xros-6-480.webp",
+        "bytes": 5752
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-xros-6-960.avif",
+        "bytes": 7833
+      },
+      {
+        "width": 960,
+        "src": "/catalog/vaporesso-xros-6-960.webp",
+        "bytes": 12684
+      }
+    ]
+  },
+  "voopoo-argus-g4.png": {
+    "width": 480,
+    "height": 480,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/voopoo-argus-g4-480.avif",
+        "bytes": 6330
+      },
+      {
+        "width": 480,
+        "src": "/catalog/voopoo-argus-g4-480.webp",
+        "bytes": 9572
+      }
+    ]
+  },
+  "voopoo-argus-z3.png": {
+    "width": 400,
+    "height": 400,
+    "variants": [
+      {
+        "width": 400,
+        "src": "/catalog/voopoo-argus-z3-400.avif",
+        "bytes": 2769
+      },
+      {
+        "width": 400,
+        "src": "/catalog/voopoo-argus-z3-400.webp",
+        "bytes": 3784
+      }
+    ]
+  },
+  "voopoo-drag-6.png": {
+    "width": 480,
+    "height": 480,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/voopoo-drag-6-480.avif",
+        "bytes": 12983
+      },
+      {
+        "width": 480,
+        "src": "/catalog/voopoo-drag-6-480.webp",
+        "bytes": 20886
       }
     ]
   },
@@ -1586,6 +2917,38 @@ export const catalogImageManifest: Record<
         "width": 480,
         "src": "/catalog/voopoo-pnp-vm6-480.webp",
         "bytes": 10014
+      }
+    ]
+  },
+  "voopoo-vmate-max2.png": {
+    "width": 400,
+    "height": 400,
+    "variants": [
+      {
+        "width": 400,
+        "src": "/catalog/voopoo-vmate-max2-400.avif",
+        "bytes": 3992
+      },
+      {
+        "width": 400,
+        "src": "/catalog/voopoo-vmate-max2-400.webp",
+        "bytes": 7498
+      }
+    ]
+  },
+  "voopoo-vrizz-2.png": {
+    "width": 480,
+    "height": 480,
+    "variants": [
+      {
+        "width": 480,
+        "src": "/catalog/voopoo-vrizz-2-480.avif",
+        "bytes": 10423
+      },
+      {
+        "width": 480,
+        "src": "/catalog/voopoo-vrizz-2-480.webp",
+        "bytes": 15210
       }
     ]
   },
