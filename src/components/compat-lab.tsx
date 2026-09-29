@@ -88,7 +88,9 @@ export function CompatLab({
           >
             {coils.map((item) => (
               <option key={item.id} value={item.slug}>
-                {item.name} · {formatPlain(item.ohms)} Ω
+                {item.wattMin != null && item.wattMax != null
+                  ? `${item.name} · ${formatPlain(item.ohms)} Ω · ${item.wattMin}–${item.wattMax} W`
+                  : `${item.name} · ${formatPlain(item.ohms)} Ω`}
               </option>
             ))}
           </select>
@@ -163,6 +165,13 @@ export function CompatLab({
               className="text-foreground underline decoration-border underline-offset-4"
             >
               Ficha de la resistencia
+            </Link>
+            <Link
+              to="/herramientas"
+              search={{ tab: "ohm", ohms: String(coil.ohms) }}
+              className="text-foreground underline decoration-border underline-offset-4"
+            >
+              Abrir en la calculadora de Ohm
             </Link>
           </div>
         </section>

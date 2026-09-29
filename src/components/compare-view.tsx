@@ -205,22 +205,32 @@ function fields(rows: Resolved[]) {
   return [...facts, ...extras];
 }
 
+function toMetric(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value === "string") {
+    if (value === EMPTY || value.trim() === "" || value.trim() === EMPTY) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
 function metricValue(item: CatalogItem, key: string): number | null {
   if (item.domain === "device") {
-    if (key === "power_max_w") return item.powerMaxW;
-    if (key === "power_min_w") return item.powerMinW;
-    if (key === "battery_mah") return item.batteryMah;
-    if (key === "capacity_ml") return item.capacityMl;
-    if (key === "weight_g") return item.weightG;
+    if (key === "power_max_w") return toMetric(item.powerMaxW);
+    if (key === "power_min_w") return toMetric(item.powerMinW);
+    if (key === "battery_mah") return toMetric(item.batteryMah);
+    if (key === "capacity_ml") return toMetric(item.capacityMl);
+    if (key === "weight_g") return toMetric(item.weightG);
     return null;
   }
   if (item.domain === "coil") {
-    if (key === "watt_max") return item.wattMax;
-    if (key === "watt_min") return item.wattMin;
-    if (key === "pack_count") return item.packCount;
+    if (key === "watt_max") return toMetric(item.wattMax);
+    if (key === "watt_min") return toMetric(item.wattMin);
+    if (key === "pack_count") return toMetric(item.packCount);
     return null;
   }
-  if (item.domain === "liquid" && key === "volume_ml") return liquidVolumeMl(item);
+  if (item.domain === "liquid" && key === "volume_ml") return toMetric(liquidVolumeMl(item));
   return null;
 }
 
@@ -228,7 +238,9 @@ function bestIndices(key: string, rows: Resolved[]): number[] {
   const direction = BEST_DIRECTION[key];
   if (!direction) return [];
   const metrics = rows.map((row) => metricValue(row.item, key));
-  const known = metrics.filter((value): value is number => value != null);
+  const known = metrics.filter(
+    (value): value is number => typeof value === "number" && Number.isFinite(value),
+  );
   if (new Set(known).size < 2) return [];
   const target = direction === "max" ? Math.max(...known) : Math.min(...known);
   return metrics

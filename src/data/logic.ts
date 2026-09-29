@@ -366,3 +366,44 @@ export function recommendLiquids(coil: Coil, liquids: Liquid[]): LiquidFit[] {
 export function drawsMatch(draw: Draw, recommended: Draw[]): boolean {
   return recommended.includes(draw);
 }
+
+export function availableOhms(coils: Coil[]): number[] {
+  return [...new Set(coils.map((coil) => round(coil.ohms, 2)))].sort((a, b) => a - b);
+}
+
+export interface RecommendedPower {
+  hasPublished: boolean;
+  wattMin: number | null;
+  wattMax: number | null;
+  representative: number | null;
+  sourceCount: number;
+  note: string;
+}
+
+export function recommendedPowerForOhms(ohms: number, coils: Coil[]): RecommendedPower {
+  const target = round(ohms, 2);
+  const matching = coils.filter(
+    (coil) =>
+      Math.abs(round(coil.ohms, 2) - target) < 1e-9 && coil.wattMin != null && coil.wattMax != null,
+  );
+  if (matching.length === 0) {
+    return {
+      hasPublished: false,
+      wattMin: null,
+      wattMax: null,
+      representative: null,
+      sourceCount: 0,
+      note: "No se publica un rango de vatios propio para este valor de resistencia.",
+    };
+  }
+  const wattMin = Math.min(...matching.map((coil) => coil.wattMin as number));
+  const wattMax = Math.max(...matching.map((coil) => coil.wattMax as number));
+  return {
+    hasPublished: true,
+    wattMin,
+    wattMax,
+    representative: round((wattMin + wattMax) / 2),
+    sourceCount: matching.length,
+    note: `Sugerido a partir de ${matching.length} resistencia(s) del archivo (${wattMin}–${wattMax} W).`,
+  };
+}

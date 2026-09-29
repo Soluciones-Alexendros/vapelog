@@ -150,6 +150,7 @@ const chipIcons: Record<string, LucideIcon> = {
   ohms: Gauge,
   watt_max: Zap,
   watt_min: Zap,
+  watt_range: Zap,
   wire_kind: CircuitBoard,
   pack_count: Package,
   volume_ml: Droplets,
@@ -961,6 +962,22 @@ function heroChips(item: CatalogItem) {
     if (picked.some((row) => row.key === fact.key)) continue;
     picked.push(fact);
     if (picked.length >= 8) break;
+  }
+  if (item.domain === "coil" && item.wattMin != null && item.wattMax != null) {
+    const display = `${item.wattMin}–${item.wattMax} W`;
+    if (!picked.some((row) => row.display === display)) {
+      const source = byKey.get("watt_min");
+      picked.push({
+        key: "watt_range",
+        group: source?.group ?? "electrico",
+        groupLabel: source?.groupLabel ?? "Eléctrico",
+        label: "Vatios",
+        display,
+        published: true,
+        unit: "W",
+        confidence: null,
+      });
+    }
   }
   return picked;
 }

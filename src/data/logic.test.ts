@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { coilBySlug, deviceBySlug, coils, devices, parts } from "./catalog.ts";
 import {
+  availableOhms,
   compatibility,
   mixNicotine,
   partsForDevice,
+  recommendedPowerForOhms,
   recommendLiquids,
   round,
   shotsForTarget,
@@ -448,5 +450,76 @@ describe("líquidos por coil", () => {
     const [fit] = recommendLiquids(coil, [liquid]);
     assert.equal(fit?.fit, "directo");
     assert.equal(fit?.variation.id, "short-0");
+  });
+});
+
+describe("availableOhms", () => {
+  it("ordena y elimina duplicados normalizados a 2 decimales", () => {
+    const result = availableOhms([
+      syntheticCoil({ slug: "c-08-a", ohms: 0.8 }),
+      syntheticCoil({ slug: "c-04", ohms: 0.4 }),
+      syntheticCoil({ slug: "c-08-b", ohms: 0.8 }),
+      syntheticCoil({ slug: "c-12", ohms: 1.2 }),
+    ]);
+    assert.deepEqual(result, [0.4, 0.8, 1.2]);
+  });
+
+  it("tolera ruido flotante al normalizar", () => {
+    const result = availableOhms([
+      syntheticCoil({ slug: "c-float", ohms: 0.1 + 0.2 }),
+      syntheticCoil({ slug: "c-exact", ohms: 0.3 }),
+    ]);
+    assert.deepEqual(result, [0.3]);
+  });
+});
+
+describe("recommendedPowerForOhms", () => {
+  it("tolera ruido flotante al emparejar ohmios", () => {
+    const result = recommendedPowerForOhms(0.3, [
+      syntheticCoil({ slug: "c-float", ohms: 0.1 + 0.2, wattMin: 10, wattMax: 20 }),
+    ]);
+    assert.equal(result.hasPublished, true);
+    assert.equal(result.sourceCount, 1);
+  });
+
+  it("devuelve caveat cuando no hay coils publicadas para el valor", () => {
+    const result = recommendedPowerForOhms(0.5, [
+      syntheticCoil({ slug: "c-sin-rango", ohms: 0.5 }),
+      syntheticCoil({ slug: "c-otro", ohms: 0.8, wattMin: 12, wattMax: 18 }),
+    ]);
+    assert.equal(result.hasPublished, false);
+    assert.equal(result.wattMin, null);
+    assert.equal(result.wattMax, null);
+    assert.equal(result.representative, null);
+    assert.equal(result.sourceCount, 0);
+    assert.equal(
+      result.note,
+      "No se publica un rango de vatios propio para este valor de resistencia.",
+    );
+  });
+
+  it("una sola coil devuelve su rango exacto", () => {
+    const result = recommendedPowerForOhms(0.8, [
+      syntheticCoil({ slug: "c-unica", ohms: 0.8, wattMin: 12, wattMax: 18 }),
+    ]);
+    assert.equal(result.hasPublished, true);
+    assert.equal(result.wattMin, 12);
+    assert.equal(result.wattMax, 18);
+    assert.equal(result.representative, 15);
+    assert.equal(result.sourceCount, 1);
+    assert.equal(result.note, "Sugerido a partir de 1 resistencia(s) del archivo (12–18 W).");
+  });
+
+  it("varias coils combinan min/max con nota y representative", () => {
+    const result = recommendedPowerForOhms(0.4, [
+      syntheticCoil({ slug: "c-a", ohms: 0.4, wattMin: 15, wattMax: 25 }),
+      syntheticCoil({ slug: "c-b", ohms: 0.4, wattMin: 20, wattMax: 30 }),
+    ]);
+    assert.equal(result.hasPublished, true);
+    assert.equal(result.wattMin, 15);
+    assert.equal(result.wattMax, 30);
+    assert.equal(result.representative, 22.5);
+    assert.equal(result.sourceCount, 2);
+    assert.equal(result.note, "Sugerido a partir de 2 resistencia(s) del archivo (15–30 W).");
   });
 });

@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { deviceBySlug, devices } from "@/data/catalog";
-import { mixNicotine, powerNotes, round, shotsForTarget, solveOhm } from "@/data/logic";
-import { formatPlain } from "@/components/labels";
+import { coils, deviceBySlug, devices } from "@/data/catalog";
+import {
+  availableOhms,
+  mixNicotine,
+  powerNotes,
+  recommendedPowerForOhms,
+  round,
+  shotsForTarget,
+  solveOhm,
+} from "@/data/logic";
+import { formatPlain, toneTextClass } from "@/components/labels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -104,7 +112,19 @@ function OhmForm({
   onSearch: (next: ToolSearch) => void;
 }) {
   const [mode, setMode] = useState<"watts" | "volts">(search.volts ? "volts" : "watts");
-  const ohms = search.ohms ?? "0.8";
+  const ohmOptions = availableOhms(coils);
+  const parsedOhms = search.ohms != null && search.ohms !== "" ? num(search.ohms) : NaN;
+  const matchedOption = !Number.isNaN(parsedOhms)
+    ? ohmOptions.find((option) => round(option, 2) === round(parsedOhms, 2))
+    : undefined;
+  const ohms =
+    matchedOption != null
+      ? String(matchedOption)
+      : ohmOptions.some((option) => round(option, 2) === round(0.8, 2))
+        ? "0.8"
+        : ohmOptions[0] != null
+          ? String(ohmOptions[0])
+          : "0.8";
   const watts = search.watts ?? "14";
   const volts = search.volts ?? "3.7";
   const deviceSlug = search.device ?? "";
@@ -115,6 +135,17 @@ function OhmForm({
   });
   const device = deviceSlug ? deviceBySlug(deviceSlug) : undefined;
   const notes = device && !("error" in solved) ? powerNotes(device, solved.watts, solved.ohms) : [];
+  const recommendation = recommendedPowerForOhms(num(ohms), coils);
+  const currentWatts = mode === "watts" ? num(watts) : "error" in solved ? NaN : solved.watts;
+  const rangeMin = recommendation.wattMin;
+  const rangeMax = recommendation.wattMax;
+  const hasRange = recommendation.hasPublished && rangeMin != null && rangeMax != null;
+  const inRecommendedRange =
+    hasRange &&
+    rangeMin != null &&
+    rangeMax != null &&
+    currentWatts >= rangeMin &&
+    currentWatts <= rangeMax;
 
   return (
     <form
@@ -155,12 +186,46 @@ function OhmForm({
         </div>
       </fieldset>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field
-          id="ohms"
-          label="Resistencia (Ω)"
-          value={ohms}
-          onChange={(ohms) => onSearch({ ...search, tab: "ohm", ohms })}
-        />
+        <div>
+          <label className="block text-sm text-muted-foreground" htmlFor="ohms">
+            Resistencia (Ω)
+          </label>
+          <select
+            id="ohms"
+            className="mt-2"
+            value={ohms}
+            onChange={(event) => {
+              const v = event.target.value;
+              const rec = recommendedPowerForOhms(num(v), coils);
+              if (!rec.hasPublished || rec.representative == null) {
+                onSearch({ ...search, tab: "ohm", ohms: v });
+                return;
+              }
+              if (mode === "watts") {
+                onSearch({ ...search, tab: "ohm", ohms: v, watts: String(rec.representative) });
+                return;
+              }
+              const sv = solveOhm({ ohms: num(v), watts: rec.representative });
+              if (!("error" in sv)) {
+                onSearch({
+                  ...search,
+                  tab: "ohm",
+                  ohms: v,
+                  volts: String(round(sv.volts, 2)),
+                });
+              } else {
+                onSearch({ ...search, tab: "ohm", ohms: v });
+              }
+            }}
+          >
+            <option value="">Selecciona resistencia</option>
+            {ohmOptions.map((option) => (
+              <option key={String(option)} value={String(option)}>
+                {`${formatPlain(option)} Ω`}
+              </option>
+            ))}
+          </select>
+        </div>
         {mode === "watts" ? (
           <Field
             id="watts"
@@ -177,6 +242,13 @@ function OhmForm({
           />
         )}
       </div>
+      {hasRange ? (
+        <p className={`mt-2 text-sm ${toneTextClass(inRecommendedRange ? "success" : "warning")}`}>
+          {`Sugerido: ${formatPlain(rangeMin)}–${formatPlain(rangeMax)} W`}
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">{recommendation.note}</p>
+      )}
       <label className="mt-4 block text-sm text-muted-foreground" htmlFor="device-fit">
         Contrastar con un dispositivo del archivo
       </label>
@@ -205,6 +277,17 @@ function OhmForm({
           <Result label="Corriente" value={`${formatPlain(round(solved.amps, 2))} A`} />
           <Result label="Potencia" value={`${formatPlain(round(solved.watts, 2))} W`} />
           <Result label="Resistencia" value={`${formatPlain(round(solved.ohms, 2))} Ω`} />
+          {hasRange ? (
+            <Result
+              label="Recomendación"
+              value={
+                inRecommendedRange
+                  ? `Dentro del rango ${formatPlain(rangeMin)}–${formatPlain(rangeMax)} W`
+                  : `Fuera del rango ${formatPlain(rangeMin)}–${formatPlain(rangeMax)} W`
+              }
+              toneClass={toneTextClass(inRecommendedRange ? "success" : "warning")}
+            />
+          ) : null}
         </dl>
       )}
       {notes.length > 0 ? (
@@ -241,6 +324,10 @@ function NicoForm({
     shots: num(shots),
   });
   const target = shotsForTarget(num(aroma), num(shotMl), num(shotMg), num(objetivo));
+  const reachableShots =
+    typeof target === "number"
+      ? Array.from(new Set([Math.floor(target), Math.ceil(target)])).filter((k) => k >= 0)
+      : [];
 
   const patch = (partial: ToolSearch) => onSearch({ ...search, tab: "nicokit", ...partial });
 
@@ -278,7 +365,14 @@ function NicoForm({
           id="shots"
           label="Número de nicokits"
           value={shots}
-          onChange={(shots) => patch({ shots })}
+          onChange={(value) => {
+            if (value === "") {
+              patch({ shots: "" });
+              return;
+            }
+            const parsed = num(value);
+            if (!Number.isNaN(parsed)) patch({ shots: String(Math.max(0, Math.round(parsed))) });
+          }}
         />
         <Field
           id="objetivo"
@@ -316,12 +410,29 @@ function NicoForm({
       )}
       <div className="mt-6 border-t border-border pt-4">
         {typeof target === "number" ? (
-          <p className="text-sm text-foreground">
-            Para acercarse a {formatPlain(num(objetivo))} mg/ml harían falta{" "}
-            <span className="tabular-nums">{formatPlain(round(target, 2))}</span> nicokits de{" "}
-            {shotMl} ml a {shotMg} mg/ml, partiendo de {aroma} ml a 0 mg. Redondea al entero y
-            vuelve a leer el resultado: un nicokit no se parte con precisión de laboratorio.
-          </p>
+          <>
+            <p className="text-sm text-foreground">
+              Para acercarse a {formatPlain(num(objetivo))} mg/ml harían falta{" "}
+              <span className="tabular-nums">{formatPlain(round(target, 1))}</span> nicokits de{" "}
+              {shotMl} ml a {shotMg} mg/ml, partiendo de {aroma} ml a 0 mg. Redondea al entero y
+              vuelve a leer el resultado: un nicokit no se parte con precisión de laboratorio.
+            </p>
+            {reachableShots.map((k) => {
+              const probe = mixNicotine({
+                aromaMl: num(aroma),
+                bottleMl: num(botella),
+                shotMl: num(shotMl),
+                shotMg: num(shotMg),
+                shots: k,
+              });
+              if ("error" in probe) return null;
+              return (
+                <p key={k} className="mt-2 text-sm text-muted-foreground">
+                  {`Con ${k} nicokit(s) enteros: ${formatPlain(round(probe.mgPerMl, 2))} mg/ml`}
+                </p>
+              );
+            })}
+          </>
         ) : (
           <p className="text-sm text-primary">{target.error}</p>
         )}
@@ -361,11 +472,19 @@ function Field({
   );
 }
 
-function Result({ label, value }: { label: string; value: string }) {
+function Result({ label, value, toneClass }: { label: string; value: string; toneClass?: string }) {
   return (
     <div className="rounded-md border border-border bg-background p-3">
       <dt className="text-xs tracking-widest text-muted-foreground uppercase">{label}</dt>
-      <dd className="mt-2 font-display text-2xl text-foreground tabular-nums">{value}</dd>
+      <dd
+        className={
+          toneClass
+            ? `mt-2 font-display text-2xl tabular-nums ${toneClass}`
+            : "mt-2 font-display text-2xl text-foreground tabular-nums"
+        }
+      >
+        {value}
+      </dd>
     </div>
   );
 }
