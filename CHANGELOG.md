@@ -12,6 +12,12 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-29
+
+### Cambios
+
+- feat(catalogo): confianza fuera de fichas, header en 2 filas, carrusel de compatibilidad, bateria derivada e imagenes oficiales (#7)
+
 ## [0.5.0] - 2026-09-29
 
 ### Cambios
