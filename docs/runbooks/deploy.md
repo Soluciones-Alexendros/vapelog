@@ -33,14 +33,14 @@ El commit de release vuelve a pasar la CI y no dispara otra versión (un
 
 ## Qué se publica
 
-- Producción: [vapelog-beryl.vercel.app](https://vapelog-beryl.vercel.app).
+- Producción: [vapelog-alexendros.vercel.app](https://vapelog-alexendros.vercel.app).
 - Rama de producción en Vercel: `main`. El estado del deploy aparece como
   check «Vercel» en cada commit.
 
 ## Verificación tras un push
 
 1. Check «Vercel» en verde en el commit de `main`.
-2. `curl -s https://vapelog-beryl.vercel.app/dispositivos | grep "XROS 4"`
+2. `curl -s https://vapelog-alexendros.vercel.app/dispositivos | grep "XROS 4"`
    (el HTML sirve contenido real; ver ADR-0004).
 3. Una ficha de cada dominio y el toggle de tema (claro y oscuro).
 4. Nueva versión y release en

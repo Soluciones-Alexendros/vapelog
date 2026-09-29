@@ -17,12 +17,12 @@ Contratos: [AGENTS.md](AGENTS.md) · [ARCHITECTURE.md](ARCHITECTURE.md) ·
 [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) ·
 [SUPPORT.md](SUPPORT.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-|                |                                                                      |
-| -------------- | -------------------------------------------------------------------- |
-| **Estado**     | Catálogo puro (sin auth / multiplayer / broker Grok)                 |
-| **Producción** | [vapelog-beryl.vercel.app](https://vapelog-beryl.vercel.app)         |
-| **Stack**      | TanStack Start · React 19 · TypeScript · Tailwind v4 · OKLCH · Nitro |
-| **Gestor**     | pnpm · Node 22                                                       |
+|                |                                                                        |
+| -------------- | ---------------------------------------------------------------------- |
+| **Estado**     | Catálogo puro (sin auth / multiplayer / broker Grok)                   |
+| **Producción** | [vapelog-alexendros.vercel.app](https://vapelog-alexendros.vercel.app) |
+| **Stack**      | TanStack Start · React 19 · TypeScript · Tailwind v4 · OKLCH · Nitro   |
+| **Gestor**     | pnpm · Node 22                                                         |
 
 [![CI](https://github.com/Soluciones-Alexendros/vapelog/actions/workflows/ci.yml/badge.svg)](https://github.com/Soluciones-Alexendros/vapelog/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Soluciones-Alexendros/vapelog)](https://github.com/Soluciones-Alexendros/vapelog/releases)
