@@ -1,4 +1,4 @@
-import { taxonById } from "./catalog.ts";
+import { liquidTpd, primaryVariation, taxonById, variationRange } from "./catalog.ts";
 import { confidenceLabel, formatPlain, tpdLabel } from "../components/labels.ts";
 import {
   batteryKind,
@@ -14,7 +14,7 @@ import {
   weightGrams,
   wireKind,
 } from "./measures.ts";
-import type { CatalogItem, Coil, Device, Domain, Liquid, Part } from "./types.ts";
+import type { CatalogItem, Coil, Device, Domain, Liquid, NicotineType, Part } from "./types.ts";
 
 export interface SpecDef {
   key: string;
@@ -48,6 +48,35 @@ function liquid(item: CatalogItem): Liquid | null {
 
 function part(item: CatalogItem): Part | null {
   return item.domain === "part" ? item : null;
+}
+
+function rangeText(min: number, max: number): string {
+  return min === max ? formatPlain(min) : `${formatPlain(min)}–${formatPlain(max)}`;
+}
+
+function liquidVolumeText(item: CatalogItem): string | null {
+  const row = liquid(item);
+  const range = row ? variationRange(row) : null;
+  return range ? rangeText(range.volumeMl.min, range.volumeMl.max) : null;
+}
+
+function liquidNicotineText(item: CatalogItem): string | null {
+  const row = liquid(item);
+  const range = row ? variationRange(row) : null;
+  return range ? rangeText(range.nicotineMg.min, range.nicotineMg.max) : null;
+}
+
+function nicotineTypeLabel(type: NicotineType): string {
+  if (type === "sal") return "Sales";
+  if (type === "freebase") return "Freebase";
+  return "Sin nicotina";
+}
+
+function liquidNicotineTypes(item: CatalogItem): string | null {
+  const row = liquid(item);
+  if (!row || row.variations.length === 0) return null;
+  const types = [...new Set(row.variations.map((variation) => variation.nicotineType))];
+  return types.map(nicotineTypeLabel).join(" · ");
 }
 
 function sheetConfidence(item: CatalogItem): string | null {
@@ -512,11 +541,11 @@ export const specDefs: SpecDef[] = [
     "number",
     true,
     30,
-    (item) => (liquid(item) ? formatPlain(liquid(item)!.volumeMl) : null),
+    liquidVolumeText,
     sheetConfidence,
   ),
   def("liquid", "bottle", "formato", "Formato", "Botella", null, "text", false, 40, (item) =>
-    publishedText(liquid(item)?.bottle),
+    publishedText(liquid(item) ? primaryVariation(liquid(item)!)?.bottle : undefined),
   ),
   def(
     "liquid",
@@ -528,7 +557,7 @@ export const specDefs: SpecDef[] = [
     "number",
     false,
     50,
-    (item) => num(liquid(item)?.assumedBottleMl ?? null),
+    (item) => num(liquid(item) ? (primaryVariation(liquid(item)!)?.assumedBottleMl ?? null) : null),
   ),
   def(
     "liquid",
@@ -540,16 +569,12 @@ export const specDefs: SpecDef[] = [
     "number",
     true,
     60,
-    (item) => (liquid(item) ? formatPlain(liquid(item)!.nicotineMg) : null),
+    liquidNicotineText,
     sheetConfidence,
   ),
-  def("liquid", "nicotine_type", "nicotina", "Nicotina", "Tipo", null, "enum", true, 70, (item) => {
-    const row = liquid(item);
-    if (!row) return null;
-    if (row.nicotineType === "sal") return "Sales";
-    if (row.nicotineType === "freebase") return "Freebase";
-    return "Sin nicotina";
-  }),
+  def("liquid", "nicotine_type", "nicotina", "Nicotina", "Tipo", null, "enum", true, 70, (item) =>
+    liquidNicotineTypes(item),
+  ),
   def(
     "liquid",
     "vg",
@@ -560,7 +585,11 @@ export const specDefs: SpecDef[] = [
     "number",
     true,
     80,
-    (item) => num(ratioParts(liquid(item)?.ratio ?? null)?.vg ?? null),
+    (item) =>
+      num(
+        ratioParts(liquid(item) ? (primaryVariation(liquid(item)!)?.ratio ?? null) : null)?.vg ??
+          null,
+      ),
     sheetConfidence,
   ),
   def(
@@ -573,7 +602,11 @@ export const specDefs: SpecDef[] = [
     "number",
     true,
     90,
-    (item) => num(ratioParts(liquid(item)?.ratio ?? null)?.pg ?? null),
+    (item) =>
+      num(
+        ratioParts(liquid(item) ? (primaryVariation(liquid(item)!)?.ratio ?? null) : null)?.pg ??
+          null,
+      ),
     sheetConfidence,
   ),
   def("liquid", "draw", "uso", "Uso", "Calada recomendada", null, "enum", true, 100, (item) => {
@@ -587,7 +620,7 @@ export const specDefs: SpecDef[] = [
     return names.length ? names.join(" · ") : null;
   }),
   def("liquid", "tpd", "regimen", "Régimen y fuente", "TPD", null, "enum", true, 120, (item) =>
-    liquid(item) ? tpdLabel(liquid(item)!.tpd) : null,
+    liquid(item) ? tpdLabel(liquidTpd(liquid(item)!)) : null,
   ),
   def(
     "liquid",

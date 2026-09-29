@@ -1,5 +1,15 @@
 import { exclusionReason } from "./compat-rules.ts";
-import type { Coil, CompatResult, Device, Draw, Liquid, Part } from "./types";
+import { ratioParts } from "./measures.ts";
+import type {
+  Coil,
+  CompatResult,
+  Device,
+  Draw,
+  Liquid,
+  LiquidVariation,
+  Part,
+  TpdStatus,
+} from "./types";
 
 export function normalize(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
@@ -253,42 +263,105 @@ export type LiquidFitKind = "directo" | "posible" | "evitar";
 
 export interface LiquidFit {
   liquid: Liquid;
+  variation: LiquidVariation;
   fit: LiquidFitKind;
   reason: string;
+}
+
+export function leadVariation(liquid: Liquid): LiquidVariation | undefined {
+  return liquid.variations.reduce<LiquidVariation | undefined>(
+    (lead, variation) => (!lead || variation.nicotineMg > lead.nicotineMg ? variation : lead),
+    undefined,
+  );
+}
+
+export function liquidVolumeMl(liquid: Liquid): number | null {
+  return leadVariation(liquid)?.volumeMl ?? null;
+}
+
+export function liquidNicotineMg(liquid: Liquid): number | null {
+  return leadVariation(liquid)?.nicotineMg ?? null;
+}
+
+export function liquidNicotineType(liquid: Liquid): LiquidVariation["nicotineType"] | null {
+  return leadVariation(liquid)?.nicotineType ?? null;
+}
+
+export function liquidRatio(liquid: Liquid): LiquidVariation["ratio"] {
+  return leadVariation(liquid)?.ratio ?? null;
+}
+
+export function liquidBottle(liquid: Liquid): string | null {
+  return leadVariation(liquid)?.bottle ?? null;
+}
+
+export function liquidAssumedBottleMl(liquid: Liquid): number | null {
+  return leadVariation(liquid)?.assumedBottleMl ?? null;
+}
+
+export function liquidTpd(liquid: Liquid): TpdStatus {
+  return leadVariation(liquid)?.tpd ?? "no-aplica";
+}
+
+export function liquidHasNicotineType(
+  liquid: Liquid,
+  type: LiquidVariation["nicotineType"],
+): boolean {
+  return liquid.variations.some((variation) => variation.nicotineType === type);
+}
+
+export function liquidHasRatio(liquid: Liquid, ratio: LiquidVariation["ratio"]): boolean {
+  return liquid.variations.some((variation) => variation.ratio === ratio);
+}
+
+const FIT_RANK: Record<LiquidFitKind, number> = { evitar: 0, posible: 1, directo: 2 };
+
+function fitVariation(
+  coil: Coil,
+  variation: LiquidVariation,
+  recommendedDraw: Draw[],
+): { fit: LiquidFitKind; reason: string } {
+  if (variation.nicotineMg >= 10 && (coil.draw === "DL" || coil.draw === "RDL")) {
+    return {
+      fit: "evitar",
+      reason: "Graduación alta para una coil de calada abierta (RDL/DL).",
+    };
+  }
+  const parts = ratioParts(variation.ratio);
+  if (parts && parts.vg >= 70 && coil.draw === "MTL") {
+    return {
+      fit: "posible",
+      reason:
+        "El VG alto puede ir justo en un MTL cerrado. Mejor un 50/50 si la cápsula es estrecha.",
+    };
+  }
+  if (recommendedDraw.includes(coil.draw)) {
+    return {
+      fit: "directo",
+      reason: `El formato encaja con un uso ${coil.draw}.`,
+    };
+  }
+  return {
+    fit: "posible",
+    reason: "Se puede usar, pero no es el cruce más natural de formato y calada.",
+  };
 }
 
 export function recommendLiquids(coil: Coil, liquids: Liquid[]): LiquidFit[] {
   if (!coil.refillable) return [];
 
-  return liquids.map((liquid) => {
-    if (liquid.nicotineMg >= 10 && (coil.draw === "DL" || coil.draw === "RDL")) {
-      return {
-        liquid,
-        fit: "evitar" as const,
-        reason: "Graduación alta para una coil de calada abierta (RDL/DL).",
-      };
+  const fits: LiquidFit[] = [];
+  for (const liquid of liquids) {
+    let best: LiquidFit | null = null;
+    for (const variation of liquid.variations) {
+      const evaluation = fitVariation(coil, variation, liquid.recommendedDraw);
+      if (!best || FIT_RANK[evaluation.fit] > FIT_RANK[best.fit]) {
+        best = { liquid, variation, fit: evaluation.fit, reason: evaluation.reason };
+      }
     }
-    if (liquid.ratio === "70/30" && coil.draw === "MTL") {
-      return {
-        liquid,
-        fit: "posible" as const,
-        reason:
-          "El VG alto puede ir justo en un MTL cerrado. Mejor un 50/50 si la cápsula es estrecha.",
-      };
-    }
-    if (liquid.recommendedDraw.includes(coil.draw)) {
-      return {
-        liquid,
-        fit: "directo" as const,
-        reason: `El formato encaja con un uso ${coil.draw}.`,
-      };
-    }
-    return {
-      liquid,
-      fit: "posible" as const,
-      reason: "Se puede usar, pero no es el cruce más natural de formato y calada.",
-    };
-  });
+    if (best) fits.push(best);
+  }
+  return fits;
 }
 
 export function drawsMatch(draw: Draw, recommended: Draw[]): boolean {

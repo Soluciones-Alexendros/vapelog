@@ -10,7 +10,7 @@ import {
   shotsForTarget,
   solveOhm,
 } from "./logic.ts";
-import type { Coil, Device, Liquid } from "./types";
+import type { Coil, Device, Liquid, Ratio } from "./types";
 
 function syntheticDevice(
   overrides: Partial<Device> &
@@ -81,7 +81,10 @@ function syntheticCoil(overrides: Partial<Coil> & Pick<Coil, "slug" | "ohms">): 
   };
 }
 
-function syntheticLiquid(overrides: Partial<Liquid> & Pick<Liquid, "slug" | "ratio">): Liquid {
+function syntheticLiquid(
+  overrides: Partial<Liquid> & Pick<Liquid, "slug"> & { ratio?: Ratio | null },
+): Liquid {
+  const { ratio = null, ...rest } = overrides;
   return {
     domain: "liquid",
     id: overrides.slug,
@@ -98,14 +101,21 @@ function syntheticLiquid(overrides: Partial<Liquid> & Pick<Liquid, "slug" | "rat
     tags: [],
     status: "referenciado",
     flavorIds: [],
-    volumeMl: 50,
-    nicotineMg: 0,
-    nicotineType: "ninguna",
-    bottle: "",
-    assumedBottleMl: null,
     recommendedDraw: ["MTL"],
-    tpd: "si",
-    ...overrides,
+    variations: [
+      {
+        id: "base",
+        label: "50 ml · 0 mg/ml",
+        format: "shortfill",
+        volumeMl: 50,
+        nicotineMg: 0,
+        nicotineType: "ninguna",
+        ratio,
+        bottle: "",
+        tpd: "si",
+      },
+    ],
+    ...rest,
   };
 }
 
@@ -374,5 +384,40 @@ describe("líquidos por coil", () => {
     const [fit] = recommendLiquids(coil, [liquid]);
     assert.equal(fit?.fit, "posible");
     assert.match(fit?.reason ?? "", /VG alto/);
+  });
+
+  it("elige por variación la que mejor encaja con la calada", () => {
+    const coil = coilBySlug("xros-corex-0-4");
+    assert.ok(coil);
+    if (!coil) return;
+    const liquid = syntheticLiquid({
+      slug: "doble-variacion",
+      recommendedDraw: ["MTL", "RDL", "DL"],
+      variations: [
+        {
+          id: "sal-20",
+          label: "20 mg/ml · 10 ml",
+          format: "sales",
+          volumeMl: 10,
+          nicotineMg: 20,
+          nicotineType: "sal",
+          ratio: "50/50",
+          tpd: "si",
+        },
+        {
+          id: "short-0",
+          label: "0 mg/ml · 50 ml",
+          format: "shortfill",
+          volumeMl: 50,
+          nicotineMg: 0,
+          nicotineType: "ninguna",
+          ratio: "70/30",
+          tpd: "si",
+        },
+      ],
+    });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "directo");
+    assert.equal(fit?.variation.id, "short-0");
   });
 });

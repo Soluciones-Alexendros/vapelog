@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { coils, devices, liquids, parts } from "./catalog.ts";
-import { compareFacts, specFacts } from "./specs.ts";
+import { compareFacts, specFacts, variationRows } from "./specs.ts";
 import type { CatalogItem, Domain } from "./types.ts";
 
 function sqlKeys(domain: Domain): string[] {
@@ -52,6 +52,18 @@ describe("ficha plana", () => {
     const ohms = rows.find((row) => row.label === "Resistencia");
     assert.equal(ohms?.values.length, 2);
     assert.ok(ohms?.values.every((value) => value.endsWith("Ω")));
+  });
+
+  it("cada variación de líquido tiene su fila con volumen y graduación", () => {
+    for (const liquid of liquids) {
+      const rows = variationRows(liquid);
+      assert.equal(rows.length, liquid.variations.length);
+      assert.deepEqual(
+        rows.map((row) => row.key),
+        liquid.variations.map((variation) => variation.id),
+      );
+      assert.ok(rows.every((row) => row.display.includes("ml") && row.display.includes("mg/ml")));
+    }
   });
 
   it("la plantilla SQL usa las mismas claves que la ficha", () => {

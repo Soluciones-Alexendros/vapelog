@@ -1,4 +1,4 @@
-import type { Draw } from "./types.ts";
+import type { Draw, Ratio } from "./types.ts";
 
 const UNPUBLISHED = /no publicad|sin dato|no fijad|leer la etiqueta/i;
 
@@ -88,10 +88,14 @@ export function packCount(value: string): number | null {
   return Number(match[1]);
 }
 
-export function ratioParts(ratio: "50/50" | "70/30" | null): { vg: number; pg: number } | null {
-  if (ratio === "50/50") return { vg: 50, pg: 50 };
-  if (ratio === "70/30") return { vg: 70, pg: 30 };
-  return null;
+export function ratioParts(ratio: Ratio | null | undefined): { vg: number; pg: number } | null {
+  if (!ratio) return null;
+  const match = ratio.match(/^\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*$/);
+  if (!match) return null;
+  const vg = Number(match[1]!.replace(",", "."));
+  const pg = Number(match[2]!.replace(",", "."));
+  if (!Number.isFinite(vg) || !Number.isFinite(pg)) return null;
+  return { vg, pg };
 }
 
 export const ohmBands = [

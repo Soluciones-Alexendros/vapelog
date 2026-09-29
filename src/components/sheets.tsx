@@ -25,9 +25,10 @@ import {
   liquids,
   partBySlug,
   parts,
+  variationRange,
 } from "@/data/catalog";
 import { compatibility, partsForDevice, recommendLiquids } from "@/data/logic";
-import { EMPTY, relationRows, specFacts, specGroups } from "@/data/specs";
+import { EMPTY, relationRows, specFacts, specGroups, variationRows } from "@/data/specs";
 import type { CatalogItem, Coil, Confidence, Device, Domain } from "@/data/types";
 import { useCompare } from "@/components/chrome";
 import {
@@ -257,23 +258,39 @@ export function CoilSheet({ slug }: { slug: string }) {
 export function LiquidSheet({ slug }: { slug: string }) {
   const liquid = liquidBySlug(slug);
   if (!liquid) return <Missing />;
+  const range = variationRange(liquid);
+  const spanText = (values: { min: number; max: number }) =>
+    values.min === values.max
+      ? formatPlain(values.min)
+      : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
+  const volumeText = range ? spanText(range.volumeMl) : "Sin dato";
+  const nicotineText = range ? spanText(range.nicotineMg) : "Sin dato";
+  const nicokit = liquid.variations.find(
+    (variation) => variation.nicotineMg === 0 && variation.assumedBottleMl,
+  );
+  const countText =
+    liquid.variations.length === 1 ? "1 variación" : `${liquid.variations.length} variaciones`;
   return (
-    <Sheet item={liquid} fact={`${liquid.volumeMl} ml · ${formatPlain(liquid.nicotineMg)} mg/ml`}>
+    <Sheet item={liquid} fact={`${countText} · ${volumeText} ml · ${nicotineText} mg/ml`}>
       <Ficha item={liquid} />
+      <section className="mt-10">
+        <h2 className="text-2xl text-foreground">Variaciones</h2>
+        <SpecTable rows={variationRows(liquid)} />
+      </section>
       <p className="mt-6 text-sm text-muted-foreground">
         La venta con nicotina en la UE está sujeta a la TPD: como máximo 10 ml y 20 mg/ml por
         envase, con advertencias y notificación previa. Un shortfill a 0 mg puede ser mayor; la
         mezcla resultante tiene que leerse en la calculadora, no asumirse legal por el simple hecho
         de salir de un bote grande.
       </p>
-      {liquid.nicotineMg === 0 && liquid.assumedBottleMl ? (
+      {nicokit ? (
         <Button asChild className="mt-6">
           <Link
             to="/herramientas"
             search={{
               tab: "nicokit",
-              aroma: String(liquid.volumeMl),
-              botella: String(liquid.assumedBottleMl),
+              aroma: String(nicokit.volumeMl),
+              botella: String(nicokit.assumedBottleMl),
             }}
           >
             Abrir en la calculadora de nicokit

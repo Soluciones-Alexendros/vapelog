@@ -9,8 +9,16 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { brandById, coils, devices, liquids, parts, taxonById } from "@/data/catalog";
-import type { Domain } from "@/data/types";
+import {
+  brandById,
+  coils,
+  devices,
+  liquids,
+  parts,
+  taxonById,
+  variationRange,
+} from "@/data/catalog";
+import type { Domain, Liquid } from "@/data/types";
 import { confidenceLabel, domainLabel, formatPlain, itemTpd, tpdLabel } from "@/components/labels";
 import { ProductPhoto } from "@/components/photo";
 import { Button } from "@/components/ui/button";
@@ -28,6 +36,16 @@ interface Row {
 }
 
 const column = createColumnHelper<Row>();
+
+function liquidDetail(item: Liquid): string {
+  const range = variationRange(item);
+  if (!range) return "Sin dato publicado";
+  const span = (values: { min: number; max: number }) =>
+    values.min === values.max
+      ? formatPlain(values.min)
+      : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
+  return `${span(range.volumeMl)} ml · ${span(range.nicotineMg)} mg/ml`;
+}
 
 export function ArchiveTable() {
   const data = useMemo<Row[]>(() => {
@@ -60,7 +78,7 @@ export function ArchiveTable() {
       brand: brandById(item.brandId)?.name ?? item.brandId,
       name: item.name,
       family: taxonById(item.subId)?.es ?? "",
-      detail: `${item.volumeMl} ml · ${formatPlain(item.nicotineMg)} mg/ml`,
+      detail: liquidDetail(item),
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
     }));

@@ -87,18 +87,41 @@ export interface Coil extends ItemBase {
   pack: string;
 }
 
+export type NicotineType = "freebase" | "sal" | "ninguna";
+
+export type LiquidFormat = "libre" | "sales" | "aroma" | "shortfill";
+
+export type Ratio = `${number}/${number}`;
+
+export interface LiquidComposition {
+  vgPct?: number;
+  pgPct?: number;
+  aromaPct?: number;
+  nicotinePct?: number;
+  ingredients?: string[];
+  note?: string;
+}
+
+export interface LiquidVariation {
+  id: string;
+  label: string;
+  format: LiquidFormat;
+  volumeMl: number;
+  nicotineMg: number;
+  nicotineType: NicotineType;
+  ratio: Ratio | null;
+  bottle?: string;
+  assumedBottleMl?: number;
+  tpd?: TpdStatus;
+  composition?: LiquidComposition;
+}
+
 export interface Liquid extends ItemBase {
   domain: "liquid";
   line: string;
   flavorIds: string[];
-  volumeMl: number;
-  nicotineMg: number;
-  nicotineType: "freebase" | "sal" | "ninguna";
-  ratio: "50/50" | "70/30" | null;
-  bottle: string;
-  assumedBottleMl: number | null;
   recommendedDraw: Draw[];
-  tpd: TpdStatus;
+  variations: LiquidVariation[];
 }
 
 export type CatalogItem = Device | Coil | Liquid | Part;
