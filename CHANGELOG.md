@@ -12,6 +12,8 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-29
+
 ### Cambios
 
 - refactor(datos): modelo v3 que separa identidad, clasificación y variación, con géneros de líquido y nombres limpios sin sufijos de formato (#4)
