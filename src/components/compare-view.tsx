@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { coilBySlug, deviceBySlug, liquidBySlug, partBySlug } from "@/data/catalog";
 import { liquidVolumeMl } from "@/data/logic";
-import { batteryMah, packCount, singleMl, weightGrams } from "@/data/measures";
 import { compareFacts, EMPTY, relationRows } from "@/data/specs";
 import type { CatalogItem, Coil, Device, Liquid, Part } from "@/data/types";
 import { useCompare, type CompareRef } from "@/components/chrome";
@@ -210,15 +209,15 @@ function metricValue(item: CatalogItem, key: string): number | null {
   if (item.domain === "device") {
     if (key === "power_max_w") return item.powerMaxW;
     if (key === "power_min_w") return item.powerMinW;
-    if (key === "battery_mah") return batteryMah(item.battery);
-    if (key === "capacity_ml") return singleMl(item.capacity);
-    if (key === "weight_g") return weightGrams(item.weight);
+    if (key === "battery_mah") return item.batteryMah;
+    if (key === "capacity_ml") return item.capacityMl;
+    if (key === "weight_g") return item.weightG;
     return null;
   }
   if (item.domain === "coil") {
     if (key === "watt_max") return item.wattMax;
     if (key === "watt_min") return item.wattMin;
-    if (key === "pack_count") return packCount(item.pack);
+    if (key === "pack_count") return item.packCount;
     return null;
   }
   if (item.domain === "liquid" && key === "volume_ml") return liquidVolumeMl(item);

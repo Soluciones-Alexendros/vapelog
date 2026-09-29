@@ -46,7 +46,9 @@ describe("búsqueda por característica", () => {
           item.domain === "coil" &&
           item.familyId === "tanque" &&
           item.draws.includes("DL") &&
-          /malla|mesh/i.test(`${item.wire} ${item.build}`),
+          /malla|mesh/i.test(
+            `${item.wireKind ?? ""} ${item.wireMaterial ?? ""} ${item.build ?? ""}`,
+          ),
       ),
     );
   });

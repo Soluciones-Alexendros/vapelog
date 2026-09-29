@@ -254,7 +254,7 @@ export function partsForDevice(device: Device, parts: Part[]): Part[] {
   return parts.filter((part) => {
     const platforms = [...device.platformIds, ...device.kitPlatformIds];
     if (part.fitsPlatformIds.some((id) => platforms.includes(id))) return true;
-    if (part.fitsBattery === "18650" && device.battery.includes("18650")) return true;
+    if (part.fitsBattery === "18650" && device.cellType === "18650") return true;
     return false;
   });
 }

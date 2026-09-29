@@ -12,17 +12,9 @@ import {
   taxonById,
 } from "./catalog.ts";
 import { normalize } from "./logic.ts";
-import {
-  batteryKind,
-  ohmBandId,
-  ohmBands,
-  powerBandId,
-  powerBands,
-  ratioParts,
-  wireKind,
-} from "./measures.ts";
+import { ohmBandId, ohmBands, powerBandId, powerBands, ratioParts } from "./measures.ts";
 import type { CatalogItem, Domain, Draw, Ratio } from "./types.ts";
-import { EMPTY, relationRows, specFacts } from "./specs.ts";
+import { EMPTY, powerSummary, relationRows, specFacts } from "./specs.ts";
 
 export type OhmBand = "baja" | "media" | "alta" | "muy";
 export type PowerBand = "baja" | "media" | "alta";
@@ -147,9 +139,9 @@ function blob(item: CatalogItem): string {
   const sub = taxonById(item.subId ?? "")?.es ?? "";
   const specs =
     item.domain === "coil"
-      ? `${item.ohms} ${item.wire} ${item.build} ${item.draws.join(" ")}`
+      ? `${item.ohms} ${item.wireKind ?? ""} ${item.wireMaterial ?? ""} ${item.build ?? ""} ${item.draws.join(" ")}`
       : item.domain === "device"
-        ? `${item.power} ${item.battery} ${item.draws.join(" ")} ${item.connector}`
+        ? `${powerSummary(item)} ${item.batteryKind} ${item.materials ?? ""} ${item.airflow ?? ""} ${item.draws.join(" ")} ${item.connector} ${item.chipset ?? ""}`
         : item.domain === "liquid"
           ? liquidBlob(item)
           : item.spec;
@@ -180,10 +172,10 @@ export function matches(
   }
   if (on("hilo") && search.hilo) {
     if (item.domain !== "coil") return false;
-    const kind = wireKind(item.wire, item.build);
-    if (search.hilo === "malla" && kind !== "malla") return false;
+    const kind = item.wireKind;
+    if (search.hilo === "malla" && kind !== "malla" && kind !== "doble-malla") return false;
     if (search.hilo === "alambre" && kind !== "alambre") return false;
-    if (search.hilo === "ceramica" && kind !== "ceramica") return false;
+    if (search.hilo === "ceramica" && !/ceram|ccell/i.test(item.wireMaterial ?? "")) return false;
   }
   if (on("conector") && search.conector) {
     const ok =
@@ -197,7 +189,7 @@ export function matches(
   if (on("plataforma") && search.plataforma && !platformIds(item).includes(search.plataforma))
     return false;
   if (on("bateria") && search.bateria) {
-    if (item.domain !== "device" || batteryKind(item.battery) !== search.bateria) return false;
+    if (item.domain !== "device" || item.batteryKind !== search.bateria) return false;
   }
   if (on("potencia") && search.potencia) {
     if (

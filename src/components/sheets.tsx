@@ -35,7 +35,14 @@ import {
   type LiquidFit,
   type LiquidFitKind,
 } from "@/data/logic";
-import { EMPTY, relationRows, specFacts, specGroups, variationRows } from "@/data/specs";
+import {
+  EMPTY,
+  powerSummary,
+  relationRows,
+  specFacts,
+  specGroups,
+  variationRows,
+} from "@/data/specs";
 import type { CatalogItem, Coil, CompatKind, Device, Domain } from "@/data/types";
 import { useCompare } from "@/components/chrome";
 import {
@@ -116,7 +123,6 @@ const PART_SECTIONS: SheetSection[] = [
 const heroKeys: Record<Domain, string[]> = {
   device: [
     "power_max_w",
-    "power_note",
     "battery_mah",
     "battery_kind",
     "chipset",
@@ -133,7 +139,6 @@ const heroKeys: Record<Domain, string[]> = {
 
 const chipIcons: Record<string, LucideIcon> = {
   power_max_w: Zap,
-  power_note: Zap,
   battery_mah: Battery,
   battery_kind: Battery,
   chipset: CircuitBoard,
@@ -189,7 +194,7 @@ function DeviceBody({ device }: { device: Device }) {
     <Sheet
       item={device}
       sections={DEVICE_SECTIONS}
-      fact={[device.power, device.draws.join(" · ")].filter(Boolean).join(" · ")}
+      fact={[powerSummary(device), device.draws.join(" · ")].filter(Boolean).join(" · ")}
     >
       <Ficha item={device} />
 

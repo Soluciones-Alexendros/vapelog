@@ -35,6 +35,17 @@ export interface RelationRow {
   value: string;
 }
 
+export function powerSummary(device: Device): string {
+  const min = device.powerMinW;
+  const max = device.powerMaxW;
+  if (min != null && max != null) {
+    return min === max ? `${formatPlain(min)} W` : `${formatPlain(min)}–${formatPlain(max)} W`;
+  }
+  if (max != null) return `Hasta ${formatPlain(max)} W`;
+  if (min != null) return `Desde ${formatPlain(min)} W`;
+  return "";
+}
+
 export function specFacts(item: CatalogItem): SpecFact[] {
   return defsFor(item.domain).map((row) => {
     const value = row.read(item);

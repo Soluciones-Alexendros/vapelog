@@ -54,24 +54,32 @@ interface ItemBase {
 
 export interface Device extends ItemBase {
   domain: "device";
-  battery: string;
-  charge: string;
-  power: string;
+  batteryKind: "integrada" | "externa";
+  batteryMah: number | null;
+  cellCount: number | null;
+  cellType: "18650" | "21700" | null;
+  chargePort: "USB-C" | "Micro-USB" | null;
+  chargeAmps: number | null;
+  chargeVolts: number | null;
+  capacityMl: number | null;
+  capacityTpdMl: number | null;
+  heightMm: number | null;
+  widthMm: number | null;
+  depthMm: number | null;
+  weightG: number | null;
+  displayKind: "TFT" | "Táctil" | "HD" | "LED" | "RGB" | null;
+  displaySizeIn: number | null;
   powerMinW: number | null;
   powerMaxW: number | null;
   ohmMin: number | null;
   ohmMax: number | null;
   chipset: string | null;
   modes: string[];
-  display: string | null;
   connector: "510" | "propietario";
   platformIds: string[];
   kitPlatformIds: string[];
-  materials: string;
-  airflow: string;
-  capacity: string | null;
-  dimensions: string | null;
-  weight: string | null;
+  materials: string | null;
+  airflow: string | null;
   tpd: TpdStatus;
   year: number | null;
   draws: Draw[];
@@ -83,12 +91,13 @@ export interface Coil extends ItemBase {
   ohms: number;
   wattMin: number | null;
   wattMax: number | null;
-  wire: string;
-  build: string;
+  wireKind: "malla" | "doble-malla" | "alambre" | null;
+  wireMaterial: string | null;
+  build: "malla" | "doble-malla" | "capsula" | null;
   draws: Draw[];
   connector: "510" | "propietario";
   refillable: boolean;
-  pack: string;
+  packCount: number | null;
   tpd?: TpdStatus;
 }
 

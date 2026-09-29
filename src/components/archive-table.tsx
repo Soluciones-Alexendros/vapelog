@@ -20,6 +20,7 @@ import {
   variationRange,
 } from "@/data/catalog";
 import type { Domain, Liquid, TpdStatus } from "@/data/types";
+import { powerSummary } from "@/data/specs";
 import {
   confidenceLabel,
   domainLabel,
@@ -72,7 +73,7 @@ export function ArchiveTable() {
       brand: brandById(item.brandId)?.name ?? item.brandId,
       name: item.name,
       genre: taxonById(item.subId ?? "")?.es ?? "",
-      detail: item.power,
+      detail: powerSummary(item) || "Sin dato publicado",
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
       tpdStatus: itemTpd(item),

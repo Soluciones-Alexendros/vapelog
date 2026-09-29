@@ -1,17 +1,6 @@
 import { genreById, liquidTpd, taxonById } from "./catalog.ts";
 import { confidenceLabel, formatPlain, tpdLabel } from "../components/labels.ts";
-import {
-  batteryKind,
-  batteryMah,
-  cellFormat,
-  chargePort,
-  dimensionsMm,
-  packCount,
-  publishedText,
-  singleMl,
-  weightGrams,
-  wireKind,
-} from "./measures.ts";
+import { publishedText } from "./measures.ts";
 import type { CatalogItem, Coil, Device, Domain, Draw, Liquid, Part } from "./types.ts";
 
 export interface SpecDef {
@@ -127,20 +116,25 @@ export const specDefs: SpecDef[] = [
     publishedText(device(item)?.materials),
   ),
   def("device", "height_mm", "cuerpo", "Cuerpo", "Alto", "mm", "number", false, 50, (item) =>
-    num(dimensionsMm(device(item)?.dimensions)?.height ?? null),
+    num(device(item)?.heightMm ?? null),
   ),
   def("device", "width_mm", "cuerpo", "Cuerpo", "Ancho", "mm", "number", false, 60, (item) =>
-    num(dimensionsMm(device(item)?.dimensions)?.width ?? null),
+    num(device(item)?.widthMm ?? null),
   ),
   def("device", "depth_mm", "cuerpo", "Cuerpo", "Fondo", "mm", "number", false, 70, (item) =>
-    num(dimensionsMm(device(item)?.dimensions)?.depth ?? null),
+    num(device(item)?.depthMm ?? null),
   ),
   def("device", "weight_g", "cuerpo", "Cuerpo", "Peso", "g", "number", false, 80, (item) =>
-    num(weightGrams(device(item)?.weight)),
+    num(device(item)?.weightG ?? null),
   ),
-  def("device", "display", "cuerpo", "Cuerpo", "Pantalla", null, "text", false, 90, (item) =>
-    publishedText(device(item)?.display),
-  ),
+  def("device", "display", "cuerpo", "Cuerpo", "Pantalla", null, "text", false, 90, (item) => {
+    const row = device(item);
+    if (!row) return null;
+    const parts: string[] = [];
+    if (row.displayKind) parts.push(row.displayKind);
+    if (row.displaySizeIn != null) parts.push(`${formatPlain(row.displaySizeIn)} ″`);
+    return parts.length ? parts.join(" · ") : null;
+  }),
   def("device", "chipset", "cuerpo", "Cuerpo", "Chip", null, "text", false, 100, (item) =>
     publishedText(device(item)?.chipset),
   ),
@@ -159,14 +153,10 @@ export const specDefs: SpecDef[] = [
     true,
     120,
     (item) => {
-      const battery = device(item)?.battery;
-      return battery
-        ? batteryKind(battery) === "integrada"
-          ? "Integrada"
-          : batteryKind(battery) === "externa"
-            ? "Celda externa"
-            : null
-        : null;
+      const kind = device(item)?.batteryKind;
+      if (kind === "integrada") return "Integrada";
+      if (kind === "externa") return "Celda externa";
+      return null;
     },
   ),
   def(
@@ -179,47 +169,51 @@ export const specDefs: SpecDef[] = [
     "number",
     true,
     130,
-    (item) => num(device(item) ? batteryMah(device(item)!.battery) : null),
+    (item) => num(device(item)?.batteryMah ?? null),
     sheetConfidence,
-  ),
-  def("device", "cell", "alimentacion", "Alimentación", "Celda", null, "enum", true, 140, (item) =>
-    device(item) ? cellFormat(device(item)!.battery) : null,
   ),
   def(
     "device",
-    "charge_port",
+    "cell",
     "alimentacion",
     "Alimentación",
-    "Puerto de carga",
+    "Celda",
     null,
     "enum",
     true,
+    140,
+    (item) => {
+      const row = device(item);
+      if (!row) return null;
+      if (row.cellCount != null && row.cellType != null)
+        return `${row.cellCount} × ${row.cellType}`;
+      if (row.cellCount != null) return String(row.cellCount);
+      return row.cellType;
+    },
+  ),
+  def(
+    "device",
+    "charge_rate",
+    "alimentacion",
+    "Alimentación",
+    "Carga",
+    null,
+    "text",
+    false,
     160,
-    (item) => (device(item) ? chargePort(device(item)!.charge) : null),
-  ),
-  def(
-    "device",
-    "charge_note",
-    "alimentacion",
-    "Alimentación",
-    "Frase de carga",
-    null,
-    "text",
-    false,
-    170,
-    (item) => publishedText(device(item)?.charge),
-  ),
-  def(
-    "device",
-    "power_note",
-    "alimentacion",
-    "Alimentación",
-    "Potencia publicada",
-    null,
-    "text",
-    false,
-    180,
-    (item) => publishedText(device(item)?.power),
+    (item) => {
+      const row = device(item);
+      if (!row || row.chargePort == null) return null;
+      const rate =
+        row.chargeVolts != null && row.chargeAmps != null
+          ? `${formatPlain(row.chargeVolts)} V / ${formatPlain(row.chargeAmps)} A`
+          : row.chargeVolts != null
+            ? `${formatPlain(row.chargeVolts)} V`
+            : row.chargeAmps != null
+              ? `${formatPlain(row.chargeAmps)} A`
+              : null;
+      return rate ? `${row.chargePort} · ${rate}` : row.chargePort;
+    },
   ),
   def(
     "device",
@@ -295,20 +289,21 @@ export const specDefs: SpecDef[] = [
     "number",
     true,
     240,
-    (item) => num(singleMl(device(item)?.capacity)),
+    (item) => num(device(item)?.capacityMl ?? null),
     sheetConfidence,
   ),
   def(
     "device",
-    "capacity_note",
+    "capacity_tpd_ml",
     "atomizador",
     "Atomizador",
-    "Frase de depósito",
-    null,
-    "text",
-    false,
+    "Depósito TPD",
+    "ml",
+    "number",
+    true,
     250,
-    (item) => publishedText(device(item)?.capacity),
+    (item) => num(device(item)?.capacityTpdMl ?? null),
+    sheetConfidence,
   ),
   def("device", "airflow", "atomizador", "Atomizador", "Aire", null, "text", false, 260, (item) =>
     publishedText(device(item)?.airflow),
@@ -357,21 +352,13 @@ export const specDefs: SpecDef[] = [
     (item) => {
       const row = coil(item);
       if (!row) return null;
-      const kind = wireKind(row.wire, row.build);
-      return kind ? { malla: "Malla", alambre: "Alambre", ceramica: "Cerámica" }[kind] : null;
+      const kind =
+        row.wireKind == null
+          ? null
+          : { malla: "Malla", "doble-malla": "Doble malla", alambre: "Alambre" }[row.wireKind];
+      if (kind && row.wireMaterial) return `${kind} · ${row.wireMaterial}`;
+      return kind ?? publishedText(row.wireMaterial);
     },
-  ),
-  def(
-    "coil",
-    "wire_note",
-    "construccion",
-    "Construcción",
-    "Material del hilo",
-    null,
-    "text",
-    false,
-    40,
-    (item) => publishedText(coil(item)?.wire),
   ),
   def(
     "coil",
@@ -383,7 +370,11 @@ export const specDefs: SpecDef[] = [
     "text",
     false,
     50,
-    (item) => publishedText(coil(item)?.build),
+    (item) => {
+      const build = coil(item)?.build;
+      if (!build) return null;
+      return { malla: "Malla", "doble-malla": "Doble malla", capsula: "Cápsula" }[build];
+    },
   ),
   def("coil", "draw", "construccion", "Construcción", "Calada", null, "enum", true, 60, (item) =>
     drawText(coil(item)?.draws),
@@ -422,19 +413,7 @@ export const specDefs: SpecDef[] = [
     "number",
     false,
     90,
-    (item) => num(coil(item) ? packCount(coil(item)!.pack) : null),
-  ),
-  def(
-    "coil",
-    "pack_note",
-    "variante",
-    "Variante de empaque",
-    "Frase de empaque",
-    null,
-    "text",
-    false,
-    100,
-    (item) => publishedText(coil(item)?.pack),
+    (item) => num(coil(item)?.packCount ?? null),
   ),
   def(
     "coil",
