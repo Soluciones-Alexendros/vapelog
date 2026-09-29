@@ -12,6 +12,13 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-29
+
+### Cambios
+
+- feat(herramientas): desplegable de ohmios con potencia recomendada y revisión de cruces
+- refactor(catalogo): frases crudas a campos estructurados con datos oficiales
+
 ## [0.6.0] - 2026-09-29
 
 ### Cambios
