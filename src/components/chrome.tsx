@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Scale } from "lucide-react";
 import type { Domain } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -125,57 +126,63 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background">
-      <div className="mx-auto max-w-6xl px-4 pt-3">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="min-h-11 shrink-0 leading-none">
-            <span className="block text-xs tracking-widest text-primary uppercase">Catálogo</span>
-            <span className="font-display text-2xl text-foreground">Vapelog</span>
-          </Link>
-          <div className="ml-auto flex items-center gap-1">
-            <ThemeToggle />
-            <Link
-              to="/comparar"
-              className="inline-flex min-h-11 items-center px-3 text-sm text-muted-foreground hover:text-foreground"
-            >
-              Comparador
-              {compare.items.length > 0 ? (
-                <span className="ml-2 tabular-nums text-primary">{compare.items.length}</span>
-              ) : null}
-            </Link>
-          </div>
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 lg:gap-4">
+        <Link to="/" className="flex min-h-11 shrink-0 items-center">
+          <img
+            src="/logo.svg"
+            alt="Vapelog"
+            width={128}
+            height={32}
+            className="h-6 w-auto sm:h-8"
+          />
+        </Link>
+        <div className="flex min-w-0 flex-1 items-center gap-x-5 overflow-x-auto">
+          <nav className="flex shrink-0 items-center gap-x-4" aria-label="Catálogo">
+            {catalogNav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={active(item.to, item.exact) ? "page" : undefined}
+                className={
+                  active(item.to, item.exact)
+                    ? "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-primary text-base font-medium text-foreground"
+                    : "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary focus-visible:border-primary"
+                }
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <nav className="flex shrink-0 items-center gap-x-4" aria-label="Otras secciones">
+            {secondaryNav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={active(item.to, item.exact) ? "page" : undefined}
+                className={
+                  active(item.to, item.exact)
+                    ? "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground underline decoration-border underline-offset-4"
+                    : "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+                }
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </div>
-        <nav className="mt-1 flex flex-wrap gap-x-5" aria-label="Catálogo">
-          {catalogNav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              aria-current={active(item.to, item.exact) ? "page" : undefined}
-              className={
-                active(item.to, item.exact)
-                  ? "inline-flex min-h-11 items-center border-b-2 border-primary text-base font-medium text-foreground"
-                  : "inline-flex min-h-11 items-center border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary"
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <nav className="flex flex-wrap gap-x-4 pb-1" aria-label="Otras secciones">
-          {secondaryNav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              aria-current={active(item.to, item.exact) ? "page" : undefined}
-              className={
-                active(item.to, item.exact)
-                  ? "inline-flex min-h-11 items-center text-sm text-muted-foreground underline decoration-border underline-offset-4"
-                  : "inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-muted-foreground"
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex shrink-0 items-center gap-1">
+          <ThemeToggle />
+          <Link
+            to="/comparar"
+            className="inline-flex min-h-11 items-center gap-1 px-3 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+          >
+            <Scale className="size-4 sm:hidden" aria-hidden />
+            <span className="sr-only sm:not-sr-only">Comparador</span>
+            {compare.items.length > 0 ? (
+              <span className="tabular-nums text-primary">{compare.items.length}</span>
+            ) : null}
+          </Link>
+        </div>
       </div>
     </header>
   );
@@ -201,11 +208,14 @@ function Footer() {
           ))}
           <Link
             to="/archivo"
-            className="min-h-11 text-muted-foreground hover:text-muted-foreground"
+            className="min-h-11 text-muted-foreground hover:text-foreground focus-visible:text-foreground"
           >
             Tabla
           </Link>
-          <Link to="/modelo" className="min-h-11 text-muted-foreground hover:text-muted-foreground">
+          <Link
+            to="/modelo"
+            className="min-h-11 text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+          >
             Modelo
           </Link>
         </nav>

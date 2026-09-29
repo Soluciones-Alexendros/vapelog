@@ -12,8 +12,10 @@
 
 Vapelog es una aplicación SSR con **TanStack Start** (Vite + React Router)
 que sirve un catálogo tipado en TypeScript (`src/data/`). Las fichas se
-renderizan en el cliente/SSR desde datos en memoria; las fotos viven en
-`public/catalog/`. No hay base de datos en runtime ni autenticación.
+renderizan en el cliente/SSR desde datos en memoria; las imágenes fuente viven
+en `assets/catalog/` (tracked, no se sirven) y sus variantes webp/avif generadas
+en `public/catalog/` (regenerar con `pnpm run images`). No hay base de datos en
+runtime ni autenticación.
 
 ## Mapa
 

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "@fontsource-variable/public-sans/index.css";
+@import "@fontsource-variable/fraunces/standard.css";
 
 :root {
   --background: oklch(0.985 0.006 85);
@@ -17,21 +19,39 @@
   --accent-foreground: oklch(0.28 0.03 70);
   --destructive: oklch(0.48 0.18 25);
   --destructive-foreground: oklch(0.99 0.01 95);
-  --border: oklch(0.55 0.025 80);
-  --input: oklch(0.55 0.025 80);
+  --border: oklch(0.88 0.015 80);
+  --border-strong: oklch(0.62 0.03 75);
+  --input: oklch(0.62 0.03 75);
   --ring: oklch(0.42 0.07 210);
+  --success: oklch(0.5 0.12 155);
+  --success-foreground: oklch(0.99 0.01 95);
+  --warning: oklch(0.55 0.12 75);
+  --warning-foreground: oklch(0.99 0.01 95);
+  --info: oklch(0.5 0.11 245);
+  --info-foreground: oklch(0.99 0.01 95);
+  --surface-1: oklch(0.985 0.006 85);
+  --surface-2: oklch(0.995 0.004 85);
+  --surface-3: oklch(0.998 0.004 72);
   --chart-1: oklch(0.62 0.14 62);
   --chart-2: oklch(0.55 0.1 210);
   --chart-3: oklch(0.5 0.08 145);
   --chart-4: oklch(0.58 0.12 25);
   --chart-5: oklch(0.5 0.06 300);
   --radius: 0.375rem;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --font-sans: "Public Sans", "Segoe UI", sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --shadow-1: 0 1px 2px 0 oklch(0.25 0.03 60 / 0.05), 0 1px 3px 0 oklch(0.25 0.03 60 / 0.04);
+  --shadow-2: 0 2px 6px 0 oklch(0.25 0.03 60 / 0.07), 0 2px 4px -2px oklch(0.25 0.03 60 / 0.05);
+  --shadow-3:
+    0 10px 24px -6px oklch(0.25 0.03 60 / 0.12), 0 4px 10px -2px oklch(0.25 0.03 60 / 0.06);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 400ms;
+  --dur-4: 700ms;
+  --smoke-rgb: 120 108 92;
+  --smoke-alpha: 0.1;
+  --font-sans: "Public Sans Variable", "Segoe UI", sans-serif;
+  --font-display: "Fraunces Variable", Georgia, serif;
 }
 
 .dark {
@@ -51,14 +71,26 @@
   --accent-foreground: oklch(0.96 0.012 95);
   --destructive: oklch(0.56 0.16 25);
   --destructive-foreground: oklch(0.99 0.01 95);
-  --border: oklch(0.55 0.025 80);
-  --input: oklch(0.55 0.025 80);
+  --border: oklch(0.3 0.015 80);
+  --border-strong: oklch(0.58 0.03 75);
+  --input: oklch(0.58 0.03 75);
   --ring: oklch(0.88 0.06 210);
+  --success: oklch(0.72 0.14 155);
+  --success-foreground: oklch(0.2 0.03 150);
+  --warning: oklch(0.78 0.13 80);
+  --warning-foreground: oklch(0.25 0.04 75);
+  --info: oklch(0.72 0.11 245);
+  --info-foreground: oklch(0.2 0.03 245);
+  --surface-1: oklch(0.16 0.012 80);
+  --surface-2: oklch(0.22 0.014 80);
+  --surface-3: oklch(0.27 0.012 72);
   --chart-1: oklch(0.72 0.15 62);
   --chart-2: oklch(0.7 0.1 210);
   --chart-3: oklch(0.68 0.1 145);
   --chart-4: oklch(0.68 0.14 25);
   --chart-5: oklch(0.65 0.08 300);
+  --smoke-rgb: 200 196 188;
+  --smoke-alpha: 0.14;
 }
 
 @theme inline {
@@ -79,20 +111,72 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius: var(--radius);
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
+  --radius-sm: calc(var(--radius) - 0.125rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.125rem);
+  --radius-xl: calc(var(--radius) + 0.375rem);
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+  --animate-accordion-down: accordion-down var(--dur-2) var(--ease-out);
+  --animate-accordion-up: accordion-up var(--dur-2) var(--ease-out);
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* Tailwind v4 trata `duration-<número>` como valor literal (número → ms) y
+   ignora las claves `--duration-<número>` del tema: el alias al token solo es
+   posible como utilidad personalizada. Así `duration-2` == `--dur-2` (200 ms)
+   y sigue el override de `prefers-reduced-motion` vía la custom property. */
+@utility duration-1 {
+  transition-duration: var(--dur-1);
+}
+
+@utility duration-2 {
+  transition-duration: var(--dur-2);
+}
+
+@utility duration-3 {
+  transition-duration: var(--dur-3);
+}
+
+@utility duration-4 {
+  transition-duration: var(--dur-4);
 }
 
 @layer base {
@@ -121,6 +205,19 @@
     line-height: 1.5;
   }
 
+  /* Fallback estático del humo (SSR y prefers-reduced-motion);
+     la capa Canvas de F5 lo sustituye cuando los efectos están activos. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -11;
+    pointer-events: none;
+    background:
+      radial-gradient(52% 42% at 18% 8%, rgb(var(--smoke-rgb) / 0.1), transparent 72%),
+      radial-gradient(46% 38% at 88% 92%, rgb(var(--smoke-rgb) / 0.08), transparent 72%);
+  }
+
   h1,
   h2,
   h3 {
@@ -130,8 +227,25 @@
     font-weight: 560;
   }
 
+  h1 {
+    font-size: clamp(2rem, 1.5rem + 2.5vw, 3rem);
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2.25rem);
+  }
+
+  h3 {
+    font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  }
+
   p {
     text-wrap: pretty;
+  }
+
+  /* Datos tabulados: cifras alineadas en tablas y fichas de especificaciones. */
+  table {
+    font-variant-numeric: tabular-nums;
   }
 
   button:not(:disabled),
@@ -171,58 +285,6 @@
     width: 100%;
   }
 
-  @media (prefers-contrast: more) {
-    :root {
-      --foreground: oklch(0.12 0.01 80);
-      --muted-foreground: oklch(0.28 0.02 80);
-      --border: oklch(0.55 0.03 80);
-      --background: oklch(1 0 0);
-      --card: oklch(1 0 0);
-    }
-
-    .dark {
-      --foreground: oklch(0.98 0.008 95);
-      --muted-foreground: oklch(0.9 0.015 95);
-      --border: oklch(0.78 0.02 90);
-      --background: oklch(0.12 0.008 80);
-      --card: oklch(0.16 0.01 80);
-    }
-  }
-
-  @media (forced-colors: active) {
-    :root,
-    .dark {
-      --background: Canvas;
-      --card: Canvas;
-      --popover: Canvas;
-      --muted: Canvas;
-      --secondary: Canvas;
-      --accent: Canvas;
-      --foreground: CanvasText;
-      --card-foreground: CanvasText;
-      --popover-foreground: CanvasText;
-      --muted-foreground: CanvasText;
-      --secondary-foreground: CanvasText;
-      --accent-foreground: CanvasText;
-      --primary: LinkText;
-      --primary-foreground: Canvas;
-      --ring: Highlight;
-      --destructive: LinkText;
-      --destructive-foreground: Canvas;
-      --border: CanvasText;
-      --input: CanvasText;
-    }
-
-    button,
-    a,
-    input,
-    select,
-    textarea {
-      forced-color-adjust: auto;
-      border: 1px solid CanvasText;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -230,5 +292,83 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/* Los bloques de tokens de alto contraste y colores forzados viven fuera de
+   @layer base: las variables del :root plano (sin capa) tienen mayor
+   prioridad que cualquier regla en capa y estos overrides deben ganarles. */
+@media (prefers-contrast: more) {
+  :root {
+    --foreground: oklch(0.12 0.01 80);
+    --muted-foreground: oklch(0.28 0.02 80);
+    --border: oklch(0.55 0.03 80);
+    --border-strong: oklch(0.45 0.03 80);
+    --background: oklch(1 0 0);
+    --card: oklch(1 0 0);
+    --surface-1: oklch(1 0 0);
+    --surface-2: oklch(1 0 0);
+    --surface-3: oklch(1 0 0);
+  }
+
+  .dark {
+    --foreground: oklch(0.98 0.008 95);
+    --muted-foreground: oklch(0.9 0.015 95);
+    --border: oklch(0.78 0.02 90);
+    --border-strong: oklch(0.75 0.03 90);
+    --background: oklch(0.12 0.008 80);
+    --card: oklch(0.16 0.01 80);
+    --surface-1: oklch(0.12 0.008 80);
+    --surface-2: oklch(0.16 0.01 80);
+    --surface-3: oklch(0.2 0.012 80);
+  }
+}
+
+@media (forced-colors: active) {
+  :root,
+  .dark {
+    --background: Canvas;
+    --card: Canvas;
+    --popover: Canvas;
+    --muted: Canvas;
+    --secondary: Canvas;
+    --accent: Canvas;
+    --surface-1: Canvas;
+    --surface-2: Canvas;
+    --surface-3: Canvas;
+    --foreground: CanvasText;
+    --card-foreground: CanvasText;
+    --popover-foreground: CanvasText;
+    --muted-foreground: CanvasText;
+    --secondary-foreground: CanvasText;
+    --accent-foreground: CanvasText;
+    --primary: LinkText;
+    --primary-foreground: Canvas;
+    --ring: Highlight;
+    --destructive: LinkText;
+    --destructive-foreground: Canvas;
+    --border: CanvasText;
+    --border-strong: CanvasText;
+    --input: CanvasText;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    forced-color-adjust: auto;
+    border: 1px solid CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0.01ms;
+    --dur-2: 0.01ms;
+    --dur-3: 0.01ms;
+    --dur-4: 0.01ms;
+    --ease-out: linear;
+    --ease-in-out: linear;
   }
 }

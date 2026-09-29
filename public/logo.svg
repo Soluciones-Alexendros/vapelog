@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 32" role="img" aria-label="Vapelog">
+  <title>Vapelog</title>
+  <g transform="translate(0 0)">
+    <path
+      d="M8 7 L16 22.5 L24 7"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="3.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M16 21.5 c0.3 3.5 3 5.6 5.9 4.7 c2.3 -0.7 3.2 -3.3 1.9 -5 c-1.1 -1.5 -3.3 -1.4 -4.2 0.3 c-0.6 1.1 0 2.3 1.1 2.6"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.6"
+    />
+  </g>
+  <text
+    x="38"
+    y="23.5"
+    fill="currentColor"
+    font-family="Public Sans Variable, Public Sans, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="21"
+    font-weight="600"
+    letter-spacing="-0.4"
+  >Vapelog</text>
+</svg>

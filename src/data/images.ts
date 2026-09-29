@@ -1,4 +1,10 @@
-/** Fotos de producto en /public/catalog. La clave es el slug de la ficha. */
+import { catalogImageManifest } from "./images.gen";
+
+/**
+ * Fotos de producto: slug de la ficha → ruta del original. Los originales viven
+ * en assets/catalog (fuera del bundle público); aquí solo se conserva su ruta
+ * para derivar la clave del manifiesto de variantes.
+ */
 const catalogImages: Record<string, string> = {
   "geekvape-aegis-legend-2": "/catalog/geekvape-aegis-legend-2.jpg",
   "geekvape-b-0-15": "/catalog/geekvape-b-0-15.png",
@@ -96,6 +102,44 @@ const catalogImages: Record<string, string> = {
   "xros-corex-1-2": "/catalog/xros-corex-1-2.png",
 };
 
+export interface CatalogImageVariant {
+  width: number;
+  src: string;
+  bytes: number;
+}
+
+export interface CatalogImage {
+  width: number;
+  height: number;
+  variants: CatalogImageVariant[];
+  original: string;
+}
+
+export function productImage(slug: string): CatalogImage | undefined {
+  const original = catalogImages[slug];
+  if (!original) return undefined;
+  const file = original.slice(original.lastIndexOf("/") + 1);
+  const entry = catalogImageManifest[file];
+  if (!entry) return undefined;
+  return {
+    width: entry.width,
+    height: entry.height,
+    variants: entry.variants,
+    original,
+  };
+}
+
+export function productImageSource(slug: string): string | undefined {
+  const image = productImage(slug);
+  if (!image) return undefined;
+  const webp = image.variants.filter((variant) => variant.src.endsWith(".webp"));
+  const pool = webp.length > 0 ? webp : image.variants;
+  return pool.reduce<CatalogImageVariant | undefined>(
+    (best, variant) => (!best || variant.width > best.width ? variant : best),
+    undefined,
+  )?.src;
+}
+
 export function catalogImage(slug: string): string | undefined {
-  return catalogImages[slug];
+  return productImageSource(slug);
 }

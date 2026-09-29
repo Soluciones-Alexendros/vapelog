@@ -1,13 +1,24 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
 import { exampleCount, exampleQueries } from "@/data/search";
-import { coils, devices, liquids, parts } from "@/data/catalog";
+import { brandById, coils, devices, liquids, parts } from "@/data/catalog";
+import type { CatalogItem } from "@/data/types";
+import { domainLabel, domainPath } from "@/components/labels";
+import { ProductPhoto } from "@/components/photo";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 export const Route = createFileRoute("/")({ component: Home });
+
+const latestPosts = [...blogPosts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
+
+const highlights: CatalogItem[] = [devices[0], coils[0], liquids[0], parts[0]].filter(
+  (item): item is CatalogItem => item != null,
+);
 
 function Home() {
   const navigate = useNavigate();
@@ -50,6 +61,76 @@ function Home() {
           text="La celda que el mod no trae, y la boquilla que en un pod no se vende suelta."
         />
       </ul>
+
+      <section className="mt-14">
+        <h2 className="text-lg text-muted-foreground">Novedades</h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Lo último que se publica en el blog y una ficha por dominio para entrar al archivo.
+          Vapelog no guarda fecha de alta de cada ficha, así que aquí no se finge un orden de
+          novedad.
+        </p>
+
+        {latestPosts.length > 0 ? (
+          <ul className="mt-6 grid gap-3 md:grid-cols-2">
+            {latestPosts.map((post) => (
+              <li key={post.slug}>
+                <Link
+                  to="/blog/$slug"
+                  params={{ slug: post.slug }}
+                  className="flex h-full flex-col rounded-lg border border-border bg-surface-2 p-4 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
+                >
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge variant="muted">{categoryLabel(post.category)}</Badge>
+                    <time
+                      dateTime={post.date}
+                      className="text-xs tracking-widest text-muted-foreground uppercase tabular-nums"
+                    >
+                      {formatPostDate(post.date)}
+                    </time>
+                  </div>
+                  <h3 className="mt-3 text-lg text-foreground">{post.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{post.summary}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {highlights.length > 0 ? (
+          <div className="mt-8">
+            <h3 className="text-base text-muted-foreground">Una ficha por dominio</h3>
+            <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {highlights.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    to={`${domainPath(item.domain)}/$slug`}
+                    params={{ slug: item.slug }}
+                    className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-surface-2 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
+                  >
+                    {item.domain === "device" || item.domain === "coil" ? (
+                      <ProductPhoto slug={item.slug} alt={item.name} frame="card" missing="note" />
+                    ) : null}
+                    <div className="flex flex-1 flex-col p-3">
+                      <p className="text-xs tracking-widest text-primary uppercase">
+                        {domainLabel(item.domain)} · {brandById(item.brandId)?.name}
+                      </p>
+                      <p className="mt-2 text-base text-foreground">{item.name}</p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-sm">
+              <Link
+                to="/archivo"
+                className="text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+              >
+                Ver la tabla completa del archivo
+              </Link>
+            </p>
+          </div>
+        ) : null}
+      </section>
 
       <Separator className="mt-14" />
       <section className="mt-8">

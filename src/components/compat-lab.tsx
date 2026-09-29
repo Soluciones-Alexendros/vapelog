@@ -1,7 +1,24 @@
 import { Link } from "@tanstack/react-router";
 import { coilBySlug, coils, deviceBySlug, devices, liquids } from "@/data/catalog";
-import { compatibility, recommendLiquids } from "@/data/logic";
-import { formatPlain } from "@/components/labels";
+import { compatibility, recommendLiquids, type LiquidFit, type LiquidFitKind } from "@/data/logic";
+import {
+  compatLabel,
+  compatTone,
+  fitLabel,
+  fitTone,
+  formatPlain,
+  toneBorderClass,
+  toneTextClass,
+} from "@/components/labels";
+import { ProductPhoto } from "@/components/photo";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/cn";
 
 export interface CompatSearch {
   device?: string;
@@ -14,13 +31,6 @@ export function parseCompatSearch(search: Record<string, unknown>): CompatSearch
     coil: typeof search.coil === "string" ? search.coil : undefined,
   };
 }
-
-const kindLabel = {
-  nativa: "Encaja en la plataforma",
-  kit: "Encaja en el tanque del kit",
-  electrica: "Solo cruce eléctrico",
-  no: "No encaja",
-} as const;
 
 export function CompatLab({
   search,
@@ -36,6 +46,9 @@ export function CompatLab({
   const coil = coilBySlug(coilSlug);
   const result = device && coil ? compatibility(device, coil) : null;
   const fits = coil ? recommendLiquids(coil, liquids) : [];
+  const byKind = groupFits(fits);
+  const total = fits.length;
+  const tone = result ? compatTone(result.kind) : "muted";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -81,18 +94,58 @@ export function CompatLab({
           </select>
         </div>
       </form>
+
       {device && coil && result ? (
-        <section className="border border-border bg-card mt-6 rounded-lg p-5">
-          <p className="text-xs font-medium tracking-widest text-primary uppercase">
-            {kindLabel[result.kind]}
+        <section
+          className={cn("mt-6 rounded-lg border bg-surface-2 p-5 shadow-1", toneBorderClass(tone))}
+        >
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3">
+              <ProductPhoto slug={device.slug} alt={device.name} frame="thumb" missing="note" />
+              <span className="text-muted-foreground" aria-hidden>
+                ×
+              </span>
+              <ProductPhoto slug={coil.slug} alt={coil.name} frame="thumb" missing="note" />
+            </div>
+            <h2 className="min-w-0 flex-1 text-2xl text-foreground">
+              {device.name}{" "}
+              <span className="text-muted-foreground" aria-hidden>
+                ×
+              </span>{" "}
+              {coil.name}
+            </h2>
+            <Badge
+              variant="outline"
+              className={cn("border", toneBorderClass(tone), toneTextClass(tone))}
+            >
+              {compatLabel(result.kind)}
+            </Badge>
+          </div>
+          <p
+            className={cn(
+              "mt-4 text-xs font-medium tracking-widest uppercase",
+              toneTextClass(tone),
+            )}
+          >
+            {compatLabel(result.kind)}
           </p>
-          <h2 className="mt-2 text-3xl text-foreground">
-            {device.name} × {coil.name}
-          </h2>
-          <ul className="mt-4 flex flex-col gap-2">
-            {result.reasons.map((reason) => (
-              <li key={reason} className="text-sm text-muted-foreground">
-                {reason}
+          <ul className="mt-2 flex flex-col gap-2">
+            {result.reasons.map((reason, index) => (
+              <li
+                key={reason}
+                className={cn(
+                  "flex gap-3 text-sm",
+                  index === 0 ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mt-2 size-1.5 shrink-0 rounded-full",
+                    index === 0 ? "bg-current" : "bg-border-strong",
+                  )}
+                />
+                <span>{reason}</span>
               </li>
             ))}
           </ul>
@@ -114,6 +167,7 @@ export function CompatLab({
           </div>
         </section>
       ) : null}
+
       <section className="mt-8">
         <h2 className="text-2xl text-foreground">Líquidos para esa resistencia</h2>
         {!coil ? (
@@ -124,26 +178,74 @@ export function CompatLab({
           <p className="mt-3 text-sm text-muted-foreground">
             La cápsula elegida llega precargada y no se rellena.
           </p>
+        ) : total === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Ningún líquido del archivo cruza con esa resistencia.
+          </p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-2">
-            {fits.map((fit) => (
-              <li key={fit.liquid.id} className="border border-border p-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <Link
-                    to="/liquidos/$slug"
-                    params={{ slug: fit.liquid.slug }}
-                    className="text-foreground underline decoration-border underline-offset-4"
+          <>
+            <p className="mt-2 text-sm text-muted-foreground">
+              <span className="tabular-nums text-foreground">{total}</span> líquidos cruzan con la
+              calada publicada. Se agrupan por tipo de encaje.
+            </p>
+            <Accordion type="multiple" className="mt-4">
+              {(["directo", "posible", "evitar"] as const).map((kind) => {
+                const rows = byKind[kind];
+                if (rows.length === 0) return null;
+                return (
+                  <AccordionItem
+                    key={kind}
+                    value={kind}
+                    className={cn("border", toneBorderClass(fitTone(kind)))}
                   >
-                    {fit.liquid.name}
-                  </Link>
-                  <span className="text-xs tracking-widest text-primary uppercase">{fit.fit}</span>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">{fit.reason}</p>
-              </li>
-            ))}
-          </ul>
+                    <AccordionTrigger>
+                      <span className="flex items-center gap-2">
+                        <span className={toneTextClass(fitTone(kind))}>{fitLabel(kind)}</span>
+                        <Badge variant="muted">{rows.length}</Badge>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="flex flex-col gap-2">
+                        {rows.map((fit) => (
+                          <li
+                            key={fit.liquid.id}
+                            className="rounded-md border border-border bg-surface-2 p-3"
+                          >
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <Link
+                                to="/liquidos/$slug"
+                                params={{ slug: fit.liquid.slug }}
+                                className="text-foreground underline decoration-border underline-offset-4"
+                              >
+                                {fit.liquid.name}
+                              </Link>
+                              <span
+                                className={cn(
+                                  "text-xs tracking-widest uppercase",
+                                  toneTextClass(fitTone(fit.fit)),
+                                )}
+                              >
+                                {fitLabel(fit.fit)}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">{fit.reason}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </>
         )}
       </section>
     </div>
   );
+}
+
+function groupFits(fits: LiquidFit[]): Record<LiquidFitKind, LiquidFit[]> {
+  const groups: Record<LiquidFitKind, LiquidFit[]> = { directo: [], posible: [], evitar: [] };
+  for (const fit of fits) groups[fit.fit].push(fit);
+  return groups;
 }

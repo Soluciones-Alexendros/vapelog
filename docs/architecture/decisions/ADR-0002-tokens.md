@@ -10,6 +10,14 @@
 
 Aceptado
 
+> **Nota (rediseño 2026):** reemplazado parcialmente por
+> [ADR-0005](./ADR-0005-design-system-v2.md). Se mantienen la estrategia de
+> clase `.dark` con script anti-FOUC y los nombres semánticos shadcn
+> (`background`, `foreground`, `card`, `primary`, `muted`, `destructive`,
+> `border`, `ring`, `chart-*`); cambian los valores concretos de los tokens,
+> la escala de superficies/estados, los tokens de movimiento y humo, las
+> fuentes autoalojadas y el tema en tres estados (Claro/Oscuro/Sistema).
+
 ## Contexto
 
 El tema original era solo oscuro con tokens legacy (`bg`, `fg`, `surface`).

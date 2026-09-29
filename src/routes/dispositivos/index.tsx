@@ -1,8 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { JSX } from "react";
 import { CatalogBrowser, parseCatalogSearch } from "@/components/catalog-browser";
+import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/dispositivos/")({
   validateSearch: (search) => parseCatalogSearch(search as Record<string, unknown>),
+  head: () => {
+    const { meta, links } = buildHead({
+      title: "Dispositivos — Vapelog",
+      description:
+        "Dispositivos de vapeo por potencia, ohmios, plataformas y conectores, cada uno con su ficha y su fuente. Mecánicos, squonk y boro siguen fuera.",
+      path: "/dispositivos",
+    });
+    return { meta: meta as JSX.IntrinsicElements["meta"][], links };
+  },
   component: DevicesPage,
 });
 
