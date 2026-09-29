@@ -12,6 +12,13 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-29
+
+### Cambios
+
+- fix(ci): linea en blanco entre secciones del CHANGELOG generado (#3)
+- feat(blog): infraestructura de sección con artículos de opinión y estudio (#2)
+
 ## [0.2.0] - 2026-09-29
 
 ### Cambios
