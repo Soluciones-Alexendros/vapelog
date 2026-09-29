@@ -48,7 +48,8 @@ Pruebas: pnpm test / pnpm run smoke
 
 - Node 22, pnpm, TanStack Start, React 19, Tailwind v4, OKLCH.
 - `pnpm run typecheck` · `pnpm run lint` · `pnpm test` · `pnpm run build` ·
-  `pnpm run smoke` · `make validate`.
+  `pnpm run smoke` · `pnpm run icons` · `pnpm run sitemap` · `pnpm run images` ·
+  `pnpm run a11y` · `pnpm run visual-smoke` · `make validate`.
 
 ## Convenciones
 
@@ -63,9 +64,10 @@ Pruebas: pnpm test / pnpm run smoke
 src/components/   UI y fichas
 src/data/         catálogo tipado + lógica + tests
 src/routes/       TanStack Router
-public/catalog/   fotos
+assets/catalog/   imágenes fuente originales (tracked, no se sirven)
+public/catalog/   variantes webp/avif generadas (regenerar con `pnpm run images`)
 docs/             arquitectura, guías, runbooks
-scripts/          smoke, check-env, brand-check, browser-smoke(+verdict), a11y-pass, release
+scripts/          smoke, check-env, brand-check, browser-smoke(+verdict), a11y-pass, release, build-icons, build-sitemap, build-images, visual-smoke
 ```
 
 ## Definition of Done

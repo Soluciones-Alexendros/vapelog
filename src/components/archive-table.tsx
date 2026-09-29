@@ -19,8 +19,16 @@ import {
   taxonById,
   variationRange,
 } from "@/data/catalog";
-import type { Domain, Liquid } from "@/data/types";
-import { confidenceLabel, domainLabel, formatPlain, itemTpd, tpdLabel } from "@/components/labels";
+import type { Domain, Liquid, TpdStatus } from "@/data/types";
+import {
+  confidenceLabel,
+  domainLabel,
+  formatPlain,
+  itemTpd,
+  toneTextClass,
+  tpdLabel,
+  tpdTone,
+} from "@/components/labels";
 import { ProductPhoto } from "@/components/photo";
 import { Button } from "@/components/ui/button";
 
@@ -34,6 +42,7 @@ interface Row {
   detail: string;
   confidence: string;
   tpd: string;
+  tpdStatus: TpdStatus;
 }
 
 const column = createColumnHelper<Row>();
@@ -66,6 +75,7 @@ export function ArchiveTable() {
       detail: item.power,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
+      tpdStatus: itemTpd(item),
     }));
     const coilRows: Row[] = coils.map((item) => ({
       domain: "coil",
@@ -77,6 +87,7 @@ export function ArchiveTable() {
       detail: [`${formatPlain(item.ohms)} Ω`, item.draws.join(" · ")].filter(Boolean).join(" · "),
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
+      tpdStatus: itemTpd(item),
     }));
     const liquidRows: Row[] = liquids.map((item) => ({
       domain: "liquid",
@@ -88,6 +99,7 @@ export function ArchiveTable() {
       detail: liquidDetail(item),
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
+      tpdStatus: itemTpd(item),
     }));
     const partRows: Row[] = parts.map((item) => ({
       domain: "part",
@@ -99,6 +111,7 @@ export function ArchiveTable() {
       detail: item.spec,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
+      tpdStatus: itemTpd(item),
     }));
     return [...deviceRows, ...coilRows, ...liquidRows, ...partRows];
   }, []);
@@ -117,7 +130,14 @@ export function ArchiveTable() {
       column.accessor("genre", { header: "Género" }),
       column.accessor("detail", { header: "Dato" }),
       column.accessor("confidence", { header: "Fuente" }),
-      column.accessor("tpd", { header: "Régimen" }),
+      column.accessor("tpd", {
+        header: "Régimen",
+        cell: (info) => (
+          <span className={toneTextClass(tpdTone(info.row.original.tpdStatus))}>
+            {info.getValue()}
+          </span>
+        ),
+      }),
     ],
     [],
   );
@@ -181,10 +201,10 @@ export function ArchiveTable() {
           Exportar CSV
         </Button>
       </div>
-      <div className="mt-4 overflow-x-auto border border-border">
+      <div className="mt-4 overflow-x-auto border border-border bg-surface-2 shadow-1">
         <table className="w-full min-w-[52rem] text-left text-sm">
           <caption className="sr-only">Fichas de Vapelog</caption>
-          <thead className="bg-card text-muted-foreground">
+          <thead className="bg-muted text-muted-foreground">
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id}>
                 {group.headers.map((header) => (
@@ -193,7 +213,7 @@ export function ArchiveTable() {
                     scope="col"
                     className={
                       header.index === 0
-                        ? "sticky left-0 z-10 bg-card px-3 py-3 font-medium"
+                        ? "sticky left-0 z-10 bg-muted px-3 py-3 font-medium"
                         : "px-3 py-3 font-medium"
                     }
                   >
@@ -228,7 +248,7 @@ export function ArchiveTable() {
                     key={cell.id}
                     className={
                       index === 0
-                        ? "sticky left-0 z-10 bg-background px-3 py-3 text-muted-foreground"
+                        ? "sticky left-0 z-10 bg-surface-2 px-3 py-3 text-muted-foreground"
                         : "px-3 py-3 text-muted-foreground"
                     }
                   >

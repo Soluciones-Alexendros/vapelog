@@ -1,6 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { JSX } from "react";
+import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/modelo")({
+  head: () => {
+    const { meta, links } = buildHead({
+      title: "Modelo de datos — Vapelog",
+      description:
+        "Qué se ha cambiado del encargo original: el modelo Postgres objetivo, sus tablas y lo que queda fuera de esta semilla.",
+      path: "/modelo",
+    });
+    return { meta: meta as JSX.IntrinsicElements["meta"][], links };
+  },
   component: ModelPage,
 });
 

@@ -1,8 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { JSX } from "react";
 import { CatalogBrowser, parseCatalogSearch } from "@/components/catalog-browser";
+import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/resistencias/")({
   validateSearch: (search) => parseCatalogSearch(search as Record<string, unknown>),
+  head: () => {
+    const { meta, links } = buildHead({
+      title: "Resistencias — Vapelog",
+      description:
+        "Resistencias y cápsulas por ohmios, montaje, calada y malla, con la ventana de vatios que recomienda el fabricante.",
+      path: "/resistencias",
+    });
+    return { meta: meta as JSX.IntrinsicElements["meta"][], links };
+  },
   component: CoilsPage,
 });
 

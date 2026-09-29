@@ -1,16 +1,43 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import type { JSX } from "react";
 import { categoryLabel, formatPostDate, postBySlug } from "@/data/blog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "@/components/ui/external-link";
+import { breadcrumbJsonLd, buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/$slug")({
   beforeLoad: ({ params }) => {
     if (!postBySlug(params.slug)) throw notFound();
   },
-  head: ({ params }) => ({
-    meta: [{ title: `${postBySlug(params.slug)?.title ?? "Artículo"} — Vapelog` }],
-  }),
+  head: ({ params }) => {
+    const post = postBySlug(params.slug);
+    const title = post?.title ?? "Artículo";
+    const path = `/blog/${params.slug}`;
+    const description = post?.summary ?? "Artículo del blog de Vapelog.";
+    const { meta, links } = buildHead({
+      title: `${title} — Vapelog`,
+      description,
+      path,
+      type: "article",
+    });
+    return {
+      meta: meta as JSX.IntrinsicElements["meta"][],
+      links,
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(
+            breadcrumbJsonLd([
+              { name: "Inicio", url: "/" },
+              { name: "Blog", url: "/blog" },
+              { name: title, url: path },
+            ]),
+          ),
+        },
+      ],
+    };
+  },
   component: Page,
   notFoundComponent: NotFound,
 });

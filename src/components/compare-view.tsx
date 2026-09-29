@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { coilBySlug, deviceBySlug, liquidBySlug, partBySlug } from "@/data/catalog";
+import { liquidVolumeMl } from "@/data/logic";
+import { batteryMah, packCount, singleMl, weightGrams } from "@/data/measures";
 import { compareFacts, EMPTY, relationRows } from "@/data/specs";
 import type { CatalogItem, Coil, Device, Liquid, Part } from "@/data/types";
 import { useCompare, type CompareRef } from "@/components/chrome";
@@ -13,6 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/cn";
+
+const BEST_DIRECTION: Record<string, "max" | "min"> = {
+  power_max_w: "max",
+  battery_mah: "max",
+  capacity_ml: "max",
+  watt_max: "max",
+  weight_g: "min",
+  volume_ml: "max",
+};
 
 export function CompareView() {
   const compare = useCompare();
@@ -55,7 +67,11 @@ export function CompareView() {
           Vaciar
         </Button>
       </div>
-      <div className="mt-6 overflow-x-auto rounded-md border border-border bg-card">
+      <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+        Se resalta el valor publicado más alto o más bajo de cada fila numérica cuando procede. No
+        hay puntuaciones ni precios: solo el dato que la fuente publica.
+      </p>
+      <div className="mt-6 overflow-x-auto rounded-md border border-border bg-surface-2 shadow-1">
         <Table className="min-w-[40rem]">
           <caption className="sr-only">Comparación de fichas</caption>
           <TableHeader>
@@ -84,7 +100,7 @@ export function CompareView() {
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableHead scope="row" className="sticky left-0 z-10 bg-card text-foreground">
+              <TableHead scope="row" className="sticky left-0 z-10 bg-surface-2 text-foreground">
                 Foto
               </TableHead>
               {rows.map((row) => (
@@ -98,25 +114,42 @@ export function CompareView() {
                 </TableCell>
               ))}
             </TableRow>
-            {fields(rows).map((field) => (
-              <TableRow key={field.key}>
-                <TableHead scope="row" className="sticky left-0 z-10 bg-card text-foreground">
-                  {field.label}
-                </TableHead>
-                {field.values.map((value, index) => (
-                  <TableCell
-                    key={`${field.key}-${index}`}
-                    className={
-                      field.published[index]
-                        ? "tabular-nums text-foreground"
-                        : "text-muted-foreground"
-                    }
+            {fields(rows).map((field) => {
+              const best = bestIndices(field.key, rows);
+              const direction = BEST_DIRECTION[field.key];
+              return (
+                <TableRow key={field.key}>
+                  <TableHead
+                    scope="row"
+                    className="sticky left-0 z-10 bg-surface-2 text-foreground"
                   >
-                    {value}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                    {field.label}
+                  </TableHead>
+                  {field.values.map((value, index) => {
+                    const isBest = best.includes(index);
+                    return (
+                      <TableCell
+                        key={`${field.key}-${rows[index]?.ref.slug ?? index}`}
+                        className={cn(
+                          "tabular-nums",
+                          field.published[index] ? "text-foreground" : "text-muted-foreground",
+                          isBest && "bg-success/10 font-medium text-success",
+                        )}
+                      >
+                        {value}
+                        {isBest ? (
+                          <span className="sr-only">
+                            {direction === "min"
+                              ? " El valor más bajo publicado de la comparación."
+                              : " El valor más alto publicado de la comparación."}
+                          </span>
+                        ) : null}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -171,4 +204,35 @@ function fields(rows: Resolved[]) {
     ];
   });
   return [...facts, ...extras];
+}
+
+function metricValue(item: CatalogItem, key: string): number | null {
+  if (item.domain === "device") {
+    if (key === "power_max_w") return item.powerMaxW;
+    if (key === "power_min_w") return item.powerMinW;
+    if (key === "battery_mah") return batteryMah(item.battery);
+    if (key === "capacity_ml") return singleMl(item.capacity);
+    if (key === "weight_g") return weightGrams(item.weight);
+    return null;
+  }
+  if (item.domain === "coil") {
+    if (key === "watt_max") return item.wattMax;
+    if (key === "watt_min") return item.wattMin;
+    if (key === "pack_count") return packCount(item.pack);
+    return null;
+  }
+  if (item.domain === "liquid" && key === "volume_ml") return liquidVolumeMl(item);
+  return null;
+}
+
+function bestIndices(key: string, rows: Resolved[]): number[] {
+  const direction = BEST_DIRECTION[key];
+  if (!direction) return [];
+  const metrics = rows.map((row) => metricValue(row.item, key));
+  const known = metrics.filter((value): value is number => value != null);
+  if (new Set(known).size < 2) return [];
+  const target = direction === "max" ? Math.max(...known) : Math.min(...known);
+  return metrics
+    .map((value, index) => (value === target ? index : -1))
+    .filter((index) => index >= 0);
 }

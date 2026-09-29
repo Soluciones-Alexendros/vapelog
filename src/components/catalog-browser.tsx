@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { brandById, genreById, taxonById } from "@/data/catalog";
+import { catalogImage } from "@/data/images";
 import {
   buildFacets,
   chipsFor,
@@ -10,9 +11,9 @@ import {
   without,
   type CatalogSearch,
 } from "@/data/search";
-import type { Domain } from "@/data/types";
+import type { CatalogItem, Domain } from "@/data/types";
 import { useCompare } from "@/components/chrome";
-import { confidenceLabel, itemTpd, tpdLabel } from "@/components/labels";
+import { confidenceLabel, domainLabel, itemTpd, tpdLabel } from "@/components/labels";
 import { ProductPhoto } from "@/components/photo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { X } from "lucide-react";
+import { cn } from "@/lib/cn";
+import { Package, X } from "lucide-react";
 
 export type { CatalogSearch };
 export { parseCatalogSearch };
@@ -73,7 +75,7 @@ export function CatalogBrowser({
         className={`${heading ? "mt-6" : ""} grid min-w-0 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]`}
       >
         <form
-          className="border border-border bg-card h-fit rounded-lg p-4 lg:sticky lg:top-36 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto"
+          className="h-fit rounded-lg border border-border bg-surface-2 p-4 shadow-1 lg:sticky lg:top-36 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto"
           onSubmit={(event) => event.preventDefault()}
         >
           <label className="block text-sm text-muted-foreground" htmlFor={`${domain}-q`}>
@@ -191,7 +193,7 @@ export function CatalogBrowser({
                 <li key={chip.key}>
                   <button
                     type="button"
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm text-foreground border border-border bg-card"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface-2 px-3 text-sm text-foreground shadow-1 transition-colors duration-2 ease-out hover:border-border-strong"
                     onClick={() => onSearch(without(search, chip.key))}
                   >
                     {chip.label}
@@ -264,14 +266,14 @@ export function CatalogBrowser({
           </div>
 
           {filtered.length === 0 ? (
-            <p className="border border-border bg-card mt-8 rounded-lg p-6 text-muted-foreground">
+            <p className="mt-8 rounded-lg border border-border bg-surface-2 p-6 text-muted-foreground shadow-1">
               Ninguna ficha cumple esas características a la vez. Quita una y el recuento de al lado
               dice cuántas quedan.
             </p>
           ) : null}
 
           {vista === "tabla" && filtered.length > 0 ? (
-            <div className="mt-4 overflow-x-auto rounded-md border border-border bg-card">
+            <div className="mt-4 overflow-x-auto rounded-md border border-border bg-surface-2 shadow-1">
               <Table className="min-w-max">
                 <caption className="sr-only">{title}</caption>
                 <TableHeader>
@@ -289,17 +291,13 @@ export function CatalogBrowser({
                     const brand = brandById(item.brandId)?.name ?? "";
                     return (
                       <TableRow key={item.id}>
-                        <TableCell className="sticky left-0 z-10 bg-card text-foreground">
+                        <TableCell className="sticky left-0 z-10 bg-surface-2 text-foreground">
                           {brand}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             {domain === "device" || domain === "coil" ? (
-                              <ProductPhoto
-                                slug={item.slug}
-                                alt={`${brand} ${item.name}`.trim()}
-                                frame="thumb"
-                              />
+                              <CardMedia item={item} brand={brand} frame="thumb" />
                             ) : null}
                             <ItemLink
                               domain={domain}
@@ -355,16 +353,15 @@ export function CatalogBrowser({
                     key={item.id}
                     className={
                       vista === "grid"
-                        ? "flex flex-col overflow-hidden rounded-md border border-border bg-card hover:border-primary"
-                        : "flex items-start gap-3 overflow-hidden rounded-md border border-border bg-card p-3 hover:border-primary"
+                        ? "flex flex-col overflow-hidden rounded-md border border-border bg-surface-2 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
+                        : "flex items-start gap-3 overflow-hidden rounded-md border border-border bg-surface-2 p-3 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
                     }
                   >
                     {showPhoto ? (
-                      <ProductPhoto
-                        slug={item.slug}
-                        alt={`${brand} ${item.name}`}
+                      <CardMedia
+                        item={item}
+                        brand={brand}
                         frame={vista === "grid" ? "card" : "row"}
-                        missing="note"
                       />
                     ) : null}
                     <div
@@ -422,6 +419,44 @@ export function CatalogBrowser({
           ) : null}
         </section>
       </div>
+    </div>
+  );
+}
+
+function CardMedia({
+  item,
+  brand,
+  frame,
+}: {
+  item: CatalogItem;
+  brand: string;
+  frame: "card" | "row" | "thumb";
+}) {
+  if (catalogImage(item.slug)) {
+    return (
+      <ProductPhoto
+        slug={item.slug}
+        alt={`${brand} ${item.name}`.trim()}
+        frame={frame}
+        missing="note"
+      />
+    );
+  }
+  const family = taxonById(item.familyId ?? "")?.es ?? domainLabel(item.domain);
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 bg-surface-3 p-3 text-center outline outline-1 -outline-offset-1 outline-border",
+        frame === "card"
+          ? "aspect-square w-full"
+          : frame === "row"
+            ? "size-20 shrink-0"
+            : "size-12 shrink-0",
+      )}
+    >
+      <Package className="size-6 text-muted-foreground" aria-hidden />
+      <p className="text-xs leading-tight text-muted-foreground">{family}</p>
+      <p className="text-[0.625rem] tracking-wide text-muted-foreground uppercase">Sin foto</p>
     </div>
   );
 }

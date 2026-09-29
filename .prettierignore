@@ -5,4 +5,5 @@ dist
 coverage
 public/catalog
 src/routeTree.gen.ts
+src/data/images.gen.ts
 pnpm-lock.yaml

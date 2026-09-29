@@ -1,18 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { JSX } from "react";
 import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
 import { Badge } from "@/components/ui/badge";
+import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/")({
-  head: () => ({
-    meta: [
-      { title: "Blog — Vapelog" },
-      {
-        name: "description",
-        content:
-          "Artículos de opinión y estudios sobre dispositivos, resistencias y líquidos de vapeo, con las fuentes a la vista.",
-      },
-    ],
-  }),
+  head: () => {
+    const { meta, links } = buildHead({
+      title: "Blog — Vapelog",
+      description:
+        "Artículos de opinión y estudios sobre dispositivos, resistencias y líquidos de vapeo, con las fuentes a la vista.",
+      path: "/blog",
+    });
+    return { meta: meta as JSX.IntrinsicElements["meta"][], links };
+  },
   component: BlogIndex,
 });
 

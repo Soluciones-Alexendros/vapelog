@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AppShell } from "@/components/chrome";
-import { themeBootScript } from "@/components/ui/theme-toggle";
+import { SmokeCanvas } from "@/components/smoke-canvas";
+import { themeBootScript, THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/components/ui/theme-toggle";
 import { SITE_URL } from "@/lib/site";
 import appCss from "../styles.css?url";
 
@@ -22,17 +23,14 @@ export const Route = createRootRoute({
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#FCFAF6" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap",
-      },
     ],
     scripts: [
       {
@@ -48,8 +46,19 @@ function Root() {
     <html lang="es" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Dos metas con media: la API meta() deduplica por `name`, así que
+            se emiten como JSX estático. El toggle las sincroniza con el tema
+            efectivo tras la hidratación (el script de arranque no las toca:
+            mutarlas rompería la adopción de React 19 y duplicaría la etiqueta). */}
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content={THEME_COLOR_LIGHT}
+        />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content={THEME_COLOR_DARK} />
       </head>
       <body>
+        <SmokeCanvas />
         <AppShell>
           <Outlet />
         </AppShell>

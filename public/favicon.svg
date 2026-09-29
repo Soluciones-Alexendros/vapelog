@@ -1,6 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#14120e"/>
-  <circle cx="16" cy="16" r="10" fill="#e08a3c"/>
-  <circle cx="16" cy="16" r="6.2" fill="#14120e"/>
-  <circle cx="16" cy="16" r="2.5" fill="#f3efe4"/>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    .bg {
+      fill: #fcfaf6;
+    }
+    .fg {
+      stroke: #100d08;
+    }
+    @media (prefers-color-scheme: dark) {
+      .bg {
+        fill: #100d08;
+      }
+      .fg {
+        stroke: #f3efe4;
+      }
+    }
+  </style>
+  <rect class="bg" width="32" height="32" rx="7" />
+  <path
+    class="fg"
+    d="M8 7 L16 22.5 L24 7"
+    fill="none"
+    stroke-width="3.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    class="fg"
+    d="M16 21.5 c0.3 3.5 3 5.6 5.9 4.7 c2.3 -0.7 3.2 -3.3 1.9 -5 c-1.1 -1.5 -3.3 -1.4 -4.2 0.3 c-0.6 1.1 0 2.3 1.1 2.6"
+    fill="none"
+    stroke-width="2.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>
