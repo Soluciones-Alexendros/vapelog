@@ -12,6 +12,12 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-29
+
+### Cambios
+
+- fix(sitio): URL canonica de produccion a vapelog-alexendros.vercel.app (#5)
+
 ## [0.4.0] - 2026-09-29
 
 ### Cambios
