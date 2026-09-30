@@ -12,6 +12,8 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-30
+
 ### Cambios
 
 - feat(rediseno): identidad neo-brutalista con doble cara claro/oscuro — claro brutalista (borde tinta 3 px, sombra dura) y oscuro neón (borde fino + LED/glow) (ADR-0008)
