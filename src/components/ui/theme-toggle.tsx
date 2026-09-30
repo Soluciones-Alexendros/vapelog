@@ -2,6 +2,7 @@ import { Monitor, Moon, Sparkles, Sun } from "lucide-react";
 import { useEffect, useRef, useSyncExternalStore, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { setFxPreference, useFx } from "@/lib/fx";
+import { requestPuff } from "@/lib/smoke/emit-bus";
 
 const STORAGE_KEY = "vapelog-theme";
 
@@ -157,7 +158,14 @@ export function ThemeToggle() {
         aria-pressed={fx === "on"}
         aria-label="Efectos"
         title="Efectos visuales"
-        onClick={() => setFxPreference(fx === "on" ? "off" : "on")}
+        onClick={(event) => {
+          const next = fx === "on" ? "off" : "on";
+          setFxPreference(next);
+          if (next === "on") {
+            const box = event.currentTarget.getBoundingClientRect();
+            requestPuff(box.right - 8, box.top + 8); // esquina del botón
+          }
+        }}
         className={cn(
           "inline-flex min-h-9 items-center justify-center rounded-md border border-border px-2.5 text-muted-foreground transition-colors duration-2 hover:text-foreground",
           fx === "on" && "bg-card text-foreground shadow-1",

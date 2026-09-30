@@ -67,6 +67,7 @@ cargas de ~225–293 ms en loopback local y 30 capturas claro/oscuro ×
   `body::before` de degradados radiales (base SSR y reduced-motion) y capa
   Canvas 2D a media resolución (0,5) con 14–28 partículas a ≤ 30 fps, pausa
   en pestaña oculta y opacidad ≤ 0,12 claro / 0,16 oscuro.
+  **Sustituido por [ADR-0007](./ADR-0007-humo-v2.md).**
 - **Tipografía autoalojada:** `@fontsource-variable/fraunces` y
   `@fontsource-variable/public-sans` con `font-display: swap`; se eliminan los
   enlaces a Google Fonts de `__root.tsx` y se precarga solo la fuente de

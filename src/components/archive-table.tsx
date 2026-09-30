@@ -143,6 +143,7 @@ export function ArchiveTable() {
     [],
   );
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table v8 es librería válida; la regla marca incompatibilidad de compilación, no un bug.
   const table = useReactTable({
     data,
     columns,

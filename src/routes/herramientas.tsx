@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { JSX } from "react";
-import { parseToolSearch, ToolsPanel } from "@/components/tools-panel";
+import { ToolsPanel } from "@/components/tools-panel";
+import { parseToolSearch } from "@/components/tool-search";
 import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/herramientas")({

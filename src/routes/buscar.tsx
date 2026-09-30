@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { buildHead } from "@/lib/seo";
-import {
-  CatalogBrowser,
-  parseCatalogSearch,
-  type CatalogSearch,
-} from "@/components/catalog-browser";
+import { CatalogBrowser } from "@/components/catalog-browser";
+import { FichaLink } from "@/components/ficha-link";
+import { transitionNameForPhoto } from "@/lib/view-transition";
+import { parseCatalogSearch, type CatalogSearch } from "@/data/search";
 import { brandById } from "@/data/catalog";
 import { exampleCount, exampleQueries, itemsFor } from "@/data/search";
 import { normalize } from "@/data/logic";
@@ -189,27 +188,27 @@ function ExampleLink({ example }: { example: (typeof exampleQueries)[number] }) 
     "flex h-full flex-col rounded-md border border-border bg-card p-5 hover:border-primary";
   if (example.domain === "coil") {
     return (
-      <Link to="/resistencias" search={example.search} className={className}>
+      <Link to="/resistencias" search={example.search} preload="intent" className={className}>
         {inner}
       </Link>
     );
   }
   if (example.domain === "device") {
     return (
-      <Link to="/dispositivos" search={example.search} className={className}>
+      <Link to="/dispositivos" search={example.search} preload="intent" className={className}>
         {inner}
       </Link>
     );
   }
   if (example.domain === "liquid") {
     return (
-      <Link to="/liquidos" search={example.search} className={className}>
+      <Link to="/liquidos" search={example.search} preload="intent" className={className}>
         {inner}
       </Link>
     );
   }
   return (
-    <Link to="/componentes" search={example.search} className={className}>
+    <Link to="/componentes" search={example.search} preload="intent" className={className}>
       {inner}
     </Link>
   );
@@ -246,7 +245,12 @@ function Hit({ item }: { item: CatalogItem }) {
   const brand = brandById(item.brandId)?.name;
   const photo =
     item.domain === "device" || item.domain === "coil" ? (
-      <ProductPhoto slug={item.slug} alt="" frame="thumb" />
+      <ProductPhoto
+        slug={item.slug}
+        alt=""
+        frame="thumb"
+        transitionName={transitionNameForPhoto(item.slug)}
+      />
     ) : null;
   const label =
     item.domain === "device"
@@ -266,42 +270,24 @@ function Hit({ item }: { item: CatalogItem }) {
   );
   if (item.domain === "device") {
     return (
-      <Link
-        to="/dispositivos/$slug"
-        params={{ slug: item.slug }}
-        className="flex items-center gap-3"
-      >
+      <FichaLink domain={item.domain} slug={item.slug} className="flex items-center gap-3">
         {photo}
         {body}
-      </Link>
+      </FichaLink>
     );
   }
   if (item.domain === "coil") {
     return (
-      <Link
-        to="/resistencias/$slug"
-        params={{ slug: item.slug }}
-        className="flex items-center gap-3"
-      >
+      <FichaLink domain={item.domain} slug={item.slug} className="flex items-center gap-3">
         {photo}
         {body}
-      </Link>
-    );
-  }
-  if (item.domain === "part") {
-    return (
-      <Link
-        to="/componentes/$slug"
-        params={{ slug: item.slug }}
-        className="flex items-center gap-3"
-      >
-        {body}
-      </Link>
+      </FichaLink>
     );
   }
   return (
-    <Link to="/liquidos/$slug" params={{ slug: item.slug }} className="flex items-center gap-3">
+    <FichaLink domain={item.domain} slug={item.slug} className="flex items-center gap-3">
+      {photo}
       {body}
-    </Link>
+    </FichaLink>
   );
 }

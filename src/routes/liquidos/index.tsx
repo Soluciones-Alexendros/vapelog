@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { JSX } from "react";
-import { CatalogBrowser, parseCatalogSearch } from "@/components/catalog-browser";
+import { CatalogBrowser } from "@/components/catalog-browser";
+import { parseCatalogSearch } from "@/data/search";
 import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/liquidos/")({

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { JSX } from "react";
-import { CompatLab, parseCompatSearch } from "@/components/compat-lab";
+import { CompatLab } from "@/components/compat-lab";
+import { parseCompatSearch } from "@/components/compat-search";
 import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/compatibilidad")({

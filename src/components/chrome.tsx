@@ -1,30 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Scale } from "lucide-react";
-import type { Domain } from "@/data/types";
+import { BrandLogo } from "@/components/brand-mark";
+import { CommandPalette } from "@/components/command-palette";
+import { CompareContext, useCompare, type CompareRef } from "@/components/compare-context";
+import { RevealManager } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-
-export interface CompareRef {
-  domain: Domain;
-  slug: string;
-}
-
-const CompareContext = createContext<{
-  items: CompareRef[];
-  notice: string | null;
-  toggle: (item: CompareRef) => void;
-  remove: (slug: string) => void;
-  clear: () => void;
-  has: (slug: string) => boolean;
-} | null>(null);
-
-export function useCompare() {
-  const value = useContext(CompareContext);
-  if (!value) throw new Error("Comparador fuera de sitio");
-  return value;
-}
 
 const catalogNav = [
   { to: "/dispositivos", label: "Dispositivos", exact: false },
@@ -42,42 +25,41 @@ const secondaryNav = [
   { to: "/modelo", label: "Modelo", exact: false },
 ] as const;
 
+function readStoredCompare(): CompareRef[] {
+  try {
+    if (typeof localStorage === "undefined") return [];
+    const raw = localStorage.getItem("vapelog-compare");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as CompareRef[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (item) =>
+          item &&
+          (item.domain === "device" ||
+            item.domain === "coil" ||
+            item.domain === "liquid" ||
+            item.domain === "part") &&
+          typeof item.slug === "string",
+      )
+      .slice(0, 4);
+  } catch {
+    /* selección ilegible: se ignora */
+    return [];
+  }
+}
+
 function CompareProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CompareRef[]>([]);
+  const [items, setItems] = useState<CompareRef[]>(readStoredCompare);
   const [notice, setNotice] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("vapelog-compare");
-      if (raw) {
-        const parsed = JSON.parse(raw) as CompareRef[];
-        if (Array.isArray(parsed)) {
-          setItems(
-            parsed
-              .filter(
-                (item) =>
-                  item &&
-                  (item.domain === "device" ||
-                    item.domain === "coil" ||
-                    item.domain === "liquid" ||
-                    item.domain === "part") &&
-                  typeof item.slug === "string",
-              )
-              .slice(0, 4),
-          );
-        }
-      }
+      localStorage.setItem("vapelog-compare", JSON.stringify(items));
     } catch {
-      /* selección ilegible: se ignora */
+      /* almacenamiento no disponible: se ignora */
     }
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    localStorage.setItem("vapelog-compare", JSON.stringify(items));
-  }, [items, ready]);
+  }, [items]);
 
   const api = useMemo(
     () => ({
@@ -127,14 +109,8 @@ function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background">
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 lg:gap-4">
-        <Link to="/" className="flex min-h-11 shrink-0 items-center">
-          <img
-            src="/logo.svg"
-            alt="Vapelog"
-            width={128}
-            height={32}
-            className="h-6 w-auto sm:h-8"
-          />
+        <Link to="/" className="flex min-h-11 shrink-0 items-center" aria-label="Vapelog">
+          <BrandLogo className="h-6 w-auto sm:h-8" />
         </Link>
         <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4" aria-label="Catálogo">
           {catalogNav.map((item) => (
@@ -153,6 +129,7 @@ function Header() {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-1">
+          <CommandPalette />
           <ThemeToggle />
           <Link
             to="/comparar"
@@ -194,33 +171,53 @@ function Header() {
 function Footer() {
   return (
     <footer className="mt-16 border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-end sm:justify-between">
-        <p className="max-w-xl">
-          Vapelog — archivo de referencia para adultos. No vende nicotina ni sustituye la etiqueta
-          del lote. España / UE.
-        </p>
-        <nav className="flex flex-wrap gap-x-4" aria-label="Pie">
-          {catalogNav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="min-h-11 text-foreground hover:text-primary"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            to="/archivo"
-            className="min-h-11 text-muted-foreground hover:text-foreground focus-visible:text-foreground"
-          >
-            Tabla
-          </Link>
-          <Link
-            to="/modelo"
-            className="min-h-11 text-muted-foreground hover:text-foreground focus-visible:text-foreground"
-          >
-            Modelo
-          </Link>
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 text-sm text-muted-foreground sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div>
+          <p className="font-medium text-foreground">Vapelog</p>
+          <p className="mt-2 max-w-xl">
+            Vapelog — archivo de referencia para adultos. No vende nicotina ni sustituye la etiqueta
+            del lote. España / UE.
+          </p>
+        </div>
+        <nav aria-label="Catálogo">
+          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+            Catálogo
+          </p>
+          <ul className="mt-2 flex flex-col">
+            {catalogNav.map((item) => (
+              <li key={item.to}>
+                <Link
+                  to={item.to}
+                  className="inline-flex min-h-11 items-center text-foreground hover:text-primary"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <nav aria-label="Archivo">
+          <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+            Archivo
+          </p>
+          <ul className="mt-2 flex flex-col">
+            <li>
+              <Link
+                to="/archivo"
+                className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+              >
+                Tabla
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/modelo"
+                className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+              >
+                Modelo
+              </Link>
+            </li>
+          </ul>
         </nav>
       </div>
     </footer>
@@ -256,6 +253,41 @@ function CompareDock() {
   );
 }
 
+function RouteFocus() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  useEffect(() => {
+    // La ruta puede llegar antes que su chunk (code-splitting): el h1 nuevo
+    // aún no está en el DOM cuando corre el efecto. Se reintenta de forma
+    // acotada hasta que aparece. Con overlay modal (AgeGate) el foco lo
+    // retiene el diálogo: no robarlo.
+    let cancelled = false;
+    const timers: number[] = [];
+    const focusH1 = () => {
+      if (cancelled) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      const h1 = document.querySelector("main h1");
+      if (!(h1 instanceof HTMLElement)) return;
+      if (!h1.hasAttribute("tabindex")) h1.setAttribute("tabindex", "-1");
+      h1.focus({ preventScroll: true });
+    };
+    const raf = requestAnimationFrame(() => {
+      if (!cancelled) {
+        focusH1();
+      }
+    });
+    for (const delay of [150, 500]) {
+      timers.push(window.setTimeout(focusH1, delay));
+    }
+    focusH1();
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      for (const timer of timers) window.clearTimeout(timer);
+    };
+  }, [pathname]);
+  return null;
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const [allowed, setAllowed] = useState(true);
   const [checked, setChecked] = useState(false);
@@ -276,6 +308,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         Saltar al contenido
       </a>
       <Header />
+      <RouteFocus />
+      <RevealManager />
       {/* Solo se monta cuando bloquea: montarlo cerrado y abrirlo después
           dispara un race de react-remove-scroll (classList de null). */}
       {checked && !allowed ? <AgeGate open onAllow={() => setAllowed(true)} /> : null}

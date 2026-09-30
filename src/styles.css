@@ -50,6 +50,7 @@
   --dur-4: 700ms;
   --smoke-rgb: 120 108 92;
   --smoke-alpha: 0.1;
+  --smoke-k: 0.02;
   --font-sans: "Public Sans Variable", "Segoe UI", sans-serif;
   --font-display: "Fraunces Variable", Georgia, serif;
 }
@@ -91,6 +92,7 @@
   --chart-5: oklch(0.65 0.08 300);
   --smoke-rgb: 200 196 188;
   --smoke-alpha: 0.14;
+  --smoke-k: 0.028;
 }
 
 @theme inline {
@@ -370,5 +372,196 @@
     --dur-4: 0.01ms;
     --ease-out: linear;
     --ease-in-out: linear;
+  }
+}
+
+/* F4 — animaciones (append F4/F7: no tocar las líneas anteriores).
+   Reveal progresivo, esqueleto de foto y view transitions. */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+html.js .reveal:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out);
+}
+
+html.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out);
+}
+
+/* Esqueleto de foto con tokens existentes; el shimmer solo sin
+   prefers-reduced-motion. */
+.photo-skeleton {
+  position: absolute;
+  inset: 0;
+  background: var(--muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .photo-skeleton {
+    overflow: hidden;
+  }
+
+  .photo-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in oklch, var(--foreground) 10%, transparent) 50%,
+      transparent 80%
+    );
+    animation: vapelog-shimmer 1400ms var(--ease-out) infinite;
+  }
+
+  @keyframes vapelog-shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+}
+
+/* Transición listado → ficha: el nombre lo pone ProductPhoto
+   (`transitionNameForPhoto`); duraciones de los tokens. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal:not(.is-visible),
+  html.js .reveal.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .photo-skeleton::after {
+    content: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* S2 — capa suave L1 del humo (append S2: no tocar las líneas anteriores).
+   L0 = body::before (fallback SSR). L2/L3 (ASCII) lo harán S3/S4:
+   .smoke-ascii queda oculto y el tier ASCII del modelo, inactivo. */
+.smoke-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  contain: strict;
+  opacity: 0;
+  transition: opacity var(--dur-4) var(--ease-out);
+}
+.smoke-layer[data-ready="true"] {
+  opacity: 1;
+}
+.smoke-soft {
+  position: absolute;
+  inset: calc(var(--smoke-pad) * -1);
+  width: calc(100% + var(--smoke-pad) * 2);
+  height: calc(100% + var(--smoke-pad) * 2);
+}
+.smoke-ascii {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce), (prefers-reduced-data: reduce) {
+  .smoke-layer {
+    display: none;
+  }
+}
+
+/* S3 — capa ASCII tramada L2 (append S3: no tocar las líneas anteriores).
+   L2 = segundo canvas a 1x CSS sin DPR, atlas pre-renderizado, 10 fps,
+   alfa ≤0.12. Visible solo ≥1024px y solo en los márgenes: el layout usa
+   mx-auto max-w-6xl (= 72rem = 1152px en Tailwind) en chrome.tsx y rutas
+   (index/buscar/catalog-browser), de ahí --content-half: 576px.
+   Sin JS / humo off: display:none por defecto + .smoke-layer opacity:0
+   sin data-ready, sin resto visible. */
+.smoke-ascii {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+@media (min-width: 1024px) {
+  .smoke-ascii {
+    display: block;
+    --content-half: 576px;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 0,
+      #000 calc(50% - var(--content-half) - 80px),
+      transparent calc(50% - var(--content-half) + 80px),
+      transparent calc(50% + var(--content-half) - 80px),
+      #000 calc(50% + var(--content-half) + 80px),
+      #000 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      #000 0,
+      #000 calc(50% - var(--content-half) - 80px),
+      transparent calc(50% - var(--content-half) + 80px),
+      transparent calc(50% + var(--content-half) - 80px),
+      #000 calc(50% + var(--content-half) + 80px),
+      #000 100%
+    );
+  }
+}
+
+/* S4 — atenuación vertical del humo suave L1 en la banda del hero
+   (append S4: no tocar las líneas anteriores).
+   Se enmascara el propio canvas `.smoke-soft` y no el DOM del hero: así el
+   marcado de las rutas (index.tsx y el resto) y el HTML de SSR quedan
+   intactos, el layout no cambia y las tarjetas siguen opacas (bg-card) sin
+   necesidad de reglas extra. El canvas es una capa decorativa fija; la
+   máscara solo baja la alfa en la franja superior del viewport, donde está el
+   texto suelto del hero, y recupera la alfa plena antes del pliegue.
+   El alto del canvas arranca en -(--smoke-pad) (inset negativo), de ahí que
+   cada stop sume `var(--smoke-pad)` para referirse al borde superior real del
+   viewport. `rgb(0 0 0 / x)` atenúa vía el canal alfa de la máscara. */
+.smoke-soft {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.45) var(--smoke-pad),
+    rgb(0 0 0 / 0.72) calc(var(--smoke-pad) + 26vh),
+    #000 calc(var(--smoke-pad) + 52vh),
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.45) var(--smoke-pad),
+    rgb(0 0 0 / 0.72) calc(var(--smoke-pad) + 26vh),
+    #000 calc(var(--smoke-pad) + 52vh),
+    #000 100%
+  );
+}
+
+/* S4 — el humo es decorativo: se oculta por completo en modo de contraste
+   alto y en colores forzados para no competir con el texto ni con las
+   paletas del sistema (append S4). */
+@media (forced-colors: active), (prefers-contrast: more) {
+  .smoke-layer {
+    display: none;
   }
 }
