@@ -36,6 +36,7 @@ import {
   type LiquidFit,
   type LiquidFitKind,
 } from "@/data/logic";
+import { completion } from "@/data/completion";
 import {
   EMPTY,
   powerSummary,
@@ -449,6 +450,7 @@ function Sheet({
   const brand = brandById(item.brandId);
   const path = domainPath(item.domain);
   const chips = heroChips(item);
+  const cover = completion(item);
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-8">
@@ -477,9 +479,22 @@ function Sheet({
       <div className="mt-4 flex flex-wrap gap-2">
         <Badge variant="outline">{confidenceLabel(item.confidence)}</Badge>
         <Badge variant="outline">{tpdLabel(itemTpd(item))}</Badge>
+        <Badge variant="outline">Cobertura {cover.pct} %</Badge>
         <Badge variant="muted">{item.status === "historico" ? "Histórico" : "Referenciado"}</Badge>
         <Badge variant="muted">{item.archiveId}</Badge>
       </div>
+      {cover.missing.length > 0 ? (
+        <details className="mt-3 text-sm text-muted-foreground">
+          <summary className="cursor-pointer text-foreground">
+            Campos por rellenar ({cover.missing.length})
+          </summary>
+          <ul className="mt-2 list-disc ps-5">
+            {cover.missing.map((gap) => (
+              <li key={gap.key}>{gap.label}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
 
       <div className="mt-6 flex flex-wrap gap-2">
         <Button

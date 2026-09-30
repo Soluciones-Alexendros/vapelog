@@ -51,6 +51,7 @@ function liquidVolumeText(item: CatalogItem): string | null {
 function liquidNicotineText(item: CatalogItem): string | null {
   const row = liquid(item);
   if (!row) return null;
+  if (!row.variations.some((variation) => variation.hasNicotine)) return "Sin nicotina";
   const values = row.variations
     .filter((variation) => variation.hasNicotine && variation.nicotineMg != null)
     .map((variation) => variation.nicotineMg as number);
@@ -558,7 +559,7 @@ export const specDefs: SpecDef[] = [
     "number",
     false,
     40,
-    () => null,
+    (item) => num(part(item)?.dripMm ?? null),
   ),
   def(
     "part",
@@ -570,19 +571,10 @@ export const specDefs: SpecDef[] = [
     "text",
     false,
     50,
-    () => null,
+    (item) => publishedText(part(item)?.chemistry),
   ),
-  def(
-    "part",
-    "amps",
-    "encaje",
-    "Encaje",
-    "Amperaje continuo",
-    "A",
-    "number",
-    false,
-    60,
-    () => null,
+  def("part", "amps", "encaje", "Encaje", "Amperaje continuo", "A", "number", false, 60, (item) =>
+    num(part(item)?.continuousAmps ?? null),
   ),
   def(
     "part",

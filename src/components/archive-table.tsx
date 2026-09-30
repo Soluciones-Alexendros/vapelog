@@ -20,6 +20,7 @@ import {
   variationRange,
 } from "@/data/catalog";
 import type { Domain, Liquid, TpdStatus } from "@/data/types";
+import { completion } from "@/data/completion";
 import { powerSummary } from "@/data/specs";
 import {
   confidenceLabel,
@@ -42,6 +43,7 @@ interface Row {
   name: string;
   genre: string;
   detail: string;
+  coverage: number;
   confidence: string;
   tpd: string;
   tpdStatus: TpdStatus;
@@ -75,6 +77,7 @@ export function ArchiveTable() {
       name: item.name,
       genre: taxonById(item.subId ?? "")?.es ?? "",
       detail: powerSummary(item) || "Sin dato publicado",
+      coverage: completion(item).pct,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
       tpdStatus: itemTpd(item),
@@ -87,6 +90,7 @@ export function ArchiveTable() {
       name: item.name,
       genre: taxonById(item.subId ?? "")?.es ?? "",
       detail: [`${formatPlain(item.ohms)} Ω`, item.draws.join(" · ")].filter(Boolean).join(" · "),
+      coverage: completion(item).pct,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
       tpdStatus: itemTpd(item),
@@ -99,6 +103,7 @@ export function ArchiveTable() {
       name: item.name,
       genre: genreById(item.genreId)?.es ?? "",
       detail: liquidDetail(item),
+      coverage: completion(item).pct,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
       tpdStatus: itemTpd(item),
@@ -111,6 +116,7 @@ export function ArchiveTable() {
       name: item.name,
       genre: taxonById(item.subId ?? "")?.es ?? "",
       detail: item.spec,
+      coverage: completion(item).pct,
       confidence: confidenceLabel(item.confidence),
       tpd: tpdLabel(itemTpd(item)),
       tpdStatus: itemTpd(item),
@@ -131,6 +137,10 @@ export function ArchiveTable() {
       column.accessor("name", { header: "Nombre" }),
       column.accessor("genre", { header: "Género" }),
       column.accessor("detail", { header: "Dato" }),
+      column.accessor("coverage", {
+        header: "Cobertura",
+        cell: (info) => `${info.getValue()} %`,
+      }),
       column.accessor("confidence", { header: "Fuente" }),
       column.accessor("tpd", {
         header: "Régimen",
@@ -157,7 +167,7 @@ export function ArchiveTable() {
   });
 
   const exportCsv = () => {
-    const header = ["Tipo", "Marca", "Nombre", "Género", "Dato", "Fuente", "Régimen"];
+    const header = ["Tipo", "Marca", "Nombre", "Género", "Dato", "Cobertura", "Fuente", "Régimen"];
     const body = table
       .getSortedRowModel()
       .rows.map((row) => [
@@ -166,6 +176,7 @@ export function ArchiveTable() {
         row.original.name,
         row.original.genre,
         row.original.detail,
+        `${row.original.coverage} %`,
         row.original.confidence,
         row.original.tpd,
       ]);

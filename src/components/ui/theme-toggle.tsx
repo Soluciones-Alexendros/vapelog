@@ -172,7 +172,7 @@ export function ThemeToggle() {
               aria-label={option.label}
               onClick={() => persistPreference(option.value)}
               className={cn(
-                "inline-flex min-h-9 items-center justify-center rounded-sm px-2.5 text-muted-foreground transition-colors duration-2 hover:text-foreground",
+                "inline-flex min-h-9 items-center justify-center rounded-sm px-1.5 text-muted-foreground transition-colors duration-2 hover:text-foreground sm:px-2.5",
                 checked && "bg-card text-foreground shadow-1",
               )}
             >
@@ -185,7 +185,7 @@ export function ThemeToggle() {
         role="radiogroup"
         aria-label="Efectos visuales"
         onKeyDown={handleFxKeyDown}
-        className="inline-flex items-center rounded-md border border-border bg-muted p-0.5"
+        className="hidden items-center rounded-md border border-border bg-muted p-0.5 sm:inline-flex"
       >
         {FX_OPTIONS.map((option, index) => {
           const checked = fxPref === option.value;
@@ -209,7 +209,7 @@ export function ThemeToggle() {
                 }
               }}
               className={cn(
-                "inline-flex min-h-9 items-center justify-center rounded-sm px-2.5 text-muted-foreground transition-colors duration-2 hover:text-foreground",
+                "inline-flex min-h-9 items-center justify-center rounded-sm px-1.5 text-muted-foreground transition-colors duration-2 hover:text-foreground sm:px-2.5",
                 checked && "bg-card text-foreground shadow-1",
               )}
             >

@@ -53,29 +53,28 @@ posterior (plan v2) identifica problemas verificables:
   `src/components/smoke-canvas.tsx` solo renderiza; `emit` no consume `s.rnd`,
   de modo que las volutas ambientales siguen siendo deterministas con o sin
   bocanadas de UI.
-- **Híbrido «el humo se deshace en registro» (alternativa E, elegida).** El
-  núcleo denso se resuelve en humo suave sin glifos; solo la banda de baja
-  densidad (la estela que se disipa) se resuelve en caracteres tramados con
-  matriz de Bayer. `=` queda reservado para el extremo de la banda
-  (`glyphFor` limita a `ASCII_RAMP.length - 2`). No hay texto en el DOM: el
-  `innerText` es idéntico con humo on/off.
-- **Cinco capas L0–L4.** L0 `body::before` (degradados radiales estáticos,
-  único fondo con JS desactivado, `prefers-reduced-motion`, `prefers-reduced-data`
-  o fx=off); L1 humo suave; L2 ASCII tramado; L3 zonificación; L4 coreografía.
-- **Calidad adaptativa y ahorro.** Tiers Q3 `{count:72, cell:16, ascii:true,
-fps:30, res:0.5}`, Q2 `{count:40, cell:20, ascii:true, fps:24, res:0.4}`,
-  Q1 `{count:24, cell:24, ascii:false, fps:20, res:0.33}`. Nivel inicial por
+- **Humo suave sin glifos visibles.** El campo se pinta con un sprite irregular
+  de varias lóbulos (no un disco radial) y `drawImage`. El modelo conserva
+  `glyphFor` para pruebas; el canvas ASCII no se dibuja. No hay texto en el DOM:
+  el `innerText` es idéntico con humo on/off.
+- **Capas.** L0 `body::before` (degradados radiales estáticos, único fondo con
+  JS desactivado, `prefers-reduced-data` o fx=off); L1 humo suave. El canvas
+  ASCII (L2) no se dibuja. L3 zonificación y L4 coreografía siguen como
+  máscaras y bocanadas de UI. Con `prefers-reduced-motion` y Auto, L1 queda en
+  fotograma estático (no se oculta).
+- **Calidad adaptativa y ahorro.** Tiers Q3 `{count:87, cell:16, ascii:false,
+fps:30, res:0.5}`, Q2 `{count:54, cell:20, ascii:false, fps:24, res:0.4}`,
+  Q1 `{count:32, cell:24, ascii:false, fps:20, res:0.33}`. Nivel inicial por
   ancho (`<768 → Q1`; `<1200 → Q2`; resto `Q3`) y
   `navigator.hardwareConcurrency ≤ 4 → Q2` como máximo. `Save-Data` o
-  `prefers-reduced-data: reduce` → Q0 (solo L0, sin canvas ni rAF). La
-  degradación usa la EMA del coste propio: baja de nivel solo si supera 24 ms
-  **durante 2 s seguidos** y **nunca vuelve a subir en la sesión**. Pausa con
-  `document.hidden` y reanudación sin salto.
-- **Sprite radial sin `filter: blur`.** El humo suave usa un sprite radial
-  pre-renderizado de 128 px y `drawImage` (sin blur de GPU por fotograma).
+  `prefers-reduced-data: reduce` → Q0 (solo L0, sin canvas ni rAF). El
+  gobernador de tier puede recuperar nivel tras 10 s rápidos.
+- **Sprite irregular sin `filter: blur`.** El humo suave usa un sprite de 256 px
+  con varios lóbulos, pre-renderizado, y `drawImage` (sin blur de GPU por
+  fotograma).
 - **Cotización de contraste por contrato.** `src/data/contrast.test.ts` exige
-  `K × densidad_máx ≤ --smoke-alpha` en Q3/Q2/Q1 con 11 semillas × 120 s, más
-  el peor caso con solape ASCII (`--smoke-alpha + 0.12`).
+  `K × densidad_máx ≤ --smoke-alpha` en Q3/Q2/Q1 con 11 semillas × 120 s, y el
+  peor caso de lectura sobre `--smoke-alpha` (sin solape ASCII).
 
 ## Capas
 

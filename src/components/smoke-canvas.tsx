@@ -12,10 +12,8 @@ import {
 import { drainPuffs } from "@/lib/smoke/emit-bus";
 import {
   ASCII_RAMP,
-  bayer,
   createSmoke,
   emit as emitPuff,
-  glyphFor,
   SMOKE_RGB_DARK_DEFAULT,
   smokeTintForRoute,
   stepSmoke,
@@ -33,8 +31,8 @@ const STATIC_WARMUP_STEPS = 90;
  * rompen ese tope en alguna semilla (no monótono con el RNG de spawn).
  */
 const TIERS = [
-  { count: 87, cell: 16, ascii: true, fps: 30, res: 0.5 },
-  { count: 54, cell: 20, ascii: true, fps: 24, res: 0.4 },
+  { count: 87, cell: 16, ascii: false, fps: 30, res: 0.5 },
+  { count: 54, cell: 20, ascii: false, fps: 24, res: 0.4 },
   { count: 32, cell: 24, ascii: false, fps: 20, res: 0.33 },
 ] as const;
 
@@ -132,16 +130,36 @@ function updateAsciiMask(asc: HTMLCanvasElement): void {
 }
 
 function makeSprite(color: string): HTMLCanvasElement {
+  const size = 256;
   const c = document.createElement("canvas");
-  c.width = c.height = 128;
-  const x = c.getContext("2d");
-  if (!x) return c;
-  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-  g.addColorStop(0, `rgba(${color},1)`);
-  g.addColorStop(0.4, `rgba(${color},.5)`);
-  g.addColorStop(1, `rgba(${color},0)`);
-  x.fillStyle = g;
-  x.fillRect(0, 0, 128, 128);
+  c.width = c.height = size;
+  const ctx = c.getContext("2d");
+  if (!ctx) return c;
+  const channels = color.split(/\s*,\s*/).map((part) => Number(part));
+  const red = channels[0] ?? 120;
+  const green = channels[1] ?? 108;
+  const blue = channels[2] ?? 92;
+  const img = ctx.createImageData(size, size);
+  const cx = size / 2;
+  const cy = size / 2;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = (x - cx) / cx;
+      const dy = (y - cy) / cy;
+      const lobeA = Math.hypot(dx * 0.95, dy * 1.85);
+      const lobeB = Math.hypot(dx * 1.55 + 0.28, dy * 1.15 - 0.18);
+      const lobeC = Math.hypot(dx * 1.35 - 0.22, dy * 1.45 + 0.12);
+      const d = Math.min(lobeA, lobeB, lobeC);
+      let alpha = 0;
+      if (d < 1) alpha = d < 0.28 ? 1 - d * 1.1 : (1 - d) ** 2.2;
+      const i = (y * size + x) * 4;
+      img.data[i] = red;
+      img.data[i + 1] = green;
+      img.data[i + 2] = blue;
+      img.data[i + 3] = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
   return c;
 }
 function makeAtlas(color: string, cell: number): HTMLCanvasElement {
@@ -213,7 +231,6 @@ export function SmokeCanvas() {
     let raf = 0;
     let alive = true;
     let last = 0;
-    let lastAscii = 0;
     let state = createSmoke({
       width: W,
       height: H,
@@ -226,7 +243,6 @@ export function SmokeCanvas() {
     let atlas = makeAtlas(rgb(), TIERS[tierIndex].cell);
     let k = parseFloat(css("--smoke-k")) || 0.02;
     let prevSprite = sprite;
-    let prevAtlas = atlas;
     let prevK = k;
     let fadeT0 = 0;
     let fading = false;
@@ -348,41 +364,12 @@ export function SmokeCanvas() {
       for (const p of state.puffs) draw(p);
       for (const p of state.emits) draw(p);
     };
-    const drawAscii = (atlasImg: HTMLCanvasElement, alphaScale: number, clear: boolean) => {
-      if (clear) ax.clearRect(0, 0, W, H);
-      const c = TIERS[tierIndex].cell;
-      const cy = state.cellY;
-      for (let r = 0; r < state.rows; r++)
-        for (let q = 0; q < state.cols; q++) {
-          const g = glyphFor(state.density[r * state.cols + q], bayer(q, r));
-          if (!g) continue;
-          ax.globalAlpha = (0.05 + 0.07 * g.strength) * alphaScale;
-          ax.drawImage(
-            atlasImg,
-            ASCII_RAMP.indexOf(g.ch as never) * c,
-            0,
-            c,
-            Math.ceil(cy),
-            q * c - PAD,
-            r * cy - PAD,
-            c,
-            Math.ceil(cy),
-          );
-        }
-      ax.globalAlpha = 1;
-    };
-
-    const paintFrame = (fade: number, drawGlyphs: boolean) => {
+    const paintFrame = (fade: number) => {
       sx.clearRect(0, 0, W + 2 * PAD, H + 2 * PAD);
       if (fading && fade < 1) drawSoft(prevSprite, prevK, 1 - fade);
       drawSoft(sprite, k, fading ? fade : 1);
       sx.globalAlpha = 1;
-      if (drawGlyphs && TIERS[tierIndex].ascii) {
-        if (fading && fade < 1) {
-          drawAscii(prevAtlas, 1 - fade, true);
-          drawAscii(atlas, fade, false);
-        } else drawAscii(atlas, 1, true);
-      }
+      void atlas;
     };
 
     size();
@@ -405,7 +392,7 @@ export function SmokeCanvas() {
         if (!alive) return;
         const dt = 1 / 30;
         for (let i = 0; i < STATIC_WARMUP_STEPS; i++) stepSmoke(state, dt);
-        paintFrame(1, true);
+        paintFrame(1);
         markHost(el, { ready: true, reason, tier: tierIndex });
         publishFx({
           reason,
@@ -444,13 +431,10 @@ export function SmokeCanvas() {
       const t0 = performance.now();
       stepSmoke(state, dt);
       const fade = fading ? Math.min(1, (now - fadeT0) / THEME_FADE_MS) : 1;
-      const glyphs = TIERS[tierIndex].ascii && now - lastAscii > 100;
-      if (glyphs) lastAscii = now;
-      paintFrame(fade, glyphs || fading);
+      paintFrame(fade);
       if (fading && fade >= 1) {
         fading = false;
         prevSprite = sprite;
-        prevAtlas = atlas;
         prevK = k;
       }
       lastFrameCostMs = performance.now() - t0;
@@ -517,7 +501,6 @@ export function SmokeCanvas() {
     const mo = new MutationObserver(() => {
       applyRouteTint();
       prevSprite = sprite;
-      prevAtlas = atlas;
       prevK = k;
       sprite = makeSprite(rgb());
       atlas = makeAtlas(rgb(), TIERS[tierIndex].cell);

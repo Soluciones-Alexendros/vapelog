@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Scale } from "lucide-react";
+import { Menu, Scale } from "lucide-react";
 import { BrandLogo } from "@/components/brand-mark";
 import { CommandPalette } from "@/components/command-palette";
 import { CompareContext, useCompare, type CompareRef } from "@/components/compare-context";
@@ -111,6 +111,82 @@ function CompareProvider({ children }: { children: ReactNode }) {
   return <CompareContext.Provider value={api}>{children}</CompareContext.Provider>;
 }
 
+function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boolean }) {
+  const [open, setOpen] = useState(false);
+  const linkClass = (to: string, exact: boolean) =>
+    active(to, exact)
+      ? "inline-flex min-h-11 items-center text-base font-medium text-foreground underline decoration-primary underline-offset-4"
+      : "inline-flex min-h-11 items-center text-base font-medium text-foreground hover:text-primary";
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="secondary"
+        className="lg:hidden"
+        aria-expanded={open}
+        aria-controls="catalog-menu"
+        aria-label="Catálogo"
+        onClick={() => setOpen(true)}
+      >
+        <Menu className="size-4" aria-hidden />
+        <span className="hidden min-[400px]:inline">Catálogo</span>
+      </Button>
+      <nav className="hidden min-w-0 flex-1 items-center gap-x-4 lg:flex" aria-label="Catálogo">
+        {catalogNav.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            aria-current={active(item.to, item.exact) ? "page" : undefined}
+            className={
+              active(item.to, item.exact)
+                ? "inline-flex min-h-11 items-center border-b-2 border-primary text-base font-medium text-foreground"
+                : "inline-flex min-h-11 items-center border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary focus-visible:border-primary"
+            }
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent id="catalog-menu" className="lg:hidden">
+          <DialogTitle>Catálogo</DialogTitle>
+          <DialogDescription>Listas del archivo y el resto de secciones.</DialogDescription>
+          <nav className="mt-4 flex flex-col" aria-label="Catálogo">
+            {catalogNav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={active(item.to, item.exact) ? "page" : undefined}
+                className={linkClass(item.to, item.exact)}
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <nav
+            className="mt-4 flex flex-col border-t border-border pt-2"
+            aria-label="Otras secciones"
+          >
+            {secondaryNav.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                aria-current={active(item.to, item.exact) ? "page" : undefined}
+                className={linkClass(item.to, item.exact)}
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function Header() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const compare = useCompare();
@@ -120,7 +196,7 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background">
-      <div className="mx-auto flex max-w-6xl items-center gap-1 px-3 sm:gap-2 sm:px-4 lg:gap-4">
+      <div className="mx-auto flex max-w-6xl flex-nowrap items-center gap-1 px-3 sm:gap-2 sm:px-4 lg:gap-4">
         <Link
           to="/"
           className="brand-link flex min-h-11 shrink-0 items-center"
@@ -128,23 +204,8 @@ function Header() {
         >
           <BrandLogo className="h-6 w-auto sm:h-8" />
         </Link>
-        <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4" aria-label="Catálogo">
-          {catalogNav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              aria-current={active(item.to, item.exact) ? "page" : undefined}
-              className={
-                active(item.to, item.exact)
-                  ? "inline-flex min-h-11 items-center border-b-2 border-primary text-base font-medium text-foreground"
-                  : "inline-flex min-h-11 items-center border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary focus-visible:border-primary"
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex shrink-0 items-center gap-1">
+        <CatalogMenu active={active} />
+        <div className="ms-auto flex shrink-0 items-center gap-1">
           <CommandPalette />
           <ThemeToggle />
           <Link

@@ -20,7 +20,7 @@ Las fichas derivaban sus datos de frases comprimidas de producto (`battery`, `ch
 - `Coil` pierde `wire`, `build` y `pack` y gana `wireKind` (`malla` | `doble-malla` | `alambre`), `wireMaterial`, `build` (`malla` | `doble-malla` | `capsula`) y `packCount`.
 - Se eliminan las filas `*_note` de `spec-def.ts` (`charge_note`, `power_note`, `capacity_note`, `wire_note`, `pack_note`); `charge_port` se sustituye por `charge_rate` (texto compuesto) y se añade `capacity_tpd_ml`.
 - Se eliminan los parsers de `measures.ts` salvo `publishedText`, `ratioParts`, `ohmBands` y `powerBands`; nuevo helper `powerSummary(device)` en `specs.ts`.
-- `Part.spec`, `Part.quantityNote` y `Liquid.line` se conservan (técnicos concisos y taxonomía, respectivamente).
+- `Part.spec`, `Part.quantityNote` y `Liquid.line` se conservan (técnicos concisos y taxonomía, respectivamente). `Part` admite `dripMm`, `chemistry` y `continuousAmps` opcionales; las filas de ficha `drip_mm`, `chemistry` y `amps` leen esos campos.
 - Donde la fuente oficial no publica el dato, el campo queda en `null` y la ficha muestra `Sin dato publicado` (sin inventar datos, según AGENTS.md §9).
 
 ## Consecuencias
