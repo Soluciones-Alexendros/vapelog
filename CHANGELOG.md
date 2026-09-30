@@ -12,6 +12,8 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-30
+
 ### Cambios
 
 - fix(fx): humo visible (fondo en `html`, body transparente) y fallo consultable (`vapelog-fx:v2`, Auto/On/Off, `?fx=debug`, `window.__vapelogFx`) (ADR-0009, F0)
