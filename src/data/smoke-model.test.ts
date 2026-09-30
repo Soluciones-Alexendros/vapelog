@@ -5,6 +5,10 @@ import {
   emit,
   EMIT_MAX,
   glyphFor,
+  SMOKE_RGB_DARK_DEFAULT,
+  SMOKE_RGB_LIGHT,
+  SMOKE_TINT_BY_ROUTE_DARK,
+  smokeTintForRoute,
   softAlphaBound,
   stepSmoke,
 } from "../lib/smoke/model.ts";
@@ -119,4 +123,28 @@ test("ASCII solo en la banda baja de densidad", () => {
   assert.equal(glyphFor(3), null);
   assert.ok(glyphFor(0.8, 0.2));
   assert.notEqual(glyphFor(1.4, 0.2)?.ch, "=");
+});
+
+test("N7: tinte por ruta solo en oscuro, sin tocar alfa ni K", () => {
+  // En claro siempre gris-tinta tenue sin tinte.
+  for (const path of ["/", "/dispositivos", "/resistencias/x", "/liquidos", "/componentes"]) {
+    assert.equal(smokeTintForRoute(path, false), SMOKE_RGB_LIGHT);
+  }
+  // En oscuro cada familia (sección y ficha) tiñe su color.
+  assert.equal(smokeTintForRoute("/dispositivos", true), SMOKE_TINT_BY_ROUTE_DARK["/dispositivos"]);
+  assert.equal(
+    smokeTintForRoute("/dispositivos/tal-cual", true),
+    SMOKE_TINT_BY_ROUTE_DARK["/dispositivos"],
+  );
+  assert.equal(smokeTintForRoute("/resistencias", true), SMOKE_TINT_BY_ROUTE_DARK["/resistencias"]);
+  assert.equal(smokeTintForRoute("/liquidos/algo", true), SMOKE_TINT_BY_ROUTE_DARK["/liquidos"]);
+  assert.equal(smokeTintForRoute("/componentes", true), SMOKE_TINT_BY_ROUTE_DARK["/componentes"]);
+  // Rutas sin familia: gris por defecto (el de styles.css).
+  for (const path of ["/", "/buscar", "/comparar", "/dispositivos2"]) {
+    assert.equal(smokeTintForRoute(path, true), SMOKE_RGB_DARK_DEFAULT);
+  }
+  // La función solo devuelve matiz "r g b": nunca alfa ni K.
+  for (const tint of Object.values(SMOKE_TINT_BY_ROUTE_DARK)) {
+    assert.match(tint, /^\d{1,3} \d{1,3} \d{1,3}$/);
+  }
 });

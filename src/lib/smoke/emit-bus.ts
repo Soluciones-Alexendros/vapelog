@@ -25,6 +25,25 @@ export function puff(x: number, y: number): void {
   if (h && typeof h.emit === "function") h.emit(x, y);
 }
 
+/**
+ * N6 — ahorro de datos. `prefers-reduced-data` no tiene API tipada y
+ * `navigator.connection.saveData` tampoco, así que se leen con casts
+ * estrechos y se acepta su ausencia (falso si no existen).
+ */
+export function wantsReducedData(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  if (typeof window.matchMedia === "function") {
+    try {
+      if (window.matchMedia("(prefers-reduced-data: reduce)").matches) return true;
+    } catch {
+      // matchMedia caprichoso: se sigue con connection.saveData.
+    }
+  }
+  return Boolean(
+    (navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData,
+  );
+}
+
 /** Como `puff`, pero si fx pasa a on y el lienzo aún no montó, la encola para
  *  vaciarla al montar (caso del botón «Efectos»). */
 export function requestPuff(x: number, y: number): void {

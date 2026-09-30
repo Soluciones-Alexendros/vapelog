@@ -49,6 +49,37 @@ export const EMIT_LIFE_MAX = 2.2;
  */
 export const EMIT_ENV = 0.16;
 
+// N7 — tinte por ruta SOLO en oscuro, dentro de los topes vigentes.
+// Solo cambia el matiz (`--smoke-rgb` vía override inline en el canvas);
+// `--smoke-alpha` y `--smoke-k` no se tocan. En claro siempre gris-tinta
+// tenue sin tinte. Los cuatro tintes son grises cálidos/fríos desaturados
+// (luminancia próxima al gris por defecto 200 196 188) para que el peor caso
+// de contraste apenas se mueva respecto al medido en `contrast.test.ts`.
+export const SMOKE_RGB_LIGHT = "120 108 92";
+export const SMOKE_RGB_DARK_DEFAULT = "200 196 188";
+export const SMOKE_TINT_BY_ROUTE_DARK: Record<string, string> = {
+  "/dispositivos": "226 186 132", // ámbar
+  "/resistencias": "140 198 205", // cian
+  "/liquidos": "214 156 184", // magenta
+  "/componentes": "172 164 216", // violeta
+};
+
+/**
+ * Matiz del humo (`--smoke-rgb` como "r g b") para una ruta y tema.
+ * Pura y testeable: en claro siempre el gris-tinta; en oscuro, el tinte de
+ * la familia si el pathname es la sección o una ficha suya (`/x` o `/x/...`),
+ * si no el gris por defecto. Nunca devuelve alfa ni K.
+ */
+export function smokeTintForRoute(pathname: string, isDark: boolean): string {
+  if (!isDark) return SMOKE_RGB_LIGHT;
+  for (const prefix of Object.keys(SMOKE_TINT_BY_ROUTE_DARK)) {
+    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+      return SMOKE_TINT_BY_ROUTE_DARK[prefix] as string;
+    }
+  }
+  return SMOKE_RGB_DARK_DEFAULT;
+}
+
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {

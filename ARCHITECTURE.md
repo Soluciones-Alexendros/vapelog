@@ -19,14 +19,15 @@ runtime ni autenticación.
 
 ## Mapa
 
-| Área          | Ubicación                     |
-| ------------- | ----------------------------- |
-| Rutas         | `src/routes/`                 |
-| Fichas / UI   | `src/components/`             |
-| Catálogo      | `src/data/catalog.ts` + specs |
-| Humo          | `src/lib/smoke/`              |
-| Tokens / tema | `src/styles.css`              |
-| Smoke / env   | `scripts/`                    |
+| Área          | Ubicación                          |
+| ------------- | ---------------------------------- |
+| Rutas         | `src/routes/`                      |
+| Fichas / UI   | `src/components/`                  |
+| Catálogo      | `src/data/catalog.ts` + specs      |
+| Humo          | `src/lib/smoke/`                   |
+| Cinética / FX | `src/lib/kinetic/` + `src/lib/fx/` |
+| Tokens / tema | `src/styles.css`                   |
+| Smoke / env   | `scripts/`                         |
 
 ## Detalle
 
@@ -50,3 +51,28 @@ runtime ni autenticación.
 - Cotas de contraste verificadas en `src/data/contrast.test.ts`; guías de
   medición en `docs/guides/humo-baseline.md` (S0) y
   `docs/guides/humo-resultados.md` (S7).
+
+### Rediseño neo-brutalista ([ADR-0008](docs/architecture/decisions/ADR-0008.md))
+
+- **Identidad dual:** claro brutalista (borde tinta `--brut-border: 3px`, sombra
+  dura desplazada, `border-radius: 0`) y oscuro neón (borde fino + halo en el
+  color del tipo, `border-radius: 0.25rem`). Tipografías Archivo Black
+  (titulares `h1–h3`), Space Mono (datos/glifos/etiquetas) y Public Sans
+  (cuerpo), autoalojadas vía `@fontsource`.
+- **Color por tipo:** 4 tipos (`dispositivo`/`resistencia`/`liquido`/
+  `componente`) con tokens `--kind-*` y `--kind-color` por `data-kind`; el tipo
+  se lee por color + icono + etiqueta (WCAG 1.4.1). Mapeo de `Domain` interno a
+  `Kind` en `src/lib/kind.ts`.
+- **Tarjetas `KindCard`** (`src/components/ui/kind-card.tsx`): LED tenue en
+  espera, encendido con hover/foco; spotlight y tilt (≤ 4°) solo con
+  `(hover:hover) and (pointer:fine)`. Modelo puro del tilt en
+  `src/lib/fx/tilt.ts` (`tiltFromPointer`) y hook `useCardFx` en
+  `src/components/ui/use-card-fx.ts`.
+- **Tipografía cinética:** modelo puro `src/lib/kinetic/scramble.ts`
+  (`scrambleFrame`/`scrambleFrames`, glifos `.·:~=+*#`); el componente
+  `KineticHeading` superpone una capa `aria-hidden` solo en navegación cliente.
+- **Transiciones vapor:** `defaultViewTransition` en `src/router.tsx` +
+  `vapor-out`/`vapor-in` y puff de humo vía `emit-bus`.
+- **Salvaguardas:** todo efecto se apaga con `prefers-reduced-motion` y el
+  conmutador `vapelog-fx` (`src/lib/fx.ts`); `forced-colors` y
+  `prefers-contrast: more` con estilo propio.

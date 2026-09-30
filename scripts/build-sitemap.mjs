@@ -11,7 +11,7 @@ const ROOT = resolve(HERE, "..");
 const DATA_DIR = join(ROOT, "src", "data");
 const OUT_FILE = join(ROOT, "public", "sitemap.xml");
 
-const DEFAULT_SITE_BASE = "https://vapelog.es";
+const DEFAULT_SITE_BASE = "https://vapelog-alexendros.vercel.app";
 const SITE_BASE = (process.env.SITE_URL ?? process.env.VITE_SITE_URL ?? DEFAULT_SITE_BASE).replace(
   /\/+$/,
   "",

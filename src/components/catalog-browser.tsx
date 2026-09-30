@@ -28,9 +28,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
+import { kindOf } from "@/lib/kind";
 import { Package, SlidersHorizontal, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { KindCard } from "@/components/ui/kind-card";
+import { useCardFx } from "@/components/ui/use-card-fx";
 
 export function CatalogBrowser({
   domain,
@@ -54,6 +57,8 @@ export function CatalogBrowser({
   const chips = chipsFor(search);
   const showTpd = domain === "device" || domain === "liquid";
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const listRef = useRef<HTMLUListElement>(null);
+  useCardFx(listRef);
 
   const set = (patch: Partial<CatalogSearch>) => {
     const next: CatalogSearch = { ...search, ...patch };
@@ -261,6 +266,7 @@ export function CatalogBrowser({
 
           {vista !== "tabla" && filtered.length > 0 ? (
             <ul
+              ref={listRef}
               className={
                 vista === "grid" ? "mt-4 grid gap-3 sm:grid-cols-2" : "mt-4 flex flex-col gap-3"
               }
@@ -269,72 +275,110 @@ export function CatalogBrowser({
                 const brand = brandById(item.brandId)?.name ?? "";
                 const showPhoto = domain === "device" || domain === "coil";
                 return (
-                  <li
-                    key={item.id}
-                    className={
-                      vista === "grid"
-                        ? "reveal flex flex-col overflow-hidden rounded-md border border-border bg-surface-2 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
-                        : "reveal flex items-start gap-3 overflow-hidden rounded-md border border-border bg-surface-2 p-3 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
-                    }
-                  >
-                    {showPhoto ? (
-                      <CardMedia
-                        item={item}
-                        brand={brand}
-                        frame={vista === "grid" ? "card" : "row"}
-                      />
-                    ) : null}
-                    <div
-                      className={
-                        vista === "grid"
-                          ? "flex flex-1 flex-col p-4"
-                          : "flex min-w-0 flex-1 flex-col py-1"
-                      }
+                  <li key={item.id} className="reveal">
+                    <KindCard
+                      kind={kindOf(domain)}
+                      className="flex h-full flex-col overflow-hidden"
                     >
-                      <p className="text-xs font-medium tracking-widest text-primary uppercase">
-                        {brand}
-                      </p>
-                      <h2 className="mt-2 text-2xl text-foreground">{item.name}</h2>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {item.domain === "liquid"
-                          ? genreById(item.genreId)?.es
-                          : taxonById(item.subId ?? "")?.es}{" "}
-                        · {factLine(item)}
-                      </p>
-                      {domain === "device" || domain === "liquid" ? (
-                        <p className="mt-1 text-xs tracking-wide text-muted-foreground uppercase">
-                          {tpdLabel(itemTpd(item))}
-                        </p>
-                      ) : null}
-                      {vista === "lista" ? (
-                        <p className="mt-3 text-sm text-muted-foreground">{item.summary}</p>
-                      ) : null}
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <ItemLink
-                          domain={domain}
-                          slug={item.slug}
-                          className={buttonVariants({ variant: "secondary" })}
-                        >
-                          Abrir ficha
-                        </ItemLink>
-                        <Button
-                          type="button"
-                          variant="quiet"
-                          aria-pressed={compare.has(item.slug)}
-                          className={
-                            compare.has(item.slug)
-                              ? "font-semibold underline decoration-primary underline-offset-4"
-                              : undefined
-                          }
-                          onClick={(event) => {
-                            puff(event.clientX, event.clientY);
-                            compare.toggle({ domain, slug: item.slug });
-                          }}
-                        >
-                          {compare.has(item.slug) ? "En el comparador" : "Comparar"}
-                        </Button>
-                      </div>
-                    </div>
+                      {vista === "grid" ? (
+                        <>
+                          {showPhoto ? (
+                            <div className="px-3 pt-2">
+                              <CardMedia item={item} brand={brand} frame="card" />
+                            </div>
+                          ) : null}
+                          <div className="flex flex-1 flex-col p-4 pt-2">
+                            <p className="text-xs font-medium tracking-widest text-primary uppercase">
+                              {brand}
+                            </p>
+                            <h2 className="mt-2 text-2xl text-foreground">{item.name}</h2>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {item.domain === "liquid"
+                                ? genreById(item.genreId)?.es
+                                : taxonById(item.subId ?? "")?.es}{" "}
+                              · {factLine(item)}
+                            </p>
+                            {domain === "device" || domain === "liquid" ? (
+                              <p className="mt-1 text-xs tracking-wide text-muted-foreground uppercase">
+                                {tpdLabel(itemTpd(item))}
+                              </p>
+                            ) : null}
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <ItemLink
+                                domain={domain}
+                                slug={item.slug}
+                                className={buttonVariants({ variant: "secondary" })}
+                              >
+                                Abrir ficha
+                              </ItemLink>
+                              <Button
+                                type="button"
+                                variant="quiet"
+                                aria-pressed={compare.has(item.slug)}
+                                className={
+                                  compare.has(item.slug)
+                                    ? "font-semibold underline decoration-primary underline-offset-4"
+                                    : undefined
+                                }
+                                onClick={(event) => {
+                                  puff(event.clientX, event.clientY);
+                                  compare.toggle({ domain, slug: item.slug });
+                                }}
+                              >
+                                {compare.has(item.slug) ? "En el comparador" : "Comparar"}
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-start gap-3 p-3 pt-2">
+                          {showPhoto ? <CardMedia item={item} brand={brand} frame="row" /> : null}
+                          <div className="flex min-w-0 flex-1 flex-col py-1">
+                            <p className="text-xs font-medium tracking-widest text-primary uppercase">
+                              {brand}
+                            </p>
+                            <h2 className="mt-2 text-2xl text-foreground">{item.name}</h2>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {item.domain === "liquid"
+                                ? genreById(item.genreId)?.es
+                                : taxonById(item.subId ?? "")?.es}{" "}
+                              · {factLine(item)}
+                            </p>
+                            {domain === "device" || domain === "liquid" ? (
+                              <p className="mt-1 text-xs tracking-wide text-muted-foreground uppercase">
+                                {tpdLabel(itemTpd(item))}
+                              </p>
+                            ) : null}
+                            <p className="mt-3 text-sm text-muted-foreground">{item.summary}</p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <ItemLink
+                                domain={domain}
+                                slug={item.slug}
+                                className={buttonVariants({ variant: "secondary" })}
+                              >
+                                Abrir ficha
+                              </ItemLink>
+                              <Button
+                                type="button"
+                                variant="quiet"
+                                aria-pressed={compare.has(item.slug)}
+                                className={
+                                  compare.has(item.slug)
+                                    ? "font-semibold underline decoration-primary underline-offset-4"
+                                    : undefined
+                                }
+                                onClick={(event) => {
+                                  puff(event.clientX, event.clientY);
+                                  compare.toggle({ domain, slug: item.slug });
+                                }}
+                              >
+                                {compare.has(item.slug) ? "En el comparador" : "Comparar"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </KindCard>
                   </li>
                 );
               })}

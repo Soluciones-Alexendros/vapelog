@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
 import { Badge } from "@/components/ui/badge";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/")({
@@ -21,7 +22,7 @@ function BlogIndex() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Publicaciones</p>
-      <h1 className="mt-3 text-4xl text-foreground sm:text-5xl">Blog</h1>
+      <KineticHeading as="h1" text="Blog" className="mt-3 text-4xl text-foreground sm:text-5xl" />
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Opinión y estudio del archivo. Cada pieza cita lo que se puede comprobar y marca lo que no.
         Los artículos publicados ahora son ejemplos de infraestructura.

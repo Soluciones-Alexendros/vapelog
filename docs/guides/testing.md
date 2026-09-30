@@ -47,6 +47,34 @@ prueba con `node:test` dentro de `pnpm test`:
   solape ASCII (`--smoke-alpha + 0.12`) en claro, oscuro y
   `prefers-contrast: more`.
 
+## Modelos del rediseño neo-brutalista (ADR-0008)
+
+También puros y deterministas, probados dentro de `pnpm test`:
+
+- `src/data/kinetic-scramble.test.ts` (6 tests): el último fotograma de
+  `scrambleFrames` es el texto exacto; conserva longitud (code points) y
+  espacios; determinista por semilla + paso; glifos intermedios solo de
+  `GLYPHS`; resolución izquierda → derecha; coste < 0,05 ms/fotograma.
+- `src/data/tilt.test.ts` (6 tests): centro = 0°, bordes = ±4°, clamp fuera de
+  rango, `mx`/`my` relativos y `maxDeg` configurable para `tiltFromPointer`.
+- `src/data/contrast.test.ts`: ampliado con el contrato neo-brutalista — neón
+  de cada tipo ≥ 3:1 sobre tarjeta y fondo, tinta ≥ 7:1, ΔE OKLab mínimo ≥ 15
+  entre tipos y `prefers-contrast: more`.
+
+## Accesibilidad y e2e
+
+```bash
+pnpm run a11y          # axe serious+critical sobre el build (scripts/a11y-pass.mjs)
+pnpm run visual-smoke  # desbordamiento horizontal por viewport/tema
+pnpm run e2e           # build + Nitro loopback + a11y-pass + browser-smoke
+```
+
+- `scripts/a11y-pass.mjs` recorre ≥ 5 rutas × 2 temas y sale 0 solo con 0
+  violaciones serious/critical.
+- `scripts/visual-smoke.mjs` detecta desbordamiento horizontal (p. ej. 360 px).
+- `scripts/e2e.sh` es el espejo local del job `browser` de CI y corre en el
+  hook `pre-commit` (verificación e2e de husky).
+
 Medición en navegador real (Chromium headless contra el build de producción):
 
 ```bash

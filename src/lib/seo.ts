@@ -1,6 +1,6 @@
 import type { MetaDescriptor } from "@tanstack/react-router";
 
-const DEFAULT_SITE_BASE = "https://vapelog.es";
+const DEFAULT_SITE_BASE = "https://vapelog-alexendros.vercel.app";
 
 const envSiteUrl: unknown = import.meta.env?.VITE_SITE_URL;
 

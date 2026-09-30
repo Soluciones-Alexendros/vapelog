@@ -12,6 +12,19 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambios
+
+- feat(rediseno): identidad neo-brutalista con doble cara claro/oscuro — claro brutalista (borde tinta 3 px, sombra dura) y oscuro neón (borde fino + LED/glow) (ADR-0008)
+- feat(marca): logo con voluta a trazados (sin `<text>`), favicon e iconos regenerados, wordmark tipográfico y animación de voluta (N1)
+- feat(tipografia): Archivo Black en titulares y Space Mono en datos/etiquetas, autoalojadas vía `@fontsource` (N2)
+- feat(tarjetas): `KindCard` con color por tipo (dispositivo/resistencia/líquido/componente), LED en espera/activo, spotlight y tilt ≤ 4° (N3)
+- feat(cinetica): titulares con tipografía cinética `scramble` (glifos ASCII), solo en navegación cliente y con texto real en el DOM (N4)
+- feat(terminal): caret tras el h1, prefijo `>` en el buscador, glitch al pulsar y línea de estado en el pie con cifras reales (N5)
+- feat(transiciones): transiciones de página tipo vapor con puff de humo y degradación por `Save-Data`/`reduced-motion` (N6)
+- feat(humo): tinte por tipo de ruta en oscuro dentro de los topes de `--smoke-alpha`/`--smoke-k` (N7)
+- feat(accesibilidad): salvaguardas `prefers-reduced-motion`, conmutador `vapelog-fx`, `forced-colors` y `prefers-contrast: more` (N8)
+- chore(dominio): dominio canónico unificado a `vapelog-alexendros.vercel.app` (N0)
+
 ## [0.8.0] - 2026-09-30
 
 ### Cambios
