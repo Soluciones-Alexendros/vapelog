@@ -26,6 +26,7 @@ import {
   liquids,
   partBySlug,
   parts,
+  taxonById,
   variationRange,
 } from "@/data/catalog";
 import {
@@ -44,7 +45,10 @@ import {
   variationRows,
 } from "@/data/specs";
 import type { CatalogItem, Coil, CompatKind, Device, Domain } from "@/data/types";
-import { useCompare } from "@/components/chrome";
+import { catalogImage } from "@/data/images";
+import { transitionNameForPhoto } from "@/lib/view-transition";
+import { puff } from "@/lib/smoke/emit-bus";
+import { useCompare } from "@/components/compare-context";
 import {
   compatLabel,
   compatTone,
@@ -214,6 +218,7 @@ function DeviceBody({ device }: { device: Device }) {
               >
                 <Link
                   to="/componentes/$slug"
+                  preload="intent"
                   params={{ slug: part.slug }}
                   className="text-foreground underline decoration-border underline-offset-4"
                 >
@@ -306,6 +311,7 @@ export function CoilSheet({ slug }: { slug: string }) {
                   <div className="min-w-0">
                     <Link
                       to="/dispositivos/$slug"
+                      preload="intent"
                       params={{ slug: row.device.slug }}
                       className="text-foreground underline decoration-border underline-offset-4"
                     >
@@ -410,6 +416,7 @@ export function PartSheet({ slug }: { slug: string }) {
                 <ProductPhoto slug={device.slug} alt={device.name} frame="thumb" missing="note" />
                 <Link
                   to="/dispositivos/$slug"
+                  preload="intent"
                   params={{ slug: device.slug }}
                   className="min-w-0 text-foreground underline decoration-border underline-offset-4"
                 >
@@ -479,7 +486,10 @@ function Sheet({
           className={
             compare.has(item.slug) ? "font-semibold underline underline-offset-4" : undefined
           }
-          onClick={() => compare.toggle({ domain: item.domain, slug: item.slug })}
+          onClick={(event) => {
+            puff(event.clientX, event.clientY);
+            compare.toggle({ domain: item.domain, slug: item.slug });
+          }}
         >
           {compare.has(item.slug) ? "En el comparador" : "Comparar"}
         </Button>
@@ -502,16 +512,20 @@ function Sheet({
         className="mt-10 grid scroll-mt-28 gap-8 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-start"
       >
         {item.domain === "device" || item.domain === "coil" ? (
-          <ProductPhoto
-            slug={item.slug}
-            alt={`${brand?.name ?? ""} ${item.name}`.trim()}
-            frame="hero"
-            missing="note"
-          />
+          catalogImage(item.slug) ? (
+            <ProductPhoto
+              slug={item.slug}
+              alt={`${brand?.name ?? ""} ${item.name}`.trim()}
+              frame="hero"
+              missing="note"
+              familyLabel={familyLabelFor(item)}
+              transitionName={transitionNameForPhoto(item.slug)}
+            />
+          ) : (
+            <SheetPlaceholder label={familyLabelFor(item)} />
+          )
         ) : (
-          <div className="grid aspect-square w-full place-items-center rounded-md border border-border bg-surface-3 p-6 text-center text-sm text-muted-foreground">
-            Sin foto de fabricante en este dominio.
-          </div>
+          <SheetPlaceholder label={familyLabelFor(item)} />
         )}
         <div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -753,6 +767,7 @@ function CompatRows({
         <li key={row.coil.id} className="w-72 shrink-0 snap-start">
           <Link
             to="/resistencias/$slug"
+            preload="intent"
             params={{ slug: row.coil.slug }}
             className="flex h-full items-center gap-3 rounded-md border border-border bg-surface-2 p-2 text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
           >
@@ -846,6 +861,7 @@ function LiquidRows({
         <li key={fit.liquid.id} className="w-72 shrink-0 snap-start">
           <Link
             to="/liquidos/$slug"
+            preload="intent"
             params={{ slug: fit.liquid.slug }}
             className="flex h-full flex-col gap-1 rounded-md border border-border bg-surface-2 p-3 text-foreground shadow-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
           >
@@ -952,6 +968,29 @@ function SpecTable({
   );
 }
 
+function familyLabelFor(item: CatalogItem): string {
+  if (item.domain === "liquid") {
+    return genreById(item.genreId)?.es ?? domainLabel(item.domain);
+  }
+  return (
+    taxonById(item.familyId ?? "")?.es ??
+    taxonById(item.subId ?? "")?.es ??
+    domainLabel(item.domain)
+  );
+}
+
+function SheetPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="grid aspect-square w-full place-items-center rounded-md border border-border bg-surface-3 p-6 text-center">
+      <div className="flex flex-col items-center gap-1">
+        <Package className="size-6 text-muted-foreground" aria-hidden />
+        <p className="text-xs leading-tight text-muted-foreground">{label}</p>
+        <p className="text-[0.625rem] tracking-wide text-muted-foreground uppercase">Sin foto</p>
+      </div>
+    </div>
+  );
+}
+
 function heroChips(item: CatalogItem) {
   const facts = specFacts(item);
   const byKey = new Map(facts.map((fact) => [fact.key, fact]));
@@ -1008,6 +1047,7 @@ function RelatedItems({ item }: { item: CatalogItem }) {
           <li key={row.id} className="rounded-lg border border-border bg-surface-2 p-3 shadow-1">
             <Link
               to={`${path}/$slug`}
+              preload="intent"
               params={{ slug: row.slug }}
               className="text-foreground underline decoration-border underline-offset-4"
             >

@@ -20,6 +20,8 @@
     "test:coverage": "node --experimental-test-coverage --test \"src/data/*.test.ts\" \"scripts/*.test.mjs\"",
     "smoke": "bash scripts/smoke.sh",
     "visual-smoke": "node scripts/visual-smoke.mjs",
+    "smoke-bench": "node scripts/smoke-bench.mjs",
+    "smoke-verify": "node scripts/smoke-verify.mjs",
     "check:env": "node scripts/check-env.mjs",
     "icons": "node scripts/build-icons.mjs",
     "sitemap": "node scripts/build-sitemap.mjs",

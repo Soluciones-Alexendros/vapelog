@@ -42,7 +42,24 @@ export default tseslint.config(
       // TanStack Table v8 es una libreria valida; la regla del React Compiler
       // la marca por incompatibilidad de compilacion, no por un bug real.
       "react-hooks/incompatible-library": "warn",
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // TanStack Router exige `export const Route` en cada fichero de ruta:
+      // no se puede mover a otro módulo sin romper el enrutado por ficheros.
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true, allowExportNames: ["Route"] },
+      ],
+    },
+  },
+  {
+    // Las rutas de TanStack colocan `Route` junto al componente de página
+    // (`Route.useSearch()` / `useParams()` atan la página a su `Route`):
+    // extraer el componente obligaría a imports circulares o a taladrar
+    // props en ~16 ficheros sin cambio de comportamiento. Se desactiva la
+    // regla solo aquí; los componentes compartidos sí se movieron a módulos
+    // aparte (compare-context, compat-search, tool-search, *-variants).
+    files: ["src/routes/**/*.{ts,tsx}"],
+    rules: {
+      "react-refresh/only-export-components": "off",
     },
   },
 );

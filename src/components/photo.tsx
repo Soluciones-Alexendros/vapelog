@@ -1,3 +1,4 @@
+import { useState, type CSSProperties } from "react";
 import { productImage } from "@/data/images";
 
 const frames = {
@@ -26,12 +27,17 @@ export function ProductPhoto({
   alt,
   frame = "card",
   missing = "hide",
+  familyLabel,
+  transitionName,
 }: {
   slug: string;
   alt: string;
   frame?: keyof typeof frames;
   missing?: "hide" | "note";
+  familyLabel?: string;
+  transitionName?: string;
 }) {
+  const [loaded, setLoaded] = useState(false);
   const image = productImage(slug);
   if (!image) {
     if (missing === "hide") return null;
@@ -40,7 +46,8 @@ export function ProductPhoto({
         className={`${frames[frame]} grid place-items-center rounded-md bg-background px-2 text-center outline outline-1 -outline-offset-1 outline-foreground/15`}
       >
         <p className="text-xs leading-tight text-muted-foreground">
-          {frame === "thumb" || frame === "row" ? "Sin foto" : "Sin foto de fabricante"}
+          {familyLabel ??
+            (frame === "thumb" || frame === "row" ? "Sin foto" : "Sin foto de fabricante")}
         </p>
       </div>
     );
@@ -54,11 +61,17 @@ export function ProductPhoto({
     webpVariants[webpVariants.length - 1] ?? image.variants[image.variants.length - 1];
   const fallbackSrc = fallback ? fallback.src : image.original;
 
+  const transitionStyle: CSSProperties | undefined = transitionName
+    ? { viewTransitionName: transitionName }
+    : undefined;
+
   return (
     <div
-      className={`${frames[frame]} overflow-hidden rounded-md bg-background outline outline-1 -outline-offset-1 outline-foreground/15`}
+      className={`${frames[frame]} relative overflow-hidden rounded-md bg-background outline outline-1 -outline-offset-1 outline-foreground/15`}
+      style={transitionStyle}
     >
-      <picture className="block h-full w-full">
+      {!loaded ? <div className="photo-skeleton" aria-hidden="true" /> : null}
+      <picture className="relative block h-full w-full">
         {avifSrcSet ? <source type="image/avif" srcSet={avifSrcSet} sizes={sizes} /> : null}
         {webpSrcSet ? <source type="image/webp" srcSet={webpSrcSet} sizes={sizes} /> : null}
         <img
@@ -68,9 +81,11 @@ export function ProductPhoto({
           alt={alt}
           width={image.width}
           height={image.height}
-          className="h-full w-full object-contain"
+          className={`h-full w-full object-contain transition-opacity duration-2 ${loaded ? "opacity-100" : "opacity-0"}`}
           loading={frame === "hero" ? "eager" : "lazy"}
           decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
         />
       </picture>
     </div>

@@ -1,21 +1,23 @@
-import { Link } from "@tanstack/react-router";
+import { FichaLink } from "@/components/ficha-link";
+import { puff } from "@/lib/smoke/emit-bus";
+import { transitionNameForPhoto } from "@/lib/view-transition";
 import { brandById, genreById, taxonById } from "@/data/catalog";
 import { catalogImage } from "@/data/images";
 import {
   buildFacets,
   chipsFor,
   factLine,
-  parseCatalogSearch,
   query,
   specCells,
   without,
   type CatalogSearch,
 } from "@/data/search";
 import type { CatalogItem, Domain } from "@/data/types";
-import { useCompare } from "@/components/chrome";
+import { useCompare } from "@/components/compare-context";
 import { confidenceLabel, domainLabel, itemTpd, tpdLabel } from "@/components/labels";
 import { ProductPhoto } from "@/components/photo";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -26,10 +28,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
-import { Package, X } from "lucide-react";
-
-export type { CatalogSearch };
-export { parseCatalogSearch };
+import { Package, SlidersHorizontal, X } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 export function CatalogBrowser({
   domain,
@@ -52,6 +53,7 @@ export function CatalogBrowser({
   const facets = buildFacets(domain, search);
   const chips = chipsFor(search);
   const showTpd = domain === "device" || domain === "liquid";
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const set = (patch: Partial<CatalogSearch>) => {
     const next: CatalogSearch = { ...search, ...patch };
@@ -71,120 +73,35 @@ export function CatalogBrowser({
         </>
       ) : null}
 
-      <div
-        className={`${heading ? "mt-6" : ""} grid min-w-0 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]`}
-      >
-        <form
-          className="h-fit rounded-lg border border-border bg-surface-2 p-4 shadow-1 lg:sticky lg:top-36 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto"
-          onSubmit={(event) => event.preventDefault()}
+      <div className={`${heading ? "mt-6" : "mt-4"} lg:hidden`}>
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full"
+          onClick={() => setFiltersOpen(true)}
         >
-          <label className="block text-sm text-muted-foreground" htmlFor={`${domain}-q`}>
-            Texto dentro de estos filtros
-          </label>
-          <Input
-            id={`${domain}-q`}
-            value={search.q ?? ""}
-            onChange={(event) => set({ q: event.target.value })}
-            placeholder="Modelo o cifra"
-            className="mt-2"
-          />
-
-          {facets.map((facet) =>
-            facet.control === "select" ? (
-              <label
-                key={facet.key}
-                className="mt-5 block text-sm text-muted-foreground"
-                htmlFor={`${domain}-${facet.key}`}
-              >
-                {facet.legend}
-                <select
-                  id={`${domain}-${facet.key}`}
-                  className="mt-2 text-foreground"
-                  value={typeof search[facet.key] === "string" ? String(search[facet.key]) : ""}
-                  onChange={(event) => {
-                    const nextId = event.target.value || undefined;
-                    if (facet.key === "familia") set({ familia: nextId, sub: undefined });
-                    else set({ [facet.key]: nextId });
-                  }}
-                >
-                  <option value="">Todas</option>
-                  {facet.options.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label} ({option.count})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <fieldset key={facet.key} className="mt-5">
-                <legend className="text-sm text-muted-foreground">{facet.legend}</legend>
-                <div className="mt-1 flex flex-col" role="radiogroup" aria-label={facet.legend}>
-                  {facet.options.map((option) => {
-                    const active = search[facet.key] === option.id;
-                    return (
-                      <label
-                        key={option.id}
-                        className={
-                          active
-                            ? "flex min-h-11 cursor-pointer items-center justify-between gap-3 border-l-2 border-primary pr-1 pl-2 text-sm"
-                            : "flex min-h-11 cursor-pointer items-center justify-between gap-3 border-l-2 border-transparent pr-1 pl-2 text-sm hover:border-border"
-                        }
-                      >
-                        <span className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name={`${domain}-${facet.key}`}
-                            className="size-4"
-                            checked={active}
-                            onChange={() => {
-                              if (facet.key === "familia")
-                                set({ familia: option.id, sub: undefined });
-                              else set({ [facet.key]: option.id });
-                            }}
-                          />
-                          <span
-                            className={
-                              active
-                                ? "font-semibold text-foreground underline decoration-primary underline-offset-4"
-                                : "text-muted-foreground"
-                            }
-                          >
-                            {option.label}
-                          </span>
-                        </span>
-                        <span className="tabular-nums text-muted-foreground">{option.count}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            ),
-          )}
-
-          {showTpd ? (
-            <label className="mt-5 flex min-h-11 items-center gap-3 text-sm text-foreground">
-              <input
-                type="checkbox"
-                className="size-4"
-                checked={search.tpd === "si"}
-                onChange={(event) => set({ tpd: event.target.checked ? "si" : undefined })}
-              />
-              Solo ficha TPD estricta
-            </label>
+          <SlidersHorizontal className="size-4" aria-hidden />
+          Filtros
+          {chips.length > 0 ? (
+            <span className="tabular-nums text-primary">{chips.length}</span>
           ) : null}
+        </Button>
+      </div>
 
-          <Button
-            type="button"
-            variant="quiet"
-            className="mt-2 px-0"
-            onClick={() => onSearch(search.vista ? { vista: search.vista } : {})}
-          >
-            Limpiar filtros
-          </Button>
-          <p className="mt-4 text-xs text-muted-foreground">
-            El precio de cada tienda no está. Entra cuando la ficha deje de moverse.
-          </p>
-        </form>
+      <div
+        className={`${heading ? "mt-6" : "mt-4 lg:mt-0"} grid min-w-0 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)]`}
+      >
+        <div className="hidden h-fit rounded-lg border border-border bg-surface-2 p-4 shadow-1 lg:sticky lg:top-36 lg:block lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto">
+          <form onSubmit={(event) => event.preventDefault()}>
+            <FilterFields
+              search={search}
+              onSearch={onSearch}
+              facets={facets}
+              showTpd={showTpd}
+              idPrefix={domain}
+            />
+          </form>
+        </div>
 
         <section className="min-w-0">
           {chips.length > 0 ? (
@@ -325,7 +242,10 @@ export function CatalogBrowser({
                                   ? "font-semibold underline decoration-primary underline-offset-4"
                                   : undefined
                               }
-                              onClick={() => compare.toggle({ domain, slug: item.slug })}
+                              onClick={(event) => {
+                                puff(event.clientX, event.clientY);
+                                compare.toggle({ domain, slug: item.slug });
+                              }}
                             >
                               {compare.has(item.slug) ? "En el comparador" : "Comparar"}
                             </Button>
@@ -353,8 +273,8 @@ export function CatalogBrowser({
                     key={item.id}
                     className={
                       vista === "grid"
-                        ? "flex flex-col overflow-hidden rounded-md border border-border bg-surface-2 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
-                        : "flex items-start gap-3 overflow-hidden rounded-md border border-border bg-surface-2 p-3 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
+                        ? "reveal flex flex-col overflow-hidden rounded-md border border-border bg-surface-2 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
+                        : "reveal flex items-start gap-3 overflow-hidden rounded-md border border-border bg-surface-2 p-3 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
                     }
                   >
                     {showPhoto ? (
@@ -406,7 +326,10 @@ export function CatalogBrowser({
                               ? "font-semibold underline decoration-primary underline-offset-4"
                               : undefined
                           }
-                          onClick={() => compare.toggle({ domain, slug: item.slug })}
+                          onClick={(event) => {
+                            puff(event.clientX, event.clientY);
+                            compare.toggle({ domain, slug: item.slug });
+                          }}
                         >
                           {compare.has(item.slug) ? "En el comparador" : "Comparar"}
                         </Button>
@@ -419,7 +342,160 @@ export function CatalogBrowser({
           ) : null}
         </section>
       </div>
+
+      <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto max-lg:top-auto max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:w-full max-lg:max-w-none max-lg:translate-x-0 max-lg:translate-y-0 max-lg:rounded-t-lg max-lg:rounded-b-none">
+          <DialogTitle>Filtros</DialogTitle>
+          <DialogDescription>
+            Filtra el listado por las características publicadas en cada ficha.
+          </DialogDescription>
+          <form onSubmit={(event) => event.preventDefault()}>
+            <FilterFields
+              search={search}
+              onSearch={onSearch}
+              facets={facets}
+              showTpd={showTpd}
+              idPrefix={`${domain}-m`}
+            />
+          </form>
+          <Button type="button" className="mt-4 w-full" onClick={() => setFiltersOpen(false)}>
+            Ver {filtered.length} fichas
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function FilterFields({
+  search,
+  onSearch,
+  facets,
+  showTpd,
+  idPrefix,
+}: {
+  search: CatalogSearch;
+  onSearch: (next: CatalogSearch) => void;
+  facets: ReturnType<typeof buildFacets>;
+  showTpd: boolean;
+  idPrefix: string;
+}) {
+  const set = (patch: Partial<CatalogSearch>) => {
+    const next: CatalogSearch = { ...search, ...patch };
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined || value === "") delete next[key as keyof CatalogSearch];
+    }
+    onSearch(next);
+  };
+
+  return (
+    <>
+      <label className="block text-sm text-muted-foreground" htmlFor={`${idPrefix}-q`}>
+        Texto dentro de estos filtros
+      </label>
+      <Input
+        id={`${idPrefix}-q`}
+        value={search.q ?? ""}
+        onChange={(event) => set({ q: event.target.value })}
+        placeholder="Modelo o cifra"
+        className="mt-2"
+      />
+
+      {facets.map((facet) =>
+        facet.control === "select" ? (
+          <label
+            key={facet.key}
+            className="mt-5 block text-sm text-muted-foreground"
+            htmlFor={`${idPrefix}-${facet.key}`}
+          >
+            {facet.legend}
+            <select
+              id={`${idPrefix}-${facet.key}`}
+              className="mt-2 text-foreground"
+              value={typeof search[facet.key] === "string" ? String(search[facet.key]) : ""}
+              onChange={(event) => {
+                const nextId = event.target.value || undefined;
+                if (facet.key === "familia") set({ familia: nextId, sub: undefined });
+                else set({ [facet.key]: nextId });
+              }}
+            >
+              <option value="">Todas</option>
+              {facet.options.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label} ({option.count})
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <fieldset key={facet.key} className="mt-5">
+            <legend className="text-sm text-muted-foreground">{facet.legend}</legend>
+            <div className="mt-1 flex flex-col" role="radiogroup" aria-label={facet.legend}>
+              {facet.options.map((option) => {
+                const active = search[facet.key] === option.id;
+                return (
+                  <label
+                    key={option.id}
+                    className={
+                      active
+                        ? "flex min-h-11 cursor-pointer items-center justify-between gap-3 border-l-2 border-primary pr-1 pl-2 text-sm"
+                        : "flex min-h-11 cursor-pointer items-center justify-between gap-3 border-l-2 border-transparent pr-1 pl-2 text-sm hover:border-border"
+                    }
+                  >
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`${idPrefix}-${facet.key}`}
+                        className="size-4"
+                        checked={active}
+                        onChange={() => {
+                          if (facet.key === "familia") set({ familia: option.id, sub: undefined });
+                          else set({ [facet.key]: option.id });
+                        }}
+                      />
+                      <span
+                        className={
+                          active
+                            ? "font-semibold text-foreground underline decoration-primary underline-offset-4"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {option.label}
+                      </span>
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">{option.count}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        ),
+      )}
+
+      {showTpd ? (
+        <label className="mt-5 flex min-h-11 items-center gap-3 text-sm text-foreground">
+          <input
+            type="checkbox"
+            className="size-4"
+            checked={search.tpd === "si"}
+            onChange={(event) => set({ tpd: event.target.checked ? "si" : undefined })}
+          />
+          Solo ficha TPD estricta
+        </label>
+      ) : null}
+
+      <Button
+        type="button"
+        variant="quiet"
+        className="mt-2 px-0"
+        onClick={() => onSearch(search.vista ? { vista: search.vista } : {})}
+      >
+        Limpiar filtros
+      </Button>
+      <p className="mt-4 text-xs text-muted-foreground">
+        El precio de cada tienda no está. Entra cuando la ficha deje de moverse.
+      </p>
+    </>
   );
 }
 
@@ -439,6 +515,7 @@ function CardMedia({
         alt={`${brand} ${item.name}`.trim()}
         frame={frame}
         missing="note"
+        transitionName={transitionNameForPhoto(item.slug)}
       />
     );
   }
@@ -472,30 +549,9 @@ function ItemLink({
   className?: string;
   children: string;
 }) {
-  if (domain === "device") {
-    return (
-      <Link to="/dispositivos/$slug" params={{ slug }} className={className}>
-        {children}
-      </Link>
-    );
-  }
-  if (domain === "coil") {
-    return (
-      <Link to="/resistencias/$slug" params={{ slug }} className={className}>
-        {children}
-      </Link>
-    );
-  }
-  if (domain === "part") {
-    return (
-      <Link to="/componentes/$slug" params={{ slug }} className={className}>
-        {children}
-      </Link>
-    );
-  }
   return (
-    <Link to="/liquidos/$slug" params={{ slug }} className={className}>
+    <FichaLink domain={domain} slug={slug} className={className}>
       {children}
-    </Link>
+    </FichaLink>
   );
 }

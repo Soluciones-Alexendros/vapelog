@@ -12,6 +12,17 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-30
+
+### Cambios
+
+- feat(humo): humo v2 determinista con modelo puro sin DOM, capas L0–L4, híbrido humo suave + ASCII tramado y calidad adaptativa (ADR-0007)
+- feat(identidad): favicon propio y BrandMark vectorial con adaptación al tema (F2)
+- fix(movil): correcciones de F3 en móvil
+- feat(ux): View Transitions, reveal, skeleton y contadores animados (F4)
+- chore(lint): lint a 0 y anillo de foco consistente (F6)
+- feat(navegacion): paleta ⌘K, preload y pie renovado (F7)
+
 ## [0.7.0] - 2026-09-29
 
 ### Cambios

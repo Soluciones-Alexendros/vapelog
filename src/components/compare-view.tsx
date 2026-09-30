@@ -3,7 +3,7 @@ import { coilBySlug, deviceBySlug, liquidBySlug, partBySlug } from "@/data/catal
 import { liquidVolumeMl } from "@/data/logic";
 import { compareFacts, EMPTY, relationRows } from "@/data/specs";
 import type { CatalogItem, Coil, Device, Liquid, Part } from "@/data/types";
-import { useCompare, type CompareRef } from "@/components/chrome";
+import { useCompare, type CompareRef } from "@/components/compare-context";
 import { ProductPhoto } from "@/components/photo";
 import { Button } from "@/components/ui/button";
 import {

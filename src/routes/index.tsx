@@ -4,7 +4,10 @@ import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
 import { exampleCount, exampleQueries } from "@/data/search";
 import { brandById, coils, devices, liquids, parts } from "@/data/catalog";
 import type { CatalogItem } from "@/data/types";
-import { domainLabel, domainPath } from "@/components/labels";
+import { domainLabel } from "@/components/labels";
+import { CountUp } from "@/components/count-up";
+import { FichaLink } from "@/components/ficha-link";
+import { transitionNameForPhoto } from "@/lib/view-transition";
 import { ProductPhoto } from "@/components/photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +76,7 @@ function Home() {
         {latestPosts.length > 0 ? (
           <ul className="mt-6 grid gap-3 md:grid-cols-2">
             {latestPosts.map((post) => (
-              <li key={post.slug}>
+              <li key={post.slug} className="reveal">
                 <Link
                   to="/blog/$slug"
                   params={{ slug: post.slug }}
@@ -101,14 +104,20 @@ function Home() {
             <h3 className="text-base text-muted-foreground">Una ficha por dominio</h3>
             <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {highlights.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    to={`${domainPath(item.domain)}/$slug`}
-                    params={{ slug: item.slug }}
+                <li key={item.id} className="reveal">
+                  <FichaLink
+                    domain={item.domain}
+                    slug={item.slug}
                     className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-surface-2 shadow-1 transition-[border-color,box-shadow] duration-2 ease-out hover:border-primary hover:shadow-2"
                   >
                     {item.domain === "device" || item.domain === "coil" ? (
-                      <ProductPhoto slug={item.slug} alt={item.name} frame="card" missing="note" />
+                      <ProductPhoto
+                        slug={item.slug}
+                        alt={item.name}
+                        frame="card"
+                        missing="note"
+                        transitionName={transitionNameForPhoto(item.slug)}
+                      />
                     ) : null}
                     <div className="flex flex-1 flex-col p-3">
                       <p className="text-xs tracking-widest text-primary uppercase">
@@ -116,7 +125,7 @@ function Home() {
                       </p>
                       <p className="mt-2 text-base text-foreground">{item.name}</p>
                     </div>
-                  </Link>
+                  </FichaLink>
                 </li>
               ))}
             </ul>
@@ -162,7 +171,7 @@ function Home() {
         </form>
         <ul className="mt-6 grid gap-3 md:grid-cols-2">
           {exampleQueries.map((example) => (
-            <li key={example.id}>
+            <li key={example.id} className="reveal">
               <ExampleCard example={example} />
             </li>
           ))}
@@ -213,7 +222,7 @@ function ExampleCard({ example }: { example: (typeof exampleQueries)[number] }) 
   const inner = (
     <>
       <p className="text-xs tracking-widest text-muted-foreground uppercase tabular-nums">
-        {count} fichas
+        <CountUp value={count} /> fichas
       </p>
       <h3 className="mt-2 text-lg text-muted-foreground">{example.title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{example.text}</p>
@@ -221,20 +230,20 @@ function ExampleCard({ example }: { example: (typeof exampleQueries)[number] }) 
   );
   if (example.domain === "coil") {
     return (
-      <Link to="/resistencias" search={example.search} className={className}>
+      <Link to="/resistencias" search={example.search} preload="intent" className={className}>
         {inner}
       </Link>
     );
   }
   if (example.domain === "device") {
     return (
-      <Link to="/dispositivos" search={example.search} className={className}>
+      <Link to="/dispositivos" search={example.search} preload="intent" className={className}>
         {inner}
       </Link>
     );
   }
   return (
-    <Link to="/liquidos" search={example.search} className={className}>
+    <Link to="/liquidos" search={example.search} preload="intent" className={className}>
       {inner}
     </Link>
   );
@@ -252,12 +261,12 @@ function DomainCard({
   text: string;
 }) {
   return (
-    <li>
+    <li className="reveal">
       <Card className="h-full hover:border-primary">
-        <Link to={href} className="flex h-full flex-col">
+        <Link to={href} preload="intent" className="flex h-full flex-col">
           <CardHeader>
             <p className="text-xs tracking-widest text-primary uppercase tabular-nums">
-              {count} fichas
+              <CountUp value={count} /> fichas
             </p>
             <CardTitle className="mt-2 text-3xl">{title}</CardTitle>
             <CardDescription className="mt-2">{text}</CardDescription>

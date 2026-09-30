@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { createSmoke, stepSmoke } from "../lib/smoke/model.ts";
 
 type Oklch = { l: number; c: number; h: number };
 type TokenMap = Map<string, Oklch>;
@@ -232,17 +233,19 @@ function assertF1Category(label: string, tokens: TokenMap, category: F1Category)
   }
 }
 
-// --- Humo: --smoke-rgb (triplete sRGB) + --smoke-alpha ----------------------
+// --- Humo: --smoke-rgb (triplete sRGB) + --smoke-alpha + --smoke-k ----------
 
-type Smoke = { rgb: [number, number, number]; alpha: number };
+type Smoke = { rgb: [number, number, number]; alpha: number; k: number };
 
 function smokeIn(block: string): Smoke | null {
   const rgb = block.match(/--smoke-rgb:\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})/);
   const alpha = block.match(/--smoke-alpha:\s*([\d.]+)/);
-  if (!rgb || !alpha) return null;
+  const k = block.match(/--smoke-k:\s*([\d.]+)/);
+  if (!rgb || !alpha || !k) return null;
   return {
     rgb: [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])],
     alpha: Number(alpha[1]),
+    k: Number(k[1]),
   };
 }
 
@@ -332,6 +335,97 @@ describe("contraste de los tokens", () => {
         const ratio = contrastSrgb(srgbChannels(foreground), blended);
         assert.ok(ratio >= 4.5, `${variant.label} foreground/humo ${ratio}`);
       });
+    }
+  });
+
+  describe("humo S4: peor caso con solape ASCII (--smoke-alpha + 0,12)", () => {
+    // El humo suave usa --smoke-alpha; el peor caso asume que además pueden
+    // solaparse glifos ASCII (alfa ≤0,12) sobre el mismo píxel. Se mezcla el
+    // humo en sRGB sobre --background y se mide tinta sobre esa superficie.
+    // Medido (verde): el peor caso es oscuro --muted-foreground 6,245:1
+    // (margen 1,745 sobre 4,5); claro 7,280/12,490, pc-claro 10,952/15,265,
+    // pc-oscuro 8,843/11,223 (muted/foreground).
+    const ASCII_OVERLAP = 0.12;
+    const variants = [
+      { label: "claro", tokens: lightTokens, smokeBlock: light },
+      { label: "oscuro", tokens: darkTokens, smokeBlock: dark },
+      { label: "prefers-contrast claro", tokens: pcLightTokens, smokeBlock: pcLightBlock + light },
+      { label: "prefers-contrast oscuro", tokens: pcDarkTokens, smokeBlock: pcDarkBlock + dark },
+    ];
+    for (const variant of variants) {
+      it(`${variant.label}: foreground y muted-foreground superan 4,5:1 sobre humo + ASCII`, () => {
+        const smoke = smokeIn(variant.smokeBlock);
+        assert.ok(smoke, `${variant.label} define --smoke-rgb/--smoke-alpha/--smoke-k`);
+        const surface = blendOver(
+          smoke.rgb,
+          srgbChannels(requireToken(variant.tokens, "--background")),
+          smoke.alpha + ASCII_OVERLAP,
+        );
+        for (const ink of ["--foreground", "--muted-foreground"]) {
+          const ratio = contrastSrgb(srgbChannels(requireToken(variant.tokens, ink)), surface);
+          assert.ok(ratio >= 4.5, `${variant.label} ${ink}/humo+ASCII ${ratio}`);
+        }
+      });
+    }
+  });
+
+  describe("humo S1: K·densidad_max ≤ alpha por bloque (11 semillas × 120 s)", () => {
+    const smokeBlocks = [
+      { label: "claro", smokeBlock: light },
+      { label: "oscuro", smokeBlock: dark },
+      { label: "prefers-contrast claro", smokeBlock: pcLightBlock + light },
+      { label: "prefers-contrast oscuro", smokeBlock: pcDarkBlock + dark },
+    ];
+    // 11 semillas desplegadas (ADR-0007): cubren el peor caso conocido
+    // (Q3 semilla 8 = 6.374 con el modelo anterior) más la unión de
+    // smoke-model.test.ts (3,11,29,57 cota; 5 determinismo; 9 rejilla).
+    const SEEDS = [2, 3, 4, 5, 8, 9, 10, 11, 20, 29, 57];
+    const STEPS = 120 * 30;
+    const DT = 1 / 30;
+    type Grid = {
+      label: string;
+      cfg: { width: number; height: number; pad: number; count: number; cell: number };
+    };
+    // Configs DESPLEGADAS (ADR-0007): Q3 escritorio, Q2 medio, Q1 móvil
+    // (Q1 sin ASCII). Márgenes finales con el modelo r 26..56 / growth 1.4 /
+    // life 11..17 (K=0.02/alpha=0.1 claro, K=0.028/alpha=0.14 oscuro):
+    // - Q3 worst 4.293 (semilla 20): K·d = 0.0859 claro / 0.1202 oscuro → margen 14.1 %.
+    // - Q2 worst 3.498 (semilla 20): K·d = 0.0700 claro / 0.0980 oscuro → margen 30.0 %.
+    // - Q1 worst 3.212 (semilla 20): K·d = 0.0642 claro / 0.0899 oscuro → margen 35.8 %.
+    // Cota exigida con margen ≥10 %: densidad_max ≤ 4.5.
+    const GRIDS: Grid[] = [
+      { label: "Q3 escritorio", cfg: { width: 1280, height: 720, pad: 120, count: 72, cell: 16 } },
+      { label: "Q2 medio", cfg: { width: 1000, height: 800, pad: 120, count: 40, cell: 20 } },
+      { label: "Q1 móvil", cfg: { width: 390, height: 844, pad: 120, count: 24, cell: 24 } },
+    ];
+    function maxDensity(grid: Grid): number {
+      let worst = 0;
+      for (const seed of SEEDS) {
+        const s = createSmoke({ ...grid.cfg, seed });
+        for (let i = 0; i < STEPS; i++) {
+          stepSmoke(s, DT);
+          for (const v of s.density) if (v > worst) worst = v;
+        }
+      }
+      return worst;
+    }
+    for (const grid of GRIDS) {
+      it(
+        `${grid.label}: K_bloque × densidad_max ≤ alpha_bloque en los 4 bloques`,
+        { timeout: 180_000 },
+        () => {
+          const density = maxDensity(grid);
+          for (const b of smokeBlocks) {
+            const smoke = smokeIn(b.smokeBlock);
+            assert.ok(smoke, `${b.label} define --smoke-rgb/--smoke-alpha/--smoke-k`);
+            const bound = smoke.k * density;
+            assert.ok(
+              bound <= smoke.alpha,
+              `${grid.label} ${b.label}: K=${smoke.k} × densidad=${density.toFixed(3)} = ${bound.toFixed(4)} > alpha=${smoke.alpha}`,
+            );
+          }
+        },
+      );
     }
   });
 });
