@@ -24,14 +24,17 @@
     "smoke-verify": "node scripts/smoke-verify.mjs",
     "check:env": "node scripts/check-env.mjs",
     "icons": "node scripts/build-icons.mjs",
+    "logo": "node scripts/build-logo.mjs",
     "sitemap": "node scripts/build-sitemap.mjs",
     "images": "node scripts/build-images.mjs",
     "a11y": "node scripts/a11y-pass.mjs",
+    "e2e": "bash scripts/e2e.sh",
     "prepare": "husky"
   },
   "dependencies": {
-    "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/public-sans": "^5.3.0",
+    "@fontsource/archivo-black": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
     "@radix-ui/react-accordion": "^1.2.20",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-label": "^2.1.15",

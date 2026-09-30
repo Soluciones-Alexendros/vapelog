@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { coilBySlug, deviceBySlug, liquidBySlug, partBySlug } from "@/data/catalog";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { liquidVolumeMl } from "@/data/logic";
 import { compareFacts, EMPTY, relationRows } from "@/data/specs";
 import type { CatalogItem, Coil, Device, Liquid, Part } from "@/data/types";
@@ -31,7 +32,7 @@ export function CompareView() {
   if (!domain || compare.items.length === 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-4xl text-foreground">Comparador</h1>
+        <KineticHeading as="h1" text="Comparador" className="text-4xl text-foreground" />
         <p className="mt-3 text-muted-foreground">
           Todavía no hay fichas. Elige hasta cuatro del mismo tipo.
         </p>
@@ -60,7 +61,7 @@ export function CompareView() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium tracking-widest text-primary uppercase">Hasta cuatro</p>
-          <h1 className="mt-2 text-4xl text-foreground">Comparador</h1>
+          <KineticHeading as="h1" text="Comparador" className="mt-2 text-4xl text-foreground" />
         </div>
         <Button type="button" variant="quiet" onClick={compare.clear}>
           Vaciar

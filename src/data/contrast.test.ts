@@ -273,6 +273,46 @@ function contrastSrgb(a: [number, number, number], b: [number, number, number]):
   return (hi + 0.05) / (lo + 0.05);
 }
 
+// --- N2 neo-brutalista: kinds por tipo, tinta y ΔE OKLab --------------------
+
+const KIND_TOKENS = [
+  "--kind-dispositivo",
+  "--kind-resistencia",
+  "--kind-liquido",
+  "--kind-componente",
+] as const;
+
+function oklab(color: Oklch): [number, number, number] {
+  const hue = (color.h * Math.PI) / 180;
+  return [color.l, color.c * Math.cos(hue), color.c * Math.sin(hue)];
+}
+
+function deltaEok(a: Oklch, b: Oklch): number {
+  const [la, aa, ba] = oklab(a);
+  const [lb, ab, bb] = oklab(b);
+  return Math.sqrt((la - lb) ** 2 + (aa - ab) ** 2 + (ba - bb) ** 2) * 100;
+}
+
+function minDeltaE(colors: Oklch[]): { min: number; pair: string } {
+  let min = Number.POSITIVE_INFINITY;
+  let pair = "";
+  for (let i = 0; i < colors.length; i++) {
+    for (let j = i + 1; j < colors.length; j++) {
+      const d = deltaEok(colors[i], colors[j]);
+      if (d < min) {
+        min = d;
+        pair = `${KIND_TOKENS[i]}/${KIND_TOKENS[j]}`;
+      }
+    }
+  }
+  return { min, pair };
+}
+
+function assertBrutTokens(source: string): void {
+  assert.ok(source.includes("--brut-border: 3px"), "--brut-border 3px");
+  assert.ok(source.includes("--brut-offset: 6px"), "--brut-offset 6px");
+}
+
 describe("contraste de los tokens", () => {
   const source = css();
   const light = blockBetween(source, ":root {", ".dark {");
@@ -427,5 +467,82 @@ describe("contraste de los tokens", () => {
         },
       );
     }
+  });
+
+  describe("N2 neo-brutalista: kinds, tinta y ΔE", () => {
+    it("tokens brut existen con 3px/6px", () => {
+      assertBrutTokens(source);
+      for (const name of KIND_TOKENS) {
+        assert.ok(lightTokens.has(name), `claro define ${name}`);
+        assert.ok(darkTokens.has(name), `oscuro define ${name}`);
+      }
+      assert.ok(lightTokens.has("--ink"), "claro define --ink");
+      // --ink vive en :root y se hereda en oscuro (sin override en .dark).
+      assert.ok(darkTokens.has("--ink") || lightTokens.has("--ink"), "oscuro hereda --ink");
+    });
+
+    it("oscuro: kinds neón ≥3:1 sobre card y background", () => {
+      const card = requireToken(darkTokens, "--card");
+      const background = requireToken(darkTokens, "--background");
+      for (const name of KIND_TOKENS) {
+        const kind = requireToken(darkTokens, name);
+        for (const [surfaceName, surface] of [
+          ["--card", card],
+          ["--background", background],
+        ] as const) {
+          assert.ok(
+            contrast(kind, surface) >= 3,
+            `oscuro ${name}/${surfaceName} ${contrast(kind, surface)}`,
+          );
+        }
+      }
+    });
+
+    it("claro: tinta sobre hueso ≥7:1", () => {
+      const ink = requireToken(lightTokens, "--ink");
+      const background = requireToken(lightTokens, "--background");
+      const ratio = contrast(ink, background);
+      assert.ok(ratio >= 7, `claro --ink/--background ${ratio}`);
+    });
+
+    it("ΔE OKLab mínimo entre los 4 kinds ≥15 (claro y oscuro)", () => {
+      for (const [label, tokens] of [
+        ["claro", lightTokens],
+        ["oscuro", darkTokens],
+      ] as const) {
+        const colors = KIND_TOKENS.map((name) => requireToken(tokens, name));
+        const { min, pair } = minDeltaE(colors);
+        assert.ok(min >= 15, `${label} ΔE mín ${pair} ${min}`);
+      }
+    });
+
+    it("prefers-contrast:more mantiene kinds ≥3:1 en oscuro y ΔE ≥15", () => {
+      const card = requireToken(pcDarkTokens, "--card");
+      const background = requireToken(pcDarkTokens, "--background");
+      for (const name of KIND_TOKENS) {
+        const base = requireToken(darkTokens, name);
+        const override = pcDarkTokens.get(name) ?? base;
+        for (const [surfaceName, surface] of [
+          ["--card", card],
+          ["--background", background],
+        ] as const) {
+          assert.ok(
+            contrast(override, surface) >= 3,
+            `pc-oscuro ${name}/${surfaceName} ${contrast(override, surface)}`,
+          );
+        }
+      }
+      for (const [label, tokens] of [
+        ["pc-claro", pcLightTokens],
+        ["pc-oscuro", pcDarkTokens],
+      ] as const) {
+        const colors = KIND_TOKENS.map(
+          (name) =>
+            tokens.get(name) ?? requireToken(label === "pc-claro" ? lightTokens : darkTokens, name),
+        );
+        const { min, pair } = minDeltaE(colors);
+        assert.ok(min >= 15, `${label} ΔE mín ${pair} ${min}`);
+      }
+    });
   });
 });

@@ -10,6 +10,7 @@ import {
   solveOhm,
 } from "@/data/logic";
 import { formatPlain, toneTextClass } from "@/components/labels";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ToolSearch } from "@/components/tool-search";
@@ -29,7 +30,7 @@ export function ToolsPanel({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Herramientas</p>
-      <h1 className="mt-2 text-4xl text-foreground">Cálculo</h1>
+      <KineticHeading as="h1" text="Cálculo" className="mt-2 text-4xl text-foreground" />
       <p className="mt-3 text-muted-foreground">
         Ley de Ohm para un montaje regulado, y la mezcla de un shortfill con nicokits. No es una
         autorización para un mod mecánico.

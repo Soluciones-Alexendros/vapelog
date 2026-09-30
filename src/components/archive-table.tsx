@@ -31,6 +31,7 @@ import {
   tpdTone,
 } from "@/components/labels";
 import { ProductPhoto } from "@/components/photo";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { Button } from "@/components/ui/button";
 
 interface Row {
@@ -183,7 +184,7 @@ export function ArchiveTable() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Datos</p>
-      <h1 className="mt-2 text-4xl text-foreground">Tabla del archivo</h1>
+      <KineticHeading as="h1" text="Tabla del archivo" className="mt-2 text-4xl text-foreground" />
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Lectura de todas las fichas. No hay alta ni borrado: sin cuentas, una escritura abierta no
         es un archivo, es un tablón.

@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /buscar
 
-Sitemap: https://vapelog.es/sitemap.xml
+Sitemap: https://vapelog-alexendros.vercel.app/sitemap.xml

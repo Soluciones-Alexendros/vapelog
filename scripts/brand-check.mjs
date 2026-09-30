@@ -61,6 +61,36 @@ export function siteDeclaresOgTypeGame(site) {
   return String(site?.type ?? "").toLowerCase() === "x:game";
 }
 
+const LOGO_FILES = ["public/logo.svg", "public/logo-mark.svg", "public/favicon.svg"];
+
+export function brandLogoWarnings({ workspaceRoot = "." } = {}) {
+  const warnings = [];
+  for (const rel of LOGO_FILES) {
+    const filePath = join(workspaceRoot, rel);
+    let content;
+    try {
+      content = readFileSync(filePath, "utf8");
+    } catch {
+      warnings.push(
+        `BRAND WARNING: ${filePath} falta — la identidad v2 exige ${rel} generado por scripts/build-logo.mjs.`,
+      );
+      continue;
+    }
+    if (/<text[\s>]/.test(content)) {
+      warnings.push(
+        `BRAND WARNING: ${filePath} contiene <text> — el wordmark debe viajar a trazados (sin fuentes del sistema).`,
+      );
+    }
+    if (!content.includes('class="vo"') && !content.includes("brand-voluta")) {
+      warnings.push(`BRAND WARNING: ${filePath} no trae la voluta (path .vo).`);
+    }
+    if (!content.includes("prefers-color-scheme") || !content.includes("dark")) {
+      warnings.push(`BRAND WARNING: ${filePath} no trae el bloque dark (prefers-color-scheme).`);
+    }
+  }
+  return warnings;
+}
+
 export function ogPendingActive(workspaceRoot, now = Date.now()) {
   try {
     const { mtimeMs } = statSync(join(workspaceRoot, OG_PENDING_REL_PATH));
@@ -165,6 +195,8 @@ function brandWarningsOnDisk({ hasCanvas, workspaceRoot = ".", cardRequired = fa
       );
     }
   }
+
+  warnings.push(...brandLogoWarnings({ workspaceRoot }));
 
   return warnings;
 }

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { buildHead } from "@/lib/seo";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { CatalogBrowser } from "@/components/catalog-browser";
 import { FichaLink } from "@/components/ficha-link";
 import { transitionNameForPhoto } from "@/lib/view-transition";
@@ -55,7 +56,11 @@ function SearchPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Buscador</p>
-      <h1 className="mt-2 text-4xl text-foreground">Por característica, no por eslogan</h1>
+      <KineticHeading
+        as="h1"
+        text="Por característica, no por eslogan"
+        className="mt-2 text-4xl text-foreground"
+      />
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Cada filtro es un dato de la ficha y se suma al anterior. Resistencia integrada más una
         marca deja solo las cápsulas de esa marca. Si la marca no está en el archivo, el resultado
@@ -146,13 +151,18 @@ function FinderHome({ q }: { q: string }) {
         <label className="sr-only" htmlFor="finder-q">
           Buscar por nombre en todo el archivo
         </label>
-        <input
-          id="finder-q"
-          name="q"
-          defaultValue={q}
-          placeholder="Nombre, marca o cifra"
-          className="sm:max-w-md"
-        />
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-md">
+          <span aria-hidden="true" className="font-mono text-lg text-primary">
+            &gt;
+          </span>
+          <input
+            id="finder-q"
+            name="q"
+            defaultValue={q}
+            placeholder="Nombre, marca o cifra"
+            className="font-mono sm:max-w-md"
+          />
+        </div>
         <button
           type="submit"
           className="inline-flex min-h-11 items-center justify-center rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground"

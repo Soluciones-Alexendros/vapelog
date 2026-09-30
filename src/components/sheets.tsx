@@ -14,7 +14,7 @@ import {
   Wind,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   brandById,
   coilBySlug,
@@ -84,6 +84,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
+import { kindOf } from "@/lib/kind";
+import { KindCard } from "@/components/ui/kind-card";
+import { useCardFx } from "@/components/ui/use-card-fx";
 
 interface SheetSection {
   id: string;
@@ -1022,6 +1025,8 @@ function heroChips(item: CatalogItem) {
 }
 
 function RelatedItems({ item }: { item: CatalogItem }) {
+  const listRef = useRef<HTMLUListElement>(null);
+  useCardFx(listRef);
   const pool =
     item.domain === "device"
       ? devices
@@ -1042,18 +1047,22 @@ function RelatedItems({ item }: { item: CatalogItem }) {
   return (
     <SheetSectionBlock id="relacionados" title="Relacionados">
       <p className="mt-2 text-sm text-muted-foreground">Misma marca o familia en el archivo.</p>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul ref={listRef} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {related.map((row) => (
-          <li key={row.id} className="rounded-lg border border-border bg-surface-2 p-3 shadow-1">
-            <Link
-              to={`${path}/$slug`}
-              preload="intent"
-              params={{ slug: row.slug }}
-              className="text-foreground underline decoration-border underline-offset-4"
-            >
-              {row.name}
-            </Link>
-            <p className="mt-1 text-sm text-muted-foreground">{brandById(row.brandId)?.name}</p>
+          <li key={row.id}>
+            <KindCard kind={kindOf(row.domain)} className="h-full">
+              <div className="p-3 pt-2">
+                <Link
+                  to={`${path}/$slug`}
+                  preload="intent"
+                  params={{ slug: row.slug }}
+                  className="text-foreground underline decoration-border underline-offset-4"
+                >
+                  {row.name}
+                </Link>
+                <p className="mt-1 text-sm text-muted-foreground">{brandById(row.brandId)?.name}</p>
+              </div>
+            </KindCard>
           </li>
         ))}
       </ul>

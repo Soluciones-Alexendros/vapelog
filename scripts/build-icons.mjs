@@ -43,6 +43,19 @@ async function solidIcon(size, out) {
   return out;
 }
 
+async function maskableIcon(size, out) {
+  const safe = Math.round(size * 0.8);
+  const mark = await sharp(markSvg(safe), { density: 384 })
+    .resize(safe, safe, { fit: "contain" })
+    .png()
+    .toBuffer();
+  await sharp({ create: { width: size, height: size, channels: 4, background: BG } })
+    .composite([{ input: mark, gravity: "center" }])
+    .png()
+    .toFile(out);
+  return out;
+}
+
 async function faviconPng(size) {
   const faviconSvg = await readFile(join(PUBLIC, "favicon.svg"), "utf8");
   return sharp(Buffer.from(faviconSvg), { density: 384 }).resize(size, size).png().toBuffer();
@@ -89,6 +102,7 @@ async function main() {
   const apple = await solidIcon(180, join(PUBLIC, "apple-touch-icon.png"));
   const icon192 = await solidIcon(192, join(PUBLIC, "icon-192.png"));
   const icon512 = await solidIcon(512, join(PUBLIC, "icon-512.png"));
+  const maskable512 = await maskableIcon(512, join(PUBLIC, "icon-maskable-512.png"));
 
   const manifest = {
     name: "Vapelog",
@@ -100,12 +114,13 @@ async function main() {
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
   const manifestPath = join(PUBLIC, "site.webmanifest");
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
-  for (const p of [favicon32, faviconIco, apple, icon192, icon512, manifestPath]) {
+  for (const p of [favicon32, faviconIco, apple, icon192, icon512, maskable512, manifestPath]) {
     console.log(relative(ROOT, p));
   }
 }

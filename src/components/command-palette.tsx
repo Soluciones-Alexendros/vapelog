@@ -179,21 +179,27 @@ export function CommandPalette() {
             <label className="sr-only" htmlFor="paleta-q">
               Buscar fichas y secciones
             </label>
-            <Input
-              id="paleta-q"
-              ref={inputRef}
-              value={q}
-              onChange={(event) => setQ(event.target.value)}
-              placeholder="XROS, 0,4 Ω, sales…"
-              autoComplete="off"
-              aria-controls="paleta-lista"
-              onKeyDown={(event) => {
-                if (event.key === "ArrowDown") {
-                  event.preventDefault();
-                  focusResult(0);
-                }
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <span aria-hidden="true" className="font-mono text-lg text-primary">
+                &gt;
+              </span>
+              <Input
+                id="paleta-q"
+                ref={inputRef}
+                value={q}
+                onChange={(event) => setQ(event.target.value)}
+                placeholder="XROS, 0,4 Ω, sales…"
+                autoComplete="off"
+                aria-controls="paleta-lista"
+                className="font-mono"
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    focusResult(0);
+                  }
+                }}
+              />
+            </div>
           </div>
           <div
             ref={listRef}
@@ -219,10 +225,10 @@ export function CommandPalette() {
                         onNavigate={close}
                         className="flex min-h-11 flex-col justify-center rounded-sm px-3 py-1.5 hover:bg-muted focus-visible:bg-muted"
                       >
-                        <span className="text-sm text-foreground">{hit.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {hit.brand} · {domainLabel(hit.domain)}
+                        <span className="font-mono text-sm text-foreground">
+                          {domainLabel(hit.domain)} · {hit.name}
                         </span>
+                        <span className="text-xs text-muted-foreground">{hit.brand}</span>
                       </FichaLink>
                     </li>
                   ))}

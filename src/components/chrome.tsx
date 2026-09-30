@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Scale } from "lucide-react";
 import { BrandLogo } from "@/components/brand-mark";
 import { CommandPalette } from "@/components/command-palette";
@@ -8,6 +8,18 @@ import { RevealManager } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  coilBySlug,
+  coils,
+  deviceBySlug,
+  devices,
+  liquidBySlug,
+  liquids,
+  partBySlug,
+  parts,
+} from "@/data/catalog";
+import { kindOf } from "@/lib/kind";
+import { KindCard } from "@/components/ui/kind-card";
 
 const catalogNav = [
   { to: "/dispositivos", label: "Dispositivos", exact: false },
@@ -108,8 +120,12 @@ function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background">
-      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 lg:gap-4">
-        <Link to="/" className="flex min-h-11 shrink-0 items-center" aria-label="Vapelog">
+      <div className="mx-auto flex max-w-6xl items-center gap-1 px-3 sm:gap-2 sm:px-4 lg:gap-4">
+        <Link
+          to="/"
+          className="brand-link flex min-h-11 shrink-0 items-center"
+          aria-label="Vapelog"
+        >
           <BrandLogo className="h-6 w-auto sm:h-8" />
         </Link>
         <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4" aria-label="Catálogo">
@@ -133,7 +149,7 @@ function Header() {
           <ThemeToggle />
           <Link
             to="/comparar"
-            className="inline-flex min-h-11 items-center gap-1 px-3 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
+            className="inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground sm:px-3"
           >
             <Scale className="size-4 sm:hidden" aria-hidden />
             <span className="sr-only sm:not-sr-only">Comparador</span>
@@ -220,24 +236,106 @@ function Footer() {
           </ul>
         </nav>
       </div>
+      <div className="border-t border-border">
+        <p className="mx-auto max-w-6xl px-4 py-3 font-mono text-xs text-muted-foreground tabular-nums">
+          vapelog@catalogo:~$ {devices.length} dispositivos · {coils.length} resistencias ·{" "}
+          {liquids.length} líquidos · {parts.length} componentes
+        </p>
+      </div>
     </footer>
+  );
+}
+
+function nameForRef(ref: CompareRef): string {
+  if (ref.domain === "device") return deviceBySlug(ref.slug)?.name ?? ref.slug;
+  if (ref.domain === "coil") return coilBySlug(ref.slug)?.name ?? ref.slug;
+  if (ref.domain === "liquid") return liquidBySlug(ref.slug)?.name ?? ref.slug;
+  return partBySlug(ref.slug)?.name ?? ref.slug;
+}
+
+function nameForSlug(slug: string): string {
+  return (
+    deviceBySlug(slug)?.name ??
+    coilBySlug(slug)?.name ??
+    liquidBySlug(slug)?.name ??
+    partBySlug(slug)?.name ??
+    slug
   );
 }
 
 function CompareDock() {
   const compare = useCompare();
-  if (compare.items.length === 0 && !compare.notice) return null;
+  const [log, setLog] = useState<string | null>(null);
+  const prevKey = useRef<string | null>(null);
+  const timer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const key = JSON.stringify(compare.items.map((item) => item.slug).sort());
+    if (prevKey.current === null) {
+      prevKey.current = key;
+      return;
+    }
+    if (prevKey.current === key) return;
+    const prevSlugs = new Set<string>(JSON.parse(prevKey.current) as string[]);
+    const nextBySlug = new Map(compare.items.map((item) => [item.slug, item]));
+    const added = compare.items.find((item) => !prevSlugs.has(item.slug));
+    const removedSlug = [...prevSlugs].find((slug) => !nextBySlug.has(slug));
+    prevKey.current = key;
+    let msg: string | null = null;
+    if (added) msg = `+ añadido: ${nameForRef(added)}`;
+    else if (removedSlug) msg = `− quitado: ${nameForSlug(removedSlug)}`;
+    if (msg) {
+      setLog(msg);
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setLog(null), 3000);
+    }
+  }, [compare.items]);
+
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    },
+    [],
+  );
+
+  if (compare.items.length === 0 && !compare.notice && !log) return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          <span className="tabular-nums text-foreground">{compare.items.length}</span> en el
-          comparador
-          {compare.notice ? (
-            <span className="mt-1 block text-primary">{compare.notice}</span>
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">
+            <span className="tabular-nums text-foreground">{compare.items.length}</span> en el
+            comparador
+            {compare.notice ? (
+              <span className="mt-1 block text-primary">{compare.notice}</span>
+            ) : null}
+          </p>
+          {compare.items.length > 0 ? (
+            <ul className="mt-2 flex flex-wrap gap-2" aria-label="Fichas en el comparador">
+              {compare.items.map((item) => (
+                <li key={item.slug}>
+                  <KindCard kind={kindOf(item.domain)} className="px-2 pt-0 pb-1 text-xs">
+                    <span className="block max-w-40 truncate px-3 text-foreground">
+                      {nameForRef(item)}
+                    </span>
+                    <button
+                      type="button"
+                      className="mt-1 ml-3 min-h-6 underline decoration-border underline-offset-4"
+                      onClick={() => compare.remove(item.slug)}
+                      aria-label={`Quitar ${nameForRef(item)} del comparador`}
+                    >
+                      Quitar
+                    </button>
+                  </KindCard>
+                </li>
+              ))}
+            </ul>
           ) : null}
-        </p>
-        <div className="flex gap-2">
+          <p aria-live="polite" role="status" className="mt-1 font-mono text-xs text-foreground">
+            {log ?? ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
           <Button type="button" variant="quiet" onClick={compare.clear}>
             Vaciar
           </Button>

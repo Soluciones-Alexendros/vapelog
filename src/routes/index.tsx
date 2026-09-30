@@ -1,17 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
 import { exampleCount, exampleQueries } from "@/data/search";
 import { brandById, coils, devices, liquids, parts } from "@/data/catalog";
-import type { CatalogItem } from "@/data/types";
+import type { CatalogItem, Domain } from "@/data/types";
 import { domainLabel } from "@/components/labels";
 import { CountUp } from "@/components/count-up";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { FichaLink } from "@/components/ficha-link";
 import { transitionNameForPhoto } from "@/lib/view-transition";
 import { ProductPhoto } from "@/components/photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { KindCard } from "@/components/ui/kind-card";
+import { useCardFx } from "@/components/ui/use-card-fx";
+import { kindOf } from "@/lib/kind";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
@@ -26,39 +29,51 @@ const highlights: CatalogItem[] = [devices[0], coils[0], liquids[0], parts[0]].f
 function Home() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const domainsRef = useRef<HTMLUListElement>(null);
+  useCardFx(domainsRef);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      <p className="text-xs font-medium tracking-widest text-primary uppercase">
-        Mercado UE · fichas con fuente
-      </p>
-      <h1 className="mt-3 max-w-3xl text-4xl text-foreground sm:text-5xl">El catálogo</h1>
+      <KineticHeading
+        as="p"
+        text="Mercado UE · fichas con fuente"
+        className="text-xs font-medium tracking-widest text-primary uppercase"
+      />
+      <KineticHeading
+        as="h1"
+        text="El catálogo"
+        className="mt-3 max-w-3xl text-4xl text-foreground sm:text-5xl term-caret"
+      />
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Cuatro listas. El resto del archivo —búsqueda, cruce, cálculo— sirve para recorrerlas, no
         para sustituirlas.
       </p>
 
-      <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul ref={domainsRef} className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <DomainCard
           href="/dispositivos"
+          domain="device"
           title="Dispositivos"
           count={devices.length}
           text="Formato, techo de vatios, batería integrada o celda externa, conector 510 o propio."
         />
         <DomainCard
           href="/resistencias"
+          domain="coil"
           title="Resistencias"
           count={coils.length}
           text="Cápsula con resistencia integrada o cabezal de tanque, más ohmios, calada, malla y marca."
         />
         <DomainCard
           href="/liquidos"
+          domain="liquid"
           title="Líquidos"
           count={liquids.length}
           text="Sales, freebase o shortfill a 0 mg, volumen y ratio."
         />
         <DomainCard
           href="/componentes"
+          domain="part"
           title="Componentes"
           count={parts.length}
           text="La celda que el mod no trae, y la boquilla que en un pod no se vende suelta."
@@ -251,28 +266,28 @@ function ExampleCard({ example }: { example: (typeof exampleQueries)[number] }) 
 
 function DomainCard({
   href,
+  domain,
   title,
   count,
   text,
 }: {
   href: "/dispositivos" | "/resistencias" | "/liquidos" | "/componentes";
+  domain: Domain;
   title: string;
   count: number;
   text: string;
 }) {
   return (
     <li className="reveal">
-      <Card className="h-full hover:border-primary">
-        <Link to={href} preload="intent" className="flex h-full flex-col">
-          <CardHeader>
-            <p className="text-xs tracking-widest text-primary uppercase tabular-nums">
-              <CountUp value={count} /> fichas
-            </p>
-            <CardTitle className="mt-2 text-3xl">{title}</CardTitle>
-            <CardDescription className="mt-2">{text}</CardDescription>
-          </CardHeader>
+      <KindCard kind={kindOf(domain)} className="h-full">
+        <Link to={href} preload="intent" className="flex h-full flex-col p-3 pt-2">
+          <p className="text-xs tracking-widest text-primary uppercase tabular-nums">
+            <CountUp value={count} /> fichas
+          </p>
+          <h2 className="mt-2 text-3xl text-foreground">{title}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{text}</p>
         </Link>
-      </Card>
+      </KindCard>
     </li>
   );
 }

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { JSX } from "react";
+import { KineticHeading } from "@/components/kinetic-heading";
 import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/modelo")({
@@ -19,7 +20,11 @@ function ModelPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Arquitectura</p>
-      <h1 className="mt-2 text-4xl text-foreground">Qué se ha cambiado del encargo</h1>
+      <KineticHeading
+        as="h1"
+        text="Qué se ha cambiado del encargo"
+        className="mt-2 text-4xl text-foreground"
+      />
       <div className="mt-6 flex flex-col gap-4 text-sm text-muted-foreground">
         <p>
           La compatibilidad no es una matriz dispositivo–coil. Un mod 510 admite atomizadores; la

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,7 @@ import {
   MAX_CARD_BYTES,
   OG_PENDING_MAX_AGE_MS,
   OG_PENDING_REL_PATH,
+  brandLogoWarnings,
   computeBrandWarnings,
   ogPendingActive,
   parseBrandCheckArgs,
@@ -29,11 +30,22 @@ function makeWorkspace({
   cardBytes = 200 * 1024,
   narrowBytes = 200 * 1024,
   pendingAgeMs,
+  logoFiles = true,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), "brand-check-"));
   mkdirSync(join(root, "public"), { recursive: true });
   mkdirSync(join(root, "src/lib/og"), { recursive: true });
   mkdirSync(join(root, ".brand"), { recursive: true });
+  if (logoFiles) {
+    const svg = (inner) =>
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.t{fill:#111}@media (prefers-color-scheme:dark){.t{fill:#f3efe4}}</style>${inner}</svg>`;
+    writeFileSync(
+      join(root, "public/logo.svg"),
+      svg('<path class="t" d="M1 1L2 2"/><path class="vo" d="M3 3h4"/>'),
+    );
+    writeFileSync(join(root, "public/logo-mark.svg"), svg('<path class="vo" d="M3 3h4"/>'));
+    writeFileSync(join(root, "public/favicon.svg"), svg('<path class="vo" d="M3 3h4"/>'));
+  }
   if (pendingAgeMs !== undefined) {
     const marker = join(root, OG_PENDING_REL_PATH);
     writeFileSync(marker, "");
@@ -296,4 +308,56 @@ test("cli: a non-game with a compliant card passes", () => {
   const run = runCheck(root);
   assert.equal(run.status, 0, run.stdout + run.stderr);
   assert.deepEqual(JSON.parse(run.stdout).messages, []);
+});
+
+test("brandLogoWarnings is silent for a compliant v2 identity", () => {
+  assert.deepEqual(brandLogoWarnings({ workspaceRoot: makeWorkspace() }), []);
+});
+
+test("brandLogoWarnings flags <text> in logo.svg", () => {
+  const root = makeWorkspace();
+  writeFileSync(
+    join(root, "public/logo.svg"),
+    '<svg xmlns="http://www.w3.org/2000/svg"><text>Vapelog</text><path class="vo" d="M1 1h2"/><style>@media (prefers-color-scheme:dark){.t{fill:#fff}}</style></svg>',
+  );
+  const warnings = brandLogoWarnings({ workspaceRoot: root });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /<text>/);
+});
+
+test("brandLogoWarnings flags a missing voluta", () => {
+  const root = makeWorkspace();
+  writeFileSync(
+    join(root, "public/logo-mark.svg"),
+    '<svg xmlns="http://www.w3.org/2000/svg"><style>@media (prefers-color-scheme:dark){.t{fill:#fff}}</style><path d="M1 1L2 2"/></svg>',
+  );
+  const warnings = brandLogoWarnings({ workspaceRoot: root });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /voluta/);
+});
+
+test("brandLogoWarnings flags a missing dark block", () => {
+  const root = makeWorkspace();
+  writeFileSync(
+    join(root, "public/favicon.svg"),
+    '<svg xmlns="http://www.w3.org/2000/svg"><path class="vo" d="M1 1h2"/></svg>',
+  );
+  const warnings = brandLogoWarnings({ workspaceRoot: root });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /dark/);
+});
+
+test("brandLogoWarnings flags missing files", () => {
+  const root = makeWorkspace({ logoFiles: false });
+  const warnings = brandLogoWarnings({ workspaceRoot: root });
+  assert.equal(warnings.length, 3);
+  assert.match(warnings.join("\n"), /logo\.svg falta/);
+});
+
+test("computeBrandWarnings appends logo failures after the card gate", () => {
+  const root = makeWorkspace({ siteJson: UTILITY_SITE });
+  rmSync(join(root, "public/logo.svg"));
+  const warnings = computeBrandWarnings({ hasCanvas: false, workspaceRoot: root });
+  assert.match(warnings[0], /^BRAND NOTE:/);
+  assert.match(warnings[warnings.length - 1], /logo\.svg falta/);
 });
