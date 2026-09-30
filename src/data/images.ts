@@ -1,4 +1,4 @@
-import { catalogImageManifest } from "./images.gen";
+import { catalogImageManifest } from "./images.gen.ts";
 
 /**
  * Fotos de producto: slug de la ficha → ruta del original. Los originales viven
@@ -197,6 +197,10 @@ export interface CatalogImage {
   height: number;
   variants: CatalogImageVariant[];
   original: string;
+}
+
+export function hasCatalogPhoto(slug: string): boolean {
+  return Object.prototype.hasOwnProperty.call(catalogImages, slug);
 }
 
 export function productImage(slug: string): CatalogImage | undefined {

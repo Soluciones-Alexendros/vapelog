@@ -378,14 +378,7 @@ describe("contraste de los tokens", () => {
     }
   });
 
-  describe("humo S4: peor caso con solape ASCII (--smoke-alpha + 0,12)", () => {
-    // El humo suave usa --smoke-alpha; el peor caso asume que además pueden
-    // solaparse glifos ASCII (alfa ≤0,12) sobre el mismo píxel. Se mezcla el
-    // humo en sRGB sobre --background y se mide tinta sobre esa superficie.
-    // Medido (verde): el peor caso es oscuro --muted-foreground 6,245:1
-    // (margen 1,745 sobre 4,5); claro 7,280/12,490, pc-claro 10,952/15,265,
-    // pc-oscuro 8,843/11,223 (muted/foreground).
-    const ASCII_OVERLAP = 0.12;
+  describe("humo S4: peor caso de cobertura (--smoke-alpha)", () => {
     const variants = [
       { label: "claro", tokens: lightTokens, smokeBlock: light },
       { label: "oscuro", tokens: darkTokens, smokeBlock: dark },
@@ -393,17 +386,17 @@ describe("contraste de los tokens", () => {
       { label: "prefers-contrast oscuro", tokens: pcDarkTokens, smokeBlock: pcDarkBlock + dark },
     ];
     for (const variant of variants) {
-      it(`${variant.label}: foreground y muted-foreground superan 4,5:1 sobre humo + ASCII`, () => {
+      it(`${variant.label}: foreground y muted-foreground superan 4,5:1 sobre humo`, () => {
         const smoke = smokeIn(variant.smokeBlock);
         assert.ok(smoke, `${variant.label} define --smoke-rgb/--smoke-alpha/--smoke-k`);
         const surface = blendOver(
           smoke.rgb,
           srgbChannels(requireToken(variant.tokens, "--background")),
-          smoke.alpha + ASCII_OVERLAP,
+          smoke.alpha,
         );
         for (const ink of ["--foreground", "--muted-foreground"]) {
           const ratio = contrastSrgb(srgbChannels(requireToken(variant.tokens, ink)), surface);
-          assert.ok(ratio >= 4.5, `${variant.label} ${ink}/humo+ASCII ${ratio}`);
+          assert.ok(ratio >= 4.5, `${variant.label} ${ink}/humo ${ratio}`);
         }
       });
     }

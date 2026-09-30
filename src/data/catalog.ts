@@ -701,8 +701,13 @@ export const liquids: Liquid[] = [
     genreId: "sales",
     summary:
       "Sales de nicotina del líquido Heisenberg en formato TPD de 10 ml a 20 mg/ml. Perfil de frutos azules, dulce y un fondo anisado frío.",
-    confidence: "distribuidor",
-    sources: [],
+    confidence: "fabricante",
+    sources: [
+      {
+        label: "Vampire Vape — gama Heisenberg",
+        url: "https://www.vampirevape.co.uk/e-liquid/best-sellers/heisenberg",
+      },
+    ],
     caveats: unverifiedLiquid,
     tags: ["sales", "10ml", "20mg", "heisenberg", "mtl"],
     status: "referenciado",
@@ -733,8 +738,13 @@ export const liquids: Liquid[] = [
     genreId: "shortfill",
     summary:
       "Shortfill sin nicotina del mismo perfil Heisenberg, en el formato habitual de 50 ml con espacio para nicokit.",
-    confidence: "distribuidor",
-    sources: [],
+    confidence: "fabricante",
+    sources: [
+      {
+        label: "Vampire Vape — gama Heisenberg",
+        url: "https://www.vampirevape.co.uk/e-liquid/best-sellers/heisenberg",
+      },
+    ],
     caveats: [
       ...unverifiedLiquid,
       "El hueco libre depende de la botella. La calculadora asume 60 ml totales solo como punto de partida.",

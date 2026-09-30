@@ -143,6 +143,9 @@ export interface Part extends ItemBase {
   fitsConnector: "510" | null;
   spec: string;
   quantityNote: string;
+  dripMm?: number | null;
+  chemistry?: string | null;
+  continuousAmps?: number | null;
 }
 
 export type CompatKind = "nativa" | "kit" | "electrica" | "no";

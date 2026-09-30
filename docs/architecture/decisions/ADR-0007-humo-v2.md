@@ -53,12 +53,10 @@ posterior (plan v2) identifica problemas verificables:
   `src/components/smoke-canvas.tsx` solo renderiza; `emit` no consume `s.rnd`,
   de modo que las volutas ambientales siguen siendo deterministas con o sin
   bocanadas de UI.
-- **Híbrido «el humo se deshace en registro» (alternativa E, elegida).** El
-  núcleo denso se resuelve en humo suave sin glifos; solo la banda de baja
-  densidad (la estela que se disipa) se resuelve en caracteres tramados con
-  matriz de Bayer. `=` queda reservado para el extremo de la banda
-  (`glyphFor` limita a `ASCII_RAMP.length - 2`). No hay texto en el DOM: el
-  `innerText` es idéntico con humo on/off.
+- **Humo suave sin glifos visibles.** El campo se pinta con un sprite irregular
+  de varias lóbulos (no un disco radial) y `drawImage`. El modelo conserva
+  `glyphFor` para pruebas; el canvas ASCII no se dibuja. No hay texto en el DOM:
+  el `innerText` es idéntico con humo on/off.
 - **Cinco capas L0–L4.** L0 `body::before` (degradados radiales estáticos,
   único fondo con JS desactivado, `prefers-reduced-motion`, `prefers-reduced-data`
   o fx=off); L1 humo suave; L2 ASCII tramado; L3 zonificación; L4 coreografía.

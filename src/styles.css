@@ -262,8 +262,9 @@
     z-index: var(--z-smoke);
     pointer-events: none;
     background:
-      radial-gradient(52% 42% at 18% 8%, rgb(var(--smoke-rgb) / 0.1), transparent 72%),
-      radial-gradient(46% 38% at 88% 92%, rgb(var(--smoke-rgb) / 0.08), transparent 72%);
+      radial-gradient(70% 48% at 12% 0%, rgb(var(--smoke-rgb) / 0.09), transparent 68%),
+      radial-gradient(58% 42% at 88% 18%, rgb(var(--smoke-rgb) / 0.06), transparent 70%),
+      radial-gradient(64% 50% at 70% 100%, rgb(var(--smoke-rgb) / 0.07), transparent 72%);
   }
 
   header,
@@ -279,7 +280,7 @@
     font-family: var(--font-display);
     text-wrap: balance;
     line-height: 1.12;
-    font-weight: 560;
+    font-weight: 400;
   }
 
   h1 {
@@ -570,7 +571,7 @@ html.js .reveal.is-visible {
 }
 @media (min-width: 1024px) {
   .smoke-ascii {
-    display: block;
+    display: none;
     --content-half: 576px;
     -webkit-mask-image: linear-gradient(
       to right,
@@ -774,9 +775,14 @@ html:not(.dark) .kind-card:active::before {
   animation: vapor-in var(--dur-3) var(--ease-out) both;
 }
 .term-caret::after {
-  content: "▌";
-  margin-left: 0.15em;
-  animation: caret 1.06s steps(1) 5;
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 0.72em;
+  margin-inline-start: 0.12em;
+  vertical-align: -0.04em;
+  background: currentColor;
+  animation: caret 1.06s steps(1) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .kind-card,

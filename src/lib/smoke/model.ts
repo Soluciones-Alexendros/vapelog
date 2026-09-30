@@ -132,7 +132,7 @@ function spawn(s: SmokeState, initial: boolean): Puff {
     vy: 26 + r() * 26, // px/s: 8–15× más rápido que el humo actual (0,9–3,6 px/s)
     k: 0.7 + r() * 0.7,
     rot: r() * Math.PI * 2,
-    squash: 0.6 + r() * 0.25,
+    squash: 0.38 + r() * 0.22,
     env: 0,
     size: 0,
   };

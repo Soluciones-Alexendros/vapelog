@@ -99,6 +99,7 @@ export function KineticHeading({
       ctl.abort();
       window.cancelAnimationFrame(raf);
       if (activeCtl === ctl) activeCtl = null;
+      setFrame(null);
     };
     // text/seed/fx re-disparan si cambian en la misma ruta.
   }, [pathname, text, seed, fx]);
@@ -110,7 +111,7 @@ export function KineticHeading({
       {frame !== null ? (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-background font-mono whitespace-pre-wrap break-words select-none"
+          className="pointer-events-none absolute inset-0 font-[inherit] text-[length:inherit] leading-[inherit] tracking-[inherit] whitespace-pre-wrap break-words text-foreground select-none"
         >
           {frame}
         </span>
