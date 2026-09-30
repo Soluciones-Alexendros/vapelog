@@ -12,6 +12,12 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-09-30
+
+### Cambios
+
+- fix(seo): canonical y og:url en home y buscador
+
 ## [0.9.0] - 2026-09-30
 
 ### Cambios
