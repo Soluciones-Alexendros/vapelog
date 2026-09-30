@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AppShell } from "@/components/chrome";
+import { FxDebugOverlay } from "@/components/fx-debug";
 import { SmokeCanvas } from "@/components/smoke-canvas";
 import { themeBootScript, THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/components/ui/theme-toggle";
 import { SITE_URL } from "@/lib/site";
@@ -63,6 +64,7 @@ function Root() {
         <AppShell>
           <Outlet />
         </AppShell>
+        <FxDebugOverlay />
         <Scripts />
       </body>
     </html>

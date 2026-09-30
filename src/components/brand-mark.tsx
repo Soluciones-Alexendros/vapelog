@@ -22,8 +22,7 @@ function useBrandDraw(): boolean {
   const fx = useFx();
   const [draw, setDraw] = useState(false);
   useEffect(() => {
-    if (fx !== "on") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (fx !== "animated") return;
     try {
       if (sessionStorage.getItem(DRAWN_KEY)) return;
       sessionStorage.setItem(DRAWN_KEY, "1");

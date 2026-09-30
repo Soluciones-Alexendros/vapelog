@@ -126,7 +126,7 @@ async function checkRoute(browser, route, theme, width) {
       sessionStorage.setItem("vapelog-edad", "ok");
       if (fxValue) {
         try {
-          localStorage.setItem("vapelog-fx", fxValue);
+          localStorage.setItem("vapelog-fx:v2", fxValue === "off" ? "off" : "on");
         } catch {
           // almacenamiento no disponible
         }

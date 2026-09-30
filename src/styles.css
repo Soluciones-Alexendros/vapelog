@@ -45,6 +45,7 @@
     0 10px 24px -6px oklch(0.25 0.03 60 / 0.12), 0 4px 10px -2px oklch(0.25 0.03 60 / 0.06);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-vapor: cubic-bezier(0.3, 0, 0.2, 1);
   --dur-1: 120ms;
   --dur-2: 200ms;
   --dur-3: 400ms;
@@ -62,6 +63,11 @@
   --kind-resistencia: oklch(0.8 0.12 215);
   --kind-liquido: oklch(0.76 0.17 350);
   --kind-componente: oklch(0.72 0.15 285);
+  --z-smoke: 0;
+  --z-content: 1;
+  --z-sticky: 20;
+  --z-overlay: 40;
+  --z-toast: 60;
 }
 
 .dark {
@@ -230,27 +236,41 @@
     color-scheme: dark;
   }
 
+  /* El color de fondo vive en html para que el canvas del humo (z-smoke)
+     no quede tapado por un body opaco (F0 / Anexo A). */
+  html {
+    background: var(--background);
+  }
+
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--background);
+    background: transparent;
     color: var(--foreground);
     font-family: var(--font-sans);
     font-size: 1rem;
     line-height: 1.5;
+    position: relative;
+    isolation: isolate;
   }
 
-  /* Fallback estático del humo (SSR y prefers-reduced-motion);
-     la capa Canvas de F5 lo sustituye cuando los efectos están activos. */
+  /* Fallback estático L0 (SSR, JS off, mode off, Save-Data). */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: -11;
+    z-index: var(--z-smoke);
     pointer-events: none;
     background:
       radial-gradient(52% 42% at 18% 8%, rgb(var(--smoke-rgb) / 0.1), transparent 72%),
       radial-gradient(46% 38% at 88% 92%, rgb(var(--smoke-rgb) / 0.08), transparent 72%);
+  }
+
+  header,
+  main,
+  footer {
+    position: relative;
+    z-index: var(--z-content);
   }
 
   h1,
@@ -499,13 +519,16 @@ html.js .reveal.is-visible {
 .smoke-layer {
   position: fixed;
   inset: 0;
-  z-index: -10;
+  z-index: var(--z-smoke);
   pointer-events: none;
   contain: strict;
   opacity: 0;
-  transition: opacity var(--dur-4) var(--ease-out);
+  /* Sin transición de opacidad: el ready es binario (F0); evita falsos
+     negativos en e2e y flash de layer a medias. */
+  transition: none;
 }
-.smoke-layer[data-ready="true"] {
+.smoke-layer[data-ready="true"],
+.smoke-layer[data-fx-ready="true"] {
   opacity: 1;
 }
 .smoke-soft {
@@ -517,10 +540,18 @@ html.js .reveal.is-visible {
 .smoke-ascii {
   display: none;
 }
-@media (prefers-reduced-motion: reduce), (prefers-reduced-data: reduce) {
-  .smoke-layer {
+/* Save-Data / mode off: solo L0 (body::before). Reduced-motion deja el
+   canvas en modo static (fotograma único); no se oculta con display:none. */
+@media (prefers-reduced-data: reduce) {
+  .smoke-layer[data-fx-reason="save-data"] {
     display: none;
   }
+}
+[data-fx="off"] {
+  --dur-1: 0ms;
+  --dur-2: 0ms;
+  --dur-3: 0ms;
+  --dur-4: 0ms;
 }
 
 /* S3 — capa ASCII tramada L2 (append S3: no tocar las líneas anteriores).
@@ -737,7 +768,7 @@ html:not(.dark) .kind-card:active::before {
   }
 }
 ::view-transition-old(root) {
-  animation: vapor-out var(--dur-3) var(--ease-in-out) both;
+  animation: vapor-out var(--dur-3) var(--ease-vapor) both;
 }
 ::view-transition-new(root) {
   animation: vapor-in var(--dur-3) var(--ease-out) both;

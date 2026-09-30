@@ -235,3 +235,24 @@ descarga el artefacto, instala Chromium y corre el bench en tres pasadas
   (`smoke-verify`), `.github/workflows/ci.yml` (job informativo).
 
 Sin temporales pendientes; sin commits.
+
+## §10 — Nota F2 (tiers / defer / blur, 2026-09-30)
+
+Ajuste de densidad y arranque en `src/components/smoke-canvas.tsx` (rama
+`feat/plan-v2-completo`), sin regenerar aún el bench de §1–§5:
+
+| Tier | Antes (ADR-0007) | Objetivo plan | Aterrizado F2 | Motivo                                                                     |
+| ---- | ---------------: | ------------: | ------------: | -------------------------------------------------------------------------- |
+| Q3   |               72 |     90 (→120) |            87 | `dens_max` ≤ 4.5 en 11 semillas; 90/88/84 rompen el tope en alguna semilla |
+| Q2   |               40 |      55 (→70) |            54 | Ídem; 55 → 4.558                                                           |
+| Q1   |               24 |      32 (→36) |            32 | Dentro de cota (≈3.88)                                                     |
+
+- ASCII / fps / res / cell sin cambio de flags respecto a ADR-0007.
+- Trabajo pesado (warmup static / rAF animated) diferido: doble rAF +
+  `requestIdleCallback` (fallback `setTimeout` 1 s). L0 CSS sigue visible;
+  `data-fx-ready` tras primer fotograma (animated) o warmup (static).
+- Pausa: `document.hidden` inmediato + blur de ventana → stop a los 5 s;
+  `focus` reanuda.
+- Perturbación por cursor: omitida (margen de densidad Q3 estrecho).
+- `contrast.test.ts` sigue anclado a 72/40/24 en GRIDS; sincronizar en follow-up
+  si se quiere CI sobre los conteos desplegados.

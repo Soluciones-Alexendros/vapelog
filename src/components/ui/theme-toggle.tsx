@@ -1,7 +1,7 @@
-import { Monitor, Moon, Sparkles, Sun } from "lucide-react";
+import { Monitor, Moon, Sparkles, Sun, Zap, ZapOff } from "lucide-react";
 import { useEffect, useRef, useSyncExternalStore, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
-import { setFxPreference, useFx } from "@/lib/fx";
+import { setFxPreference, useFxPref, type FxPref } from "@/lib/fx";
 import { requestPuff } from "@/lib/smoke/emit-bus";
 
 const STORAGE_KEY = "vapelog-theme";
@@ -22,6 +22,12 @@ const THEME_OPTIONS: Array<{ value: ThemePreference; label: string; Icon: typeof
   { value: "light", label: "Claro", Icon: Sun },
   { value: "system", label: "Sistema", Icon: Monitor },
   { value: "dark", label: "Oscuro", Icon: Moon },
+];
+
+const FX_OPTIONS: Array<{ value: FxPref; label: string; Icon: typeof Sparkles }> = [
+  { value: "auto", label: "Auto", Icon: Sparkles },
+  { value: "on", label: "Activados", Icon: Zap },
+  { value: "off", label: "Desactivados", Icon: ZapOff },
 ];
 
 function isPreference(value: string | null): value is ThemePreference {
@@ -92,33 +98,55 @@ function persistPreference(preference: ThemePreference) {
   emitPreference();
 }
 
+function radioKeyNav(
+  event: KeyboardEvent<HTMLDivElement>,
+  length: number,
+  currentIndex: number,
+): number | null {
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    return (currentIndex + 1) % length;
+  }
+  if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    return (currentIndex - 1 + length) % length;
+  }
+  if (event.key === "Home") return 0;
+  if (event.key === "End") return length - 1;
+  return null;
+}
+
 export function ThemeToggle() {
   const preference = useSyncExternalStore(subscribePreference, readPreference, getServerPreference);
   const systemDark = useSyncExternalStore(subscribeSystem, readSystem, getServerSystem);
-  const fx = useFx();
+  const fxPref = useFxPref();
   const effective = effectiveOf(preference, systemDark);
-  const buttonsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const themeButtonsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const fxButtonsRef = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     applyEffectiveTheme(effective);
   }, [effective]);
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleThemeKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = THEME_OPTIONS.findIndex((option) => option.value === preference);
-    let nextIndex: number | null = null;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-      nextIndex = (index + 1) % THEME_OPTIONS.length;
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      nextIndex = (index - 1 + THEME_OPTIONS.length) % THEME_OPTIONS.length;
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = THEME_OPTIONS.length - 1;
-    }
+    const nextIndex = radioKeyNav(event, THEME_OPTIONS.length, index);
     if (nextIndex === null) return;
     event.preventDefault();
     persistPreference(THEME_OPTIONS[nextIndex].value);
-    buttonsRef.current[nextIndex]?.focus();
+    themeButtonsRef.current[nextIndex]?.focus();
+  };
+
+  const handleFxKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const index = FX_OPTIONS.findIndex((option) => option.value === fxPref);
+    const nextIndex = radioKeyNav(event, FX_OPTIONS.length, index);
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const next = FX_OPTIONS[nextIndex].value;
+    setFxPreference(next);
+    if (next === "on" || next === "auto") {
+      const box = fxButtonsRef.current[nextIndex]?.getBoundingClientRect();
+      if (box) requestPuff(box.right - 8, box.top + 8);
+    }
+    fxButtonsRef.current[nextIndex]?.focus();
   };
 
   return (
@@ -126,7 +154,7 @@ export function ThemeToggle() {
       <div
         role="radiogroup"
         aria-label="Tema de la interfaz"
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleThemeKeyDown}
         className="inline-flex items-center rounded-md border border-border bg-muted p-0.5"
       >
         {THEME_OPTIONS.map((option, index) => {
@@ -135,7 +163,7 @@ export function ThemeToggle() {
             <button
               key={option.value}
               ref={(node) => {
-                buttonsRef.current[index] = node;
+                themeButtonsRef.current[index] = node;
               }}
               type="button"
               role="radio"
@@ -153,26 +181,43 @@ export function ThemeToggle() {
           );
         })}
       </div>
-      <button
-        type="button"
-        aria-pressed={fx === "on"}
-        aria-label="Efectos"
-        title="Efectos visuales"
-        onClick={(event) => {
-          const next = fx === "on" ? "off" : "on";
-          setFxPreference(next);
-          if (next === "on") {
-            const box = event.currentTarget.getBoundingClientRect();
-            requestPuff(box.right - 8, box.top + 8); // esquina del botón
-          }
-        }}
-        className={cn(
-          "inline-flex min-h-9 items-center justify-center rounded-md border border-border px-2.5 text-muted-foreground transition-colors duration-2 hover:text-foreground",
-          fx === "on" && "bg-card text-foreground shadow-1",
-        )}
+      <div
+        role="radiogroup"
+        aria-label="Efectos visuales"
+        onKeyDown={handleFxKeyDown}
+        className="inline-flex items-center rounded-md border border-border bg-muted p-0.5"
       >
-        <Sparkles className="size-4" aria-hidden />
-      </button>
+        {FX_OPTIONS.map((option, index) => {
+          const checked = fxPref === option.value;
+          return (
+            <button
+              key={option.value}
+              ref={(node) => {
+                fxButtonsRef.current[index] = node;
+              }}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              tabIndex={checked ? 0 : -1}
+              aria-label={option.label}
+              title={option.label}
+              onClick={(event) => {
+                setFxPreference(option.value);
+                if (option.value === "on" || option.value === "auto") {
+                  const box = event.currentTarget.getBoundingClientRect();
+                  requestPuff(box.right - 8, box.top + 8);
+                }
+              }}
+              className={cn(
+                "inline-flex min-h-9 items-center justify-center rounded-sm px-2.5 text-muted-foreground transition-colors duration-2 hover:text-foreground",
+                checked && "bg-card text-foreground shadow-1",
+              )}
+            >
+              <option.Icon className="size-4" aria-hidden />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

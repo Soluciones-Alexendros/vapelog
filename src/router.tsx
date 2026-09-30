@@ -1,7 +1,7 @@
 import { createRouter } from "@tanstack/react-router";
 import { AppErrorComponent } from "@/lib/error-component";
 import { AppNotFound } from "@/lib/not-found";
-import { getFxPreference, subscribeFx } from "@/lib/fx";
+import { getFxMode, subscribeFx } from "@/lib/fx";
 import { wantsReducedData } from "@/lib/smoke/emit-bus";
 import { routeTree } from "./routeTree.gen";
 
@@ -36,7 +36,7 @@ export function getRouter() {
  */
 function syncViewTransitionWithFx(router: { options: { defaultViewTransition?: unknown } }): void {
   const apply = () => {
-    router.options.defaultViewTransition = getFxPreference() === "on";
+    router.options.defaultViewTransition = getFxMode() === "animated";
   };
   apply();
   subscribeFx(apply);

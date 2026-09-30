@@ -434,9 +434,9 @@ describe("contraste de los tokens", () => {
     // - Q1 worst 3.212 (semilla 20): K·d = 0.0642 claro / 0.0899 oscuro → margen 35.8 %.
     // Cota exigida con margen ≥10 %: densidad_max ≤ 4.5.
     const GRIDS: Grid[] = [
-      { label: "Q3 escritorio", cfg: { width: 1280, height: 720, pad: 120, count: 72, cell: 16 } },
-      { label: "Q2 medio", cfg: { width: 1000, height: 800, pad: 120, count: 40, cell: 20 } },
-      { label: "Q1 móvil", cfg: { width: 390, height: 844, pad: 120, count: 24, cell: 24 } },
+      { label: "Q3 escritorio", cfg: { width: 1280, height: 720, pad: 120, count: 87, cell: 16 } },
+      { label: "Q2 medio", cfg: { width: 1000, height: 800, pad: 120, count: 54, cell: 20 } },
+      { label: "Q1 móvil", cfg: { width: 390, height: 844, pad: 120, count: 32, cell: 24 } },
     ];
     function maxDensity(grid: Grid): number {
       let worst = 0;

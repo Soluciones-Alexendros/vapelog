@@ -712,9 +712,9 @@ function CompatBlock({
         <Accordion type="single" collapsible>
           <AccordionItem value="no">
             <AccordionTrigger>
-              <span className="flex items-center gap-2">
-                <span className={toneTextClass(compatTone("no"))}>{compatLabel("no")}</span>
-                <Badge variant="muted">{grouped.no.length}</Badge>
+              <span className={toneTextClass(compatTone("no"))}>
+                {compatLabel("no")}{" "}
+                <span className="tabular-nums text-muted-foreground">{grouped.no.length}</span>
               </span>
             </AccordionTrigger>
             <AccordionContent className="px-0">
@@ -737,10 +737,10 @@ function CompatGroup({
   const tone = compatTone(kind);
   return (
     <div className={cn("rounded-lg border p-4", toneBorderClass(tone), toneBgClass(tone))}>
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className={cn("text-lg", toneTextClass(tone))}>{compatLabel(kind)}</h3>
-        <Badge variant="muted">{rows.length}</Badge>
-      </div>
+      <h3 className={cn("text-lg", toneTextClass(tone))}>
+        {compatLabel(kind)}{" "}
+        <span className="tabular-nums font-normal text-muted-foreground">{rows.length}</span>
+      </h3>
       <CompatRows rows={rows} tone={tone} label={compatLabel(kind)} className="mt-3" />
     </div>
   );
@@ -788,9 +788,15 @@ function CompatRows({
   );
 }
 
+const LIQUID_FIT_KINDS: LiquidFitKind[] = ["directo", "posible", "evitar"];
+const LIQUID_FIT_PAGE = 12;
+
 function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) {
-  const direct = byKind.directo;
-  const total = direct.length + byKind.posible.length + byKind.evitar.length;
+  const tabs = LIQUID_FIT_KINDS.filter((kind) => byKind[kind].length > 0);
+  const total = tabs.reduce((sum, kind) => sum + byKind[kind].length, 0);
+  const [active, setActive] = useState<LiquidFitKind>(tabs[0] ?? "directo");
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
 
   if (total === 0) {
     return (
@@ -800,46 +806,106 @@ function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) 
     );
   }
 
-  const groups: { kind: LiquidFitKind; rows: LiquidFit[] }[] = [
-    { kind: "posible", rows: byKind.posible },
-    { kind: "evitar", rows: byKind.evitar },
-  ];
+  const kind = tabs.includes(active) ? active : tabs[0]!;
+  const tone = fitTone(kind);
+  const rows = byKind[kind];
+  const needle = query.trim().toLowerCase();
+  const filtered = needle
+    ? rows.filter((fit) => {
+        const brand = brandById(fit.liquid.brandId)?.name ?? "";
+        return (
+          fit.liquid.name.toLowerCase().includes(needle) || brand.toLowerCase().includes(needle)
+        );
+      })
+    : rows;
+  const visible = expanded ? filtered : filtered.slice(0, LIQUID_FIT_PAGE);
+  const hidden = Math.max(0, filtered.length - visible.length);
+  const groupBrands = expanded && filtered.length > LIQUID_FIT_PAGE;
+
+  const selectKind = (next: LiquidFitKind) => {
+    setActive(next);
+    setExpanded(false);
+    setQuery("");
+  };
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <div
-        className={cn("rounded-lg border p-4", toneBorderClass("success"), toneBgClass("success"))}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className={cn("text-lg", toneTextClass(fitTone("directo")))}>
-            {fitLabel("directo")}
-          </h3>
-          <Badge variant="muted">{direct.length}</Badge>
-        </div>
-        <LiquidRows rows={direct} className="mt-3" label={fitLabel("directo")} />
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Tipo de encaje">
+        {tabs.map((tab) => {
+          const selected = tab === kind;
+          const tabTone = fitTone(tab);
+          return (
+            <Button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              variant={selected ? "secondary" : "quiet"}
+              className={
+                selected
+                  ? cn(
+                      "font-semibold underline decoration-current underline-offset-4",
+                      toneTextClass(tabTone),
+                    )
+                  : undefined
+              }
+              onClick={() => selectKind(tab)}
+            >
+              {fitLabel(tab)} <span className="tabular-nums">{byKind[tab].length}</span>
+            </Button>
+          );
+        })}
       </div>
 
-      {groups.some((group) => group.rows.length > 0) ? (
-        <Accordion type="multiple">
-          {groups.map((group) =>
-            group.rows.length > 0 ? (
-              <AccordionItem key={group.kind} value={group.kind}>
-                <AccordionTrigger>
-                  <span className="flex items-center gap-2">
-                    <span className={toneTextClass(fitTone(group.kind))}>
-                      {fitLabel(group.kind)}
-                    </span>
-                    <Badge variant="muted">{group.rows.length}</Badge>
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-0">
-                  <LiquidRows rows={group.rows} label={fitLabel(group.kind)} />
-                </AccordionContent>
-              </AccordionItem>
-            ) : null,
-          )}
-        </Accordion>
-      ) : null}
+      <div
+        role="tabpanel"
+        className={cn("rounded-lg border p-4", toneBorderClass(tone), toneBgClass(tone))}
+      >
+        <h3 className={cn("text-lg", toneTextClass(tone))}>
+          {fitLabel(kind)}{" "}
+          <span className="tabular-nums font-normal text-muted-foreground">
+            {filtered.length}
+            {needle ? ` de ${rows.length}` : ""}
+          </span>
+        </h3>
+
+        <label className="mt-3 block text-sm text-muted-foreground" htmlFor="liquid-fit-filter">
+          Filtrar por nombre o marca
+        </label>
+        <input
+          id="liquid-fit-filter"
+          type="search"
+          className="mt-2 max-w-md"
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setExpanded(false);
+          }}
+          placeholder="Nombre o marca"
+          autoComplete="off"
+        />
+
+        {filtered.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Ningún líquido de este grupo coincide con el filtro.
+          </p>
+        ) : groupBrands ? (
+          <LiquidFitBrandGroups rows={visible} className="mt-3" />
+        ) : (
+          <LiquidFitList rows={visible} className="mt-3" />
+        )}
+
+        {hidden > 0 ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-3"
+            onClick={() => setExpanded(true)}
+          >
+            Ver los {filtered.length}
+          </Button>
+        ) : null}
+      </div>
 
       <p className="text-xs text-muted-foreground">
         La lectura cruza formato y calada publicados. No es una recomendación de consumo: la
@@ -849,40 +915,63 @@ function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) 
   );
 }
 
-function LiquidRows({
-  rows,
-  className,
-  label,
-}: {
-  rows: LiquidFit[];
-  className?: string;
-  label?: string;
-}) {
+function LiquidFitList({ rows, className }: { rows: LiquidFit[]; className?: string }) {
   return (
-    <Carousel className={className} ariaLabel={label}>
+    <ul className={cn("flex flex-col gap-2", className)}>
       {rows.map((fit) => (
-        <li key={fit.liquid.id} className="w-72 shrink-0 snap-start">
-          <Link
-            to="/liquidos/$slug"
-            preload="intent"
-            params={{ slug: fit.liquid.slug }}
-            className="flex h-full flex-col gap-1 rounded-md border border-border bg-surface-2 p-3 text-foreground shadow-1 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
-          >
-            <span className="flex flex-wrap items-baseline justify-between gap-2">
-              <span className="underline decoration-border underline-offset-4">
-                {fit.liquid.name}
-              </span>
-              <span
-                className={cn("text-xs tracking-widest uppercase", toneTextClass(fitTone(fit.fit)))}
-              >
-                {fitLabel(fit.fit)}
-              </span>
-            </span>
-            <span className="text-sm text-muted-foreground">{fit.reason}</span>
-          </Link>
-        </li>
+        <LiquidFitItem key={fit.liquid.id} fit={fit} />
       ))}
-    </Carousel>
+    </ul>
+  );
+}
+
+function LiquidFitBrandGroups({ rows, className }: { rows: LiquidFit[]; className?: string }) {
+  const groups: { brandId: string; name: string; rows: LiquidFit[] }[] = [];
+  const index = new Map<string, number>();
+  for (const fit of rows) {
+    const brandId = fit.liquid.brandId;
+    const at = index.get(brandId);
+    if (at == null) {
+      index.set(brandId, groups.length);
+      groups.push({
+        brandId,
+        name: brandById(brandId)?.name ?? brandId,
+        rows: [fit],
+      });
+    } else {
+      groups[at]!.rows.push(fit);
+    }
+  }
+
+  return (
+    <div className={cn("flex flex-col gap-4", className)}>
+      {groups.map((group) => (
+        <div key={group.brandId}>
+          <h4 className="text-sm font-medium text-foreground">{group.name}</h4>
+          <LiquidFitList rows={group.rows} className="mt-2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LiquidFitItem({ fit }: { fit: LiquidFit }) {
+  const reasonId = `fit-reason-${fit.liquid.id}`;
+  return (
+    <li className="rounded-md border border-border bg-surface-2 p-3 shadow-1">
+      <Link
+        to="/liquidos/$slug"
+        preload="intent"
+        params={{ slug: fit.liquid.slug }}
+        className="text-foreground underline decoration-border underline-offset-4"
+        aria-describedby={reasonId}
+      >
+        {fit.liquid.name}
+      </Link>
+      <p id={reasonId} className="mt-1 text-sm text-muted-foreground">
+        {fit.reason}
+      </p>
+    </li>
   );
 }
 
@@ -943,30 +1032,50 @@ function SpecTable({
     published: boolean;
   }[];
 }) {
+  const [showEmpty, setShowEmpty] = useState(false);
+  const emptyCount = rows.reduce((sum, row) => sum + (row.published ? 0 : 1), 0);
+  const visible = showEmpty ? rows : rows.filter((row) => row.published);
+
   return (
-    <div className="overflow-x-auto rounded-md border border-border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Dato</TableHead>
-            <TableHead>Valor</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.key}>
-              <TableHead scope="row" className="w-[12rem] text-muted-foreground">
-                {row.label}
-              </TableHead>
-              <TableCell
-                className={row.published ? "text-foreground tabular-nums" : "text-muted-foreground"}
-              >
-                {row.display}
-              </TableCell>
+    <div>
+      <div className="overflow-x-auto rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Dato</TableHead>
+              <TableHead>Valor</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {visible.map((row) => (
+              <TableRow key={row.key}>
+                <TableHead scope="row" className="w-[12rem] text-muted-foreground">
+                  {row.label}
+                </TableHead>
+                <TableCell
+                  className={
+                    row.published ? "text-foreground tabular-nums" : "text-muted-foreground"
+                  }
+                >
+                  {row.display}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {emptyCount > 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          {emptyCount} campos sin dato publicado ·{" "}
+          <button
+            type="button"
+            className="underline decoration-border underline-offset-4 hover:text-foreground"
+            onClick={() => setShowEmpty((value) => !value)}
+          >
+            {showEmpty ? "Ocultar" : "Mostrar"}
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 }

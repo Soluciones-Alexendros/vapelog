@@ -158,7 +158,7 @@ function makeContext(browser, { fx, reducedMotion } = {}) {
           sessionStorage.setItem("vapelog-edad", "ok");
           try {
             localStorage.setItem("vapelog-theme", theme);
-            if (fxValue) localStorage.setItem("vapelog-fx", fxValue);
+            if (fxValue) localStorage.setItem("vapelog-fx:v2", fxValue === "off" ? "off" : "on");
           } catch {
             // almacenamiento no disponible
           }
