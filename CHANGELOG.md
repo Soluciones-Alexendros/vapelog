@@ -16,6 +16,13 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambios
 
+- feat(humo): fondo de humo v2 y cierre de deuda F2/F3/F4/F6/F7 (#8)
+- refactor(herramientas): elimina cuadro Recomendación, mantiene línea Sugerido
+
+## [0.8.0] - 2026-09-30
+
+### Cambios
+
 - feat(humo): humo v2 determinista con modelo puro sin DOM, capas L0–L4, híbrido humo suave + ASCII tramado y calidad adaptativa (ADR-0007)
 - feat(identidad): favicon propio y BrandMark vectorial con adaptación al tema (F2)
 - fix(movil): correcciones de F3 en móvil
