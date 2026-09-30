@@ -12,6 +12,12 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-30
+
+### Cambios
+
+- feat(ui): titular, humo y cobertura de fichas (#12)
+
 ## [0.10.0] - 2026-09-30
 
 ### Cambios
