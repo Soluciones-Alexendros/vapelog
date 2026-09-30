@@ -32,7 +32,7 @@ export const Route = createFileRoute("/buscar")({
     return { ...parseCatalogSearch(search), dominio: domain };
   },
   head: () => {
-    const { meta } = buildHead({
+    const { meta, links } = buildHead({
       title: "Buscador — Vapelog",
       description:
         "Busca por característica en todo el archivo: filtra dispositivos, resistencias, líquidos y componentes por los datos publicados en cada ficha, sin inventar coincidencias.",
@@ -43,6 +43,7 @@ export const Route = createFileRoute("/buscar")({
         ...meta,
         { name: "robots", content: "noindex, follow" },
       ] as JSX.IntrinsicElements["meta"][],
+      links,
     };
   },
   component: SearchPage,

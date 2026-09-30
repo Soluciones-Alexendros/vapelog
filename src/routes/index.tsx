@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import type { JSX } from "react";
+import { buildHead } from "@/lib/seo";
 import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
 import { exampleCount, exampleQueries } from "@/data/search";
 import { brandById, coils, devices, liquids, parts } from "@/data/catalog";
@@ -18,7 +20,18 @@ import { kindOf } from "@/lib/kind";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-export const Route = createFileRoute("/")({ component: Home });
+export const Route = createFileRoute("/")({
+  head: () => {
+    const { meta, links } = buildHead({
+      title: "Vapelog — Catálogo técnico de vapeo (UE)",
+      description:
+        "Catálogo técnico de dispositivos, resistencias y líquidos de vapeo para el mercado de la UE. Fichas con fuente, cruce y calculadoras. No es una tienda.",
+      path: "/",
+    });
+    return { meta: meta as JSX.IntrinsicElements["meta"][], links };
+  },
+  component: Home,
+});
 
 const latestPosts = [...blogPosts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
 
