@@ -22,7 +22,7 @@ import { cn } from "@/lib/cn";
  *    de texto a la vez.
  *
  * Salvaguardas (ADR-0004): el texto final viaja siempre en el DOM (SSR
- * intacto); la capa de scramble es hermana del h1 (`aria-hidden`), absoluta
+ * intacto); la capa de scramble es hija del h1 (`aria-hidden`), absoluta
  * sobre el texto real (CLS 0) y se retira al terminar (~42 pasos ≈ 700 ms).
  * Sin animación en primera carga, con `prefers-reduced-motion` ni con fx off.
  */
@@ -106,16 +106,16 @@ export function KineticHeading({
 
   const Tag = as === "p" ? "p" : "h1";
   return (
-    <span className="relative block">
-      <Tag className={cn("relative", className)}>{text}</Tag>
+    <Tag className={cn("relative block", className)}>
+      {text}
       {frame !== null ? (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 font-[inherit] text-[length:inherit] leading-[inherit] tracking-[inherit] whitespace-pre-wrap break-words text-foreground select-none"
+          className="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words select-none"
         >
           {frame}
         </span>
       ) : null}
-    </span>
+    </Tag>
   );
 }
