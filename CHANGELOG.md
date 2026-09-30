@@ -12,6 +12,17 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambios
+
+- fix(fx): humo visible (fondo en `html`, body transparente) y fallo consultable (`vapelog-fx:v2`, Auto/On/Off, `?fx=debug`, `window.__vapelogFx`) (ADR-0009, F0)
+- feat(fx): fotograma estático con `prefers-reduced-motion`; gobernador de tier con recuperación; carga diferida post-paint
+- feat(humo): tiers Q3/Q2/Q1 en 87/54/32 bajo contrato de contraste (F2)
+- test(fx): suite Playwright `pnpm run test:e2e` (humo + DOM budget) y job CI `fx-e2e`
+- feat(catalogo): líquidos por resistencia con pestañas, 12+Ver N, filtro y nombres accesibles; SpecTable oculta vacíos (F5/F6)
+- feat(nav): atajo Ctrl/Cmd+K en la paleta de comandos (F7)
+- chore(seo): `vercel.json` 308 `beryl` → canónico; cache immutable de catálogo (ADR-0010)
+- docs: `docs/plan-vapelog.md`, `docs/design-system.md`
+
 ## [0.9.1] - 2026-09-30
 
 ### Cambios

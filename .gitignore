@@ -8,6 +8,8 @@ dist
 artifacts
 screenshots
 coverage
+test-results
+playwright-report
 *.log
 .env
 .env.local

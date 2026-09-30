@@ -45,9 +45,9 @@ runtime ni autenticación.
   L1 humo suave (sprite radial, sin `filter: blur`), L2 ASCII tramado (matriz
   de Bayer), L3 zonificación y L4 coreografía por scroll.
 - **Tiers adaptativos** Q3/Q2/Q1 (`count`/`cell`/`ascii`/`fps`/`res`) con
-  nivel inicial por ancho, `hardwareConcurrency ≤ 4` como techo y degradación
-  sostenida (> 24 ms durante 2 s) irreversible en la sesión; ahorro de datos
-  (`Save-Data`/`prefers-reduced-data`) → Q0 (solo L0).
+  nivel inicial por ancho, `hardwareConcurrency ≤ 4` como techo Q1 (nunca Q0)
+  y degradación con recuperación tras 10 s estables (ADR-0009); ahorro de
+  datos (`Save-Data`) → Q0 (solo L0).
 - Cotas de contraste verificadas en `src/data/contrast.test.ts`; guías de
   medición en `docs/guides/humo-baseline.md` (S0) y
   `docs/guides/humo-resultados.md` (S7).
@@ -73,6 +73,8 @@ runtime ni autenticación.
   `KineticHeading` superpone una capa `aria-hidden` solo en navegación cliente.
 - **Transiciones vapor:** `defaultViewTransition` en `src/router.tsx` +
   `vapor-out`/`vapor-in` y puff de humo vía `emit-bus`.
-- **Salvaguardas:** todo efecto se apaga con `prefers-reduced-motion` y el
-  conmutador `vapelog-fx` (`src/lib/fx.ts`); `forced-colors` y
-  `prefers-contrast: more` con estilo propio.
+- **Salvaguardas:** todo efecto se gobierna con el conmutador
+  Auto/On/Off (`vapelog-fx:v2`, `src/lib/fx.ts` + `src/lib/fx/controller.ts`);
+  reduced-motion deja un fotograma estático (ADR-0009); `forced-colors` y
+  `prefers-contrast: more` con estilo propio. Diagnóstico: `?fx=debug` y
+  `window.__vapelogFx`. Plan vigente: [docs/plan-vapelog.md](docs/plan-vapelog.md).

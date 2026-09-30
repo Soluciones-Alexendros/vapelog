@@ -200,6 +200,64 @@ jobs:
           A11Y_URL=http://127.0.0.1:4173/ node scripts/a11y-pass.mjs
           node scripts/browser-smoke.mjs http://127.0.0.1:4173/ artifacts/desktop.png
 
+  fx-e2e:
+    name: fx-e2e
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: app-build
+
+      - name: Unpack build output
+        run: tar -xzf app-build.tgz
+
+      - name: Install Chromium for fx e2e
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Playwright fx suite
+        run: |
+          set -euo pipefail
+          PORT=4175
+          HOST=127.0.0.1 NITRO_HOST=127.0.0.1 NITRO_PORT="${PORT}" PORT="${PORT}" \
+            node .output/server/index.mjs >nitro-fx-e2e.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for _ in $(seq 1 60); do
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              echo "El servidor Nitro murió al arrancar" >&2
+              cat nitro-fx-e2e.log >&2 || true
+              exit 1
+            fi
+            if curl -fsS -o /dev/null "http://127.0.0.1:${PORT}/" 2>/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 0.5
+          done
+          if [ "$ready" != "1" ]; then
+            echo "Timeout esperando a http://127.0.0.1:${PORT}/" >&2
+            cat nitro-fx-e2e.log >&2 || true
+            exit 1
+          fi
+          E2E_BASE_URL="http://127.0.0.1:${PORT}" E2E_PORT="${PORT}" pnpm exec playwright test
+
   smoke-bench:
     name: smoke-bench (informativo)
     needs: [build]

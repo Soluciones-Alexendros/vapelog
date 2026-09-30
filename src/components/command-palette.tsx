@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input";
  * Paleta de comandos y búsqueda (F7).
  *
  * Lee `src/data/search.ts` (`itemsFor`, `exampleQueries`) sin nuevas
- * dependencias (Radix Dialog ya está). Atajo `/` para abrir, `Esc` para
- * cerrar (Radix), navegación por teclado con flechas entre enlaces,
- * accesible con rol `dialog` + título/descripción ARIA.
+ * dependencias (Radix Dialog ya está). Atajos `/` y Ctrl/Cmd+K para abrir,
+ * `Esc` para cerrar (Radix), navegación por teclado con flechas entre
+ * enlaces, accesible con rol `dialog` + título/descripción ARIA.
  */
 
 const COMMANDS = [
@@ -72,12 +72,16 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Atajo `/` para abrir (fuera de campos editables y sin modificadores).
+  // Atajos `/` y Ctrl/Cmd+K (fuera de campos editables).
   useEffect(() => {
     if (open) return;
     const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "/") return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const chordK =
+        (event.key === "k" || event.key === "K") &&
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey;
+      const slash = event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey;
+      if (!chordK && !slash) return;
       if (isEditableTarget(event.target)) return;
       event.preventDefault();
       setQ("");
@@ -148,7 +152,7 @@ export function CommandPalette() {
           setQ("");
           setOpen(true);
         }}
-        aria-label="Abrir búsqueda (barra /)"
+        aria-label="Abrir búsqueda (barra / o Ctrl/Cmd+K)"
         className="inline-flex min-h-11 items-center gap-1.5 rounded-sm px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
       >
         <Search className="size-4" aria-hidden />
@@ -158,6 +162,12 @@ export function CommandPalette() {
           className="hidden rounded-sm border border-border px-1 text-xs text-muted-foreground md:inline"
         >
           /
+        </kbd>
+        <kbd
+          aria-hidden
+          className="hidden rounded-sm border border-border px-1 text-xs text-muted-foreground md:inline"
+        >
+          ⌘K
         </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -172,8 +182,8 @@ export function CommandPalette() {
         >
           <DialogTitle>Buscar en Vapelog</DialogTitle>
           <DialogDescription>
-            Fichas y secciones del archivo. Pulsa / para abrir y Esc para cerrar; las flechas mueven
-            el foco entre resultados.
+            Fichas y secciones del archivo. Pulsa / o Ctrl/Cmd+K para abrir y Esc para cerrar; las
+            flechas mueven el foco entre resultados.
           </DialogDescription>
           <div className="mt-4">
             <label className="sr-only" htmlFor="paleta-q">

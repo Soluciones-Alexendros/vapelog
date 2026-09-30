@@ -1,7 +1,9 @@
-// Puente UI → bocanadas del humo (S5). El lienzo expone `window.__vapelogSmoke`
-// solo cuando fx=on y está montado; este módulo desacopla los botones de ese
-// ciclo de vida y respeta que sin fx=off no haya puff.
-import { getFxPreference } from "@/lib/fx";
+// Puente UI → bocanadas del humo. El lienzo expone `window.__vapelogSmoke`
+// solo cuando el modo es animated/static y está montado; este módulo
+// desacopla los botones de ese ciclo de vida.
+import { getFxMode } from "@/lib/fx";
+
+export { wantsReducedData } from "@/lib/fx/env";
 
 export type SmokeHook = { emit?: (x: number, y: number) => void };
 
@@ -14,39 +16,21 @@ function hook(): SmokeHook | undefined {
 }
 
 function queue(x: number, y: number): void {
-  if (getFxPreference() !== "on") return; // fx=off: ni se encola
+  if (getFxMode() !== "animated") return;
   pending.push({ x, y });
   if (pending.length > MAX_PENDING) pending.shift();
 }
 
-/** Bocanada solo si el lienzo está montado (fx=on); si no, no hace nada. */
+/** Bocanada solo si el lienzo está montado y el modo es animated. */
 export function puff(x: number, y: number): void {
+  if (getFxMode() !== "animated") return;
   const h = hook();
   if (h && typeof h.emit === "function") h.emit(x, y);
 }
 
-/**
- * N6 — ahorro de datos. `prefers-reduced-data` no tiene API tipada y
- * `navigator.connection.saveData` tampoco, así que se leen con casts
- * estrechos y se acepta su ausencia (falso si no existen).
- */
-export function wantsReducedData(): boolean {
-  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
-  if (typeof window.matchMedia === "function") {
-    try {
-      if (window.matchMedia("(prefers-reduced-data: reduce)").matches) return true;
-    } catch {
-      // matchMedia caprichoso: se sigue con connection.saveData.
-    }
-  }
-  return Boolean(
-    (navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData,
-  );
-}
-
-/** Como `puff`, pero si fx pasa a on y el lienzo aún no montó, la encola para
- *  vaciarla al montar (caso del botón «Efectos»). */
+/** Como `puff`, pero si el lienzo aún no montó, la encola para vaciarla al montar. */
 export function requestPuff(x: number, y: number): void {
+  if (getFxMode() !== "animated") return;
   const h = hook();
   if (h && typeof h.emit === "function") {
     h.emit(x, y);

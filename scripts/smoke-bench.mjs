@@ -179,7 +179,7 @@ async function runBench() {
         sessionStorage.setItem("vapelog-edad", "ok");
         try {
           localStorage.setItem("vapelog-theme", theme);
-          localStorage.setItem("vapelog-fx", fx);
+          localStorage.setItem("vapelog-fx:v2", fx === "off" ? "off" : "on");
         } catch {
           // almacenamiento no disponible: el colorScheme sigue aplicando
         }

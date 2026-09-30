@@ -12,7 +12,7 @@ type Pending = { x: number; y: number; target: Element | null };
  * `--mx/--my/--rx/--ry` (vía `tiltFromPointer`, maxDeg 4) solo en la tarjeta
  * bajo el puntero; limpia al salir.
  *
- * Inactivo con pointer coarse, prefers-reduced-motion o `vapelog-fx` off.
+ * Inactivo con pointer coarse, modo distinto de animated, o reduced-motion.
  *
  * Decisión claro/tilt: el tilt solo se aplica en `.dark` (transform inline
  * con `perspective(700px)`); en claro manda la sombra dura + pressed del CSS
@@ -25,17 +25,15 @@ export function useCardFx<T extends HTMLElement>(ref: RefObject<T | null>): void
   useEffect(() => {
     const container = ref.current;
     if (!container || typeof window === "undefined") return;
-    if (fx === "off") return;
+    if (fx !== "animated") return;
 
     let fine: boolean;
-    let reduce: boolean;
     try {
       fine = window.matchMedia("(hover:hover) and (pointer:fine)").matches;
-      reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     } catch {
       return;
     }
-    if (!fine || reduce) return;
+    if (!fine) return;
 
     let raf = 0;
     let pending: Pending | null = null;

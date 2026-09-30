@@ -73,12 +73,7 @@ export function KineticHeading({
       markFirstPaint();
       return;
     }
-    if (fx !== "on") return;
-    try {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    } catch {
-      return;
-    }
+    if (fx !== "animated") return;
     activeCtl?.abort();
     const ctl = new AbortController();
     activeCtl = ctl;

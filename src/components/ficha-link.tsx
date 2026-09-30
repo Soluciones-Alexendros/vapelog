@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { MouseEvent, ReactNode } from "react";
 import type { Domain } from "@/data/types";
-import { getFxPreference } from "@/lib/fx";
+import { getFxMode } from "@/lib/fx";
 import { puff } from "@/lib/smoke/emit-bus";
 import { startViewTransition, supportsViewTransitions } from "@/lib/view-transition";
 
@@ -36,7 +36,7 @@ function useFichaClick(
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
       return;
     }
-    const fxOn = getFxPreference() === "on";
+    const fxOn = getFxMode() === "animated";
     if (fxOn) {
       // Coordenadas de viewport, como las volutas ambientales del modelo.
       puff(event.clientX, event.clientY);
