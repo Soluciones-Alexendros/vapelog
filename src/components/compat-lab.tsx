@@ -42,7 +42,7 @@ export function CompatLab({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Laboratorio</p>
-      <h1 className="mt-2 text-4xl text-foreground">Cruce</h1>
+      <h1 className="mt-2 text-4xl text-foreground">Compatibilidad</h1>
       <p className="mt-3 text-muted-foreground">
         Un mod con rosca 510 no “acepta una coil”. Acepta un atomizador, y la coil tiene que ser de
         ese atomizador. Aquí se separan las tres cosas.

@@ -141,7 +141,7 @@ export function ArchiveTable() {
         header: "Cobertura",
         cell: (info) => `${info.getValue()} %`,
       }),
-      column.accessor("confidence", { header: "Fuente" }),
+      column.accessor("confidence", { header: "Verificación" }),
       column.accessor("tpd", {
         header: "Régimen",
         cell: (info) => (
@@ -167,7 +167,16 @@ export function ArchiveTable() {
   });
 
   const exportCsv = () => {
-    const header = ["Tipo", "Marca", "Nombre", "Género", "Dato", "Cobertura", "Fuente", "Régimen"];
+    const header = [
+      "Tipo",
+      "Marca",
+      "Nombre",
+      "Género",
+      "Dato",
+      "Cobertura",
+      "Verificación",
+      "Régimen",
+    ];
     const body = table
       .getSortedRowModel()
       .rows.map((row) => [
@@ -195,7 +204,7 @@ export function ArchiveTable() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Datos</p>
-      <KineticHeading as="h1" text="Tabla del archivo" className="mt-2 text-4xl text-foreground" />
+      <KineticHeading as="h1" text="Catálogo completo" className="mt-2 text-4xl text-foreground" />
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Lectura de todas las fichas. No hay alta ni borrado: sin cuentas, una escritura abierta no
         es un archivo, es un tablón.

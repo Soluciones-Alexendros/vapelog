@@ -8,7 +8,7 @@ export const Route = createFileRoute("/archivo")({
     const { meta, links } = buildHead({
       title: "Archivo — Vapelog",
       description:
-        "Tabla completa del archivo: dispositivos, resistencias, líquidos y componentes con su ficha, su fuente y su estado. Exporta a CSV y no borra.",
+        "Catálogo completo: dispositivos, resistencias, líquidos y componentes con su ficha, verificación y estado. Exporta a CSV y no borra.",
       path: "/archivo",
     });
     return { meta: meta as JSX.IntrinsicElements["meta"][], links };

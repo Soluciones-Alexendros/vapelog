@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
  */
 
 const COMMANDS = [
-  { id: "inicio", label: "Inicio", hint: "El catálogo", to: "/" },
+  { id: "inicio", label: "Inicio", hint: "Catálogo técnico", to: "/" },
   {
     id: "dispositivos",
     label: "Dispositivos",
@@ -36,11 +36,16 @@ const COMMANDS = [
   { id: "liquidos", label: "Líquidos", hint: "Sales y shortfill", to: "/liquidos" },
   { id: "componentes", label: "Componentes", hint: "Celdas y boquillas", to: "/componentes" },
   { id: "buscar", label: "Buscar", hint: "Por característica", to: "/buscar" },
-  { id: "cruce", label: "Cruce", hint: "Dispositivo × resistencia", to: "/compatibilidad" },
-  { id: "calculo", label: "Cálculo", hint: "Ohm y nicokit", to: "/herramientas" },
-  { id: "tabla", label: "Tabla", hint: "Archivo completo", to: "/archivo" },
-  { id: "blog", label: "Blog", hint: "Novedades", to: "/blog" },
-  { id: "modelo", label: "Modelo", hint: "Modelo de datos", to: "/modelo" },
+  {
+    id: "cruce",
+    label: "Compatibilidad",
+    hint: "Dispositivo × resistencia",
+    to: "/compatibilidad",
+  },
+  { id: "calculo", label: "Calculadoras", hint: "Ohm y nicokit", to: "/herramientas" },
+  { id: "tabla", label: "Catálogo completo", hint: "Todas las fichas", to: "/archivo" },
+  { id: "blog", label: "Blog", hint: "Guías recientes", to: "/blog" },
+  { id: "modelo", label: "Modelo de datos", hint: "Cómo se organiza el archivo", to: "/modelo" },
   { id: "comparar", label: "Comparador", hint: "Hasta cuatro fichas", to: "/comparar" },
 ] as const;
 

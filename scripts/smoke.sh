@@ -12,14 +12,14 @@ LOG="$(mktemp)"
 # Marcador por ruta: contenido real servido en SSR (ver src/routes y src/data).
 markerFor() {
   case "$1" in
-    /) echo "El catálogo" ;;
+    /) echo "Catálogo técnico de vapeo" ;;
     /dispositivos) echo "XROS 4" ;;
     /resistencias) echo "Z 0,2" ;;
     /liquidos) echo "Heisenberg" ;;
     /buscar) echo "Buscar" ;;
-    /herramientas) echo "Cálculo" ;;
-    /compatibilidad) echo "Cruce" ;;
-    /archivo) echo "Tabla del archivo" ;;
+    /herramientas) echo "Calculadoras" ;;
+    /compatibilidad) echo "Compatibilidad" ;;
+    /archivo) echo "Catálogo completo" ;;
     *) return 1 ;;
   esac
 }

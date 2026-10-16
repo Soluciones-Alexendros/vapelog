@@ -165,7 +165,7 @@ export function CatalogBrowser({
                   [
                     ["grid", "Fichas"],
                     ["lista", "Lista"],
-                    ["tabla", "Comparativa"],
+                    ["tabla", "Tabla"],
                   ] as const
                 ).map(([id, label]) => (
                   <Button
@@ -205,7 +205,8 @@ export function CatalogBrowser({
                     {specCells(filtered[0]).map((cell) => (
                       <TableHead key={cell.label}>{cell.label}</TableHead>
                     ))}
-                    <TableHead>Fuente</TableHead>
+                    <TableHead>Verificación</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </tr>
                 </TableHeader>
                 <TableBody>
@@ -235,9 +236,16 @@ export function CatalogBrowser({
                             {cell.value}
                           </TableCell>
                         ))}
+                        <TableCell>{confidenceLabel(item.confidence)}</TableCell>
                         <TableCell>
-                          {confidenceLabel(item.confidence)}
-                          <div className="mt-2">
+                          <div className="flex flex-wrap gap-2">
+                            <ItemLink
+                              domain={domain}
+                              slug={item.slug}
+                              className={buttonVariants({ variant: "secondary" })}
+                            >
+                              Abrir ficha
+                            </ItemLink>
                             <Button
                               type="button"
                               variant="quiet"
@@ -536,9 +544,6 @@ function FilterFields({
       >
         Limpiar filtros
       </Button>
-      <p className="mt-4 text-xs text-muted-foreground">
-        El precio de cada tienda no está. Entra cuando la ficha deje de moverse.
-      </p>
     </>
   );
 }
