@@ -59,8 +59,29 @@ export function solveOhm(input: OhmInput): OhmResult | { error: string } {
   return { error: "Añade potencia o voltaje además de la resistencia." };
 }
 
-export function powerNotes(device: Device, watts: number, ohms: number): string[] {
+export type WindowStatus = "inside" | "outside" | "unknown";
+
+export interface PowerNotesResult {
+  power: WindowStatus;
+  ohms: WindowStatus;
+  notes: string[];
+}
+
+function dimensionStatus(value: number, min: number | null, max: number | null): WindowStatus {
+  const hasMin = min != null;
+  const hasMax = max != null;
+  if (!hasMin && !hasMax) return "unknown";
+  if (hasMin && value < (min as number)) return "outside";
+  if (hasMax && value > (max as number)) return "outside";
+  if (hasMin && hasMax) return "inside";
+  return "inside";
+}
+
+export function powerNotes(device: Device, watts: number, ohms: number): PowerNotesResult {
+  const power = dimensionStatus(watts, device.powerMinW, device.powerMaxW);
+  const ohmsStatus = dimensionStatus(ohms, device.ohmMin, device.ohmMax);
   const notes: string[] = [];
+
   if (device.powerMaxW != null && watts > device.powerMaxW) {
     notes.push(`Supera el máximo publicado de ${device.powerMaxW} W.`);
   }
@@ -73,17 +94,34 @@ export function powerNotes(device: Device, watts: number, ohms: number): string[
   if (device.ohmMax != null && ohms > device.ohmMax) {
     notes.push(`La resistencia queda por encima de la ventana (${device.ohmMax} Ω).`);
   }
-  if (notes.length === 0) {
-    notes.push("Dentro de la ventana de potencia y ohmios publicada para este dispositivo.");
+
+  if (power === "unknown" && ohmsStatus === "unknown") {
+    notes.push(
+      "Este dispositivo no publica límites de potencia ni de ohmios. No se puede afirmar que la cifra quede dentro de una ventana.",
+    );
+  } else if (power === "unknown") {
+    notes.push("No hay ventana de potencia publicada para este dispositivo.");
+  } else if (ohmsStatus === "unknown") {
+    notes.push("No hay ventana de ohmios publicada para este dispositivo.");
   }
+
+  if (power === "inside" && ohmsStatus === "inside") {
+    notes.push("Dentro de la ventana de potencia y ohmios publicada para este dispositivo.");
+  } else if (power === "inside" && ohmsStatus !== "outside") {
+    notes.push("Dentro de la ventana de potencia publicada.");
+  } else if (ohmsStatus === "inside" && power !== "outside") {
+    notes.push("Dentro de la ventana de ohmios publicada.");
+  }
+
   notes.push(
     "Un mod regulado no es un mod mecánico. Esta cifra no autoriza un montaje mecánico ni sustituye el CDR de la celda.",
   );
-  return notes;
+  return { power, ohms: ohmsStatus, notes };
 }
 
 export interface MixInput {
-  aromaMl: number;
+  /** Volumen inicial a 0 mg/ml ya en la botella. */
+  initialZeroMgMl: number;
   bottleMl: number;
   shotMl: number;
   shotMg: number;
@@ -93,51 +131,113 @@ export interface MixInput {
 export interface MixResult {
   finalMl: number;
   mgPerMl: number;
+  /** Hueco inicial (capacidad − volumen a 0 mg). */
   freeMl: number;
+  /** Espacio restante tras añadir los nicokits (puede ser negativo si desborda). */
+  remainingMl: number;
   overflow: boolean;
   overTpdStrength: boolean;
 }
 
 export function mixNicotine(input: MixInput): MixResult | { error: string } {
-  const { aromaMl, bottleMl, shotMl, shotMg, shots } = input;
-  if (![aromaMl, bottleMl, shotMl, shotMg, shots].every(Number.isFinite)) {
+  const { initialZeroMgMl, bottleMl, shotMl, shotMg, shots } = input;
+  if (![initialZeroMgMl, bottleMl, shotMl, shotMg, shots].every(Number.isFinite)) {
     return { error: "Todos los valores tienen que ser números." };
   }
-  if (aromaMl <= 0 || bottleMl <= 0 || shotMl <= 0 || shotMg <= 0) {
+  if (initialZeroMgMl <= 0 || bottleMl <= 0 || shotMl <= 0 || shotMg <= 0) {
     return { error: "Volúmenes y graduación del nicokit tienen que ser mayores que 0." };
   }
-  if (shots < 0) return { error: "El número de nicokits no puede ser negativo." };
-  if (aromaMl - bottleMl > 0.001) {
+  if (!Number.isInteger(shots) || shots < 0) {
+    return { error: "El número de nicokits tiene que ser un entero mayor o igual que 0." };
+  }
+  if (initialZeroMgMl - bottleMl > 0.001) {
     return { error: "El líquido de partida no cabe en la botella." };
   }
   const added = shots * shotMl;
-  const finalMl = aromaMl + added;
-  const freeMl = bottleMl - aromaMl;
+  const finalMl = initialZeroMgMl + added;
+  const freeMl = bottleMl - initialZeroMgMl;
+  const remainingMl = bottleMl - finalMl;
   const mgPerMl = finalMl === 0 ? 0 : (shots * shotMl * shotMg) / finalMl;
   return {
     finalMl,
     mgPerMl,
     freeMl,
+    remainingMl,
     overflow: added - freeMl > 0.001,
     overTpdStrength: mgPerMl > 20 + 1e-9,
   };
 }
 
+export type ShotsForTargetResult =
+  { shots: number; overflow: boolean; finalMl: number; mgPerMl: number } | { error: string };
+
 export function shotsForTarget(
-  aromaMl: number,
+  initialZeroMgMl: number,
   shotMl: number,
   shotMg: number,
   targetMg: number,
-): number | { error: string } {
-  if (![aromaMl, shotMl, shotMg, targetMg].every((n) => Number.isFinite(n) && n > 0)) {
-    return { error: "Aroma, nicokit y objetivo tienen que ser mayores que 0." };
+  bottleMl?: number,
+): ShotsForTargetResult {
+  if (![initialZeroMgMl, shotMl, shotMg, targetMg].every(Number.isFinite)) {
+    return { error: "Todos los valores tienen que ser números." };
+  }
+  if (initialZeroMgMl <= 0 || shotMl <= 0 || shotMg <= 0) {
+    return { error: "Volumen inicial, nicokit y graduación tienen que ser mayores que 0." };
+  }
+  if (targetMg < 0) {
+    return { error: "El objetivo no puede ser negativo." };
+  }
+  if (targetMg === 0) {
+    const finalMl = initialZeroMgMl;
+    const overflow =
+      bottleMl != null && Number.isFinite(bottleMl) ? finalMl - bottleMl > 0.001 : false;
+    return { shots: 0, overflow, finalMl, mgPerMl: 0 };
   }
   if (targetMg >= shotMg) {
     return { error: "El objetivo no puede igualar ni superar la graduación del nicokit." };
   }
   const denom = shotMg * shotMl - targetMg * shotMl;
   if (denom <= 0) return { error: "No hay una mezcla posible con ese nicokit." };
-  return (targetMg * aromaMl) / denom;
+  const shots = (targetMg * initialZeroMgMl) / denom;
+  const added = shots * shotMl;
+  const finalMl = initialZeroMgMl + added;
+  const overflow =
+    bottleMl != null && Number.isFinite(bottleMl) ? finalMl - bottleMl > 0.001 : false;
+  const mgPerMl = finalMl === 0 ? 0 : (shots * shotMl * shotMg) / finalMl;
+  return { shots, overflow, finalMl, mgPerMl };
+}
+
+/** Alternativas enteras alrededor del objetivo; cada una indica desbordamiento. */
+export function shotAlternatives(
+  initialZeroMgMl: number,
+  bottleMl: number,
+  shotMl: number,
+  shotMg: number,
+  targetMg: number,
+): Array<{ shots: number; overflow: boolean; mgPerMl: number; finalMl: number }> {
+  const target = shotsForTarget(initialZeroMgMl, shotMl, shotMg, targetMg, bottleMl);
+  if ("error" in target) return [];
+  const candidates = Array.from(
+    new Set([Math.floor(target.shots), Math.ceil(target.shots)].filter((k) => k >= 0)),
+  );
+  return candidates.flatMap((shots) => {
+    const mixed = mixNicotine({
+      initialZeroMgMl,
+      bottleMl,
+      shotMl,
+      shotMg,
+      shots,
+    });
+    if ("error" in mixed) return [];
+    return [
+      {
+        shots,
+        overflow: mixed.overflow,
+        mgPerMl: mixed.mgPerMl,
+        finalMl: mixed.finalMl,
+      },
+    ];
+  });
 }
 
 export function compatibility(device: Device, coil: Coil): CompatResult {
@@ -259,21 +359,57 @@ export function partsForDevice(device: Device, parts: Part[]): Part[] {
   });
 }
 
-export type LiquidFitKind = "directo" | "posible" | "evitar";
+/** Encaje de calada / uso; `preparacion` es concentrado que no está listo. */
+export type LiquidFitKind = "directo" | "posible" | "evitar" | "preparacion";
 
 export interface LiquidFit {
   liquid: Liquid;
   variation: LiquidVariation;
   fit: LiquidFitKind;
   reason: string;
+  /** Si el líquido requiere preparación antes del uso. */
+  requiresPreparation: boolean;
+}
+
+/**
+ * Concentración conocida en mg/ml.
+ * - número ≥ 0: valor conocido (cero incluido)
+ * - null: desconocido (no se interpreta como cero)
+ */
+export function knownNicotineMgPerMl(variation: LiquidVariation): number | null {
+  if (variation.hasNicotine) {
+    if (variation.nicotineMg == null || !Number.isFinite(variation.nicotineMg)) return null;
+    return variation.nicotineMg;
+  }
+  if (variation.nicotineMg == null) return 0;
+  if (!Number.isFinite(variation.nicotineMg)) return null;
+  return variation.nicotineMg;
+}
+
+export function isKnownZeroNicotine(variation: LiquidVariation): boolean {
+  const mg = knownNicotineMgPerMl(variation);
+  return mg === 0;
+}
+
+export function isKnownPositiveNicotine(variation: LiquidVariation): boolean {
+  const mg = knownNicotineMgPerMl(variation);
+  return mg != null && mg > 0;
+}
+
+export function isUnknownNicotine(variation: LiquidVariation): boolean {
+  return knownNicotineMgPerMl(variation) == null;
 }
 
 export function leadVariation(liquid: Liquid): LiquidVariation | undefined {
-  return liquid.variations.reduce<LiquidVariation | undefined>(
-    (lead, variation) =>
-      !lead || (variation.nicotineMg ?? 0) > (lead.nicotineMg ?? 0) ? variation : lead,
-    undefined,
-  );
+  return liquid.variations.reduce<LiquidVariation | undefined>((lead, variation) => {
+    if (!lead) return variation;
+    const leadMg = knownNicotineMgPerMl(lead);
+    const nextMg = knownNicotineMgPerMl(variation);
+    if (leadMg == null && nextMg == null) return lead;
+    if (leadMg == null) return variation;
+    if (nextMg == null) return lead;
+    return nextMg > leadMg ? variation : lead;
+  }, undefined);
 }
 
 export function liquidVolumeMl(liquid: Liquid): number | null {
@@ -281,11 +417,12 @@ export function liquidVolumeMl(liquid: Liquid): number | null {
 }
 
 export function liquidNicotineMg(liquid: Liquid): number | null {
-  return leadVariation(liquid)?.nicotineMg ?? null;
+  const lead = leadVariation(liquid);
+  return lead ? knownNicotineMgPerMl(lead) : null;
 }
 
 export function hasNicotineVariation(variation: LiquidVariation): boolean {
-  return variation.hasNicotine;
+  return isKnownPositiveNicotine(variation);
 }
 
 export function liquidRatio(liquid: Liquid): LiquidVariation["ratio"] {
@@ -308,28 +445,35 @@ export function liquidHasRatio(liquid: Liquid, ratio: LiquidVariation["ratio"]):
   return liquid.variations.some((variation) => variation.ratio === ratio);
 }
 
-const FIT_RANK: Record<LiquidFitKind, number> = { evitar: 0, posible: 1, directo: 2 };
+const FIT_RANK: Record<LiquidFitKind, number> = {
+  evitar: 0,
+  preparacion: 1,
+  posible: 2,
+  directo: 3,
+};
 
 function fitVariation(
   coil: Coil,
   variation: LiquidVariation,
   draws: Draw[],
-): { fit: LiquidFitKind; reason: string } {
-  if (variation.hasNicotine && (variation.nicotineMg ?? 0) > 12) {
-    if (coil.draws.includes("MTL")) {
-      return { fit: "evitar", reason: "Graduación alta de nicotina para una calada MTL." };
-    }
-    if (coil.draws.some((draw) => draw === "RDL" || draw === "DL")) {
-      return {
-        fit: "evitar",
-        reason: "Graduación alta para una calada abierta (RDL/DL).",
-      };
-    }
+  genreId: string,
+): { fit: LiquidFitKind; reason: string; requiresPreparation: boolean } {
+  if (genreId === "aroma") {
+    const drawFits = coil.draws.some((draw) => draws.includes(draw));
+    return {
+      fit: "preparacion",
+      requiresPreparation: true,
+      reason: drawFits
+        ? `Concentrado: requiere preparación. La calada del montaje (${coil.draws.join("/")}) encaja con el perfil del aroma, pero no está listo para vapear.`
+        : "Concentrado: requiere preparación antes del uso. No es un líquido listo para vapear.",
+    };
   }
+
   const parts = ratioParts(variation.ratio);
   if (parts && parts.vg >= 70 && coil.draws.includes("MTL")) {
     return {
       fit: "posible",
+      requiresPreparation: false,
       reason:
         "El VG alto puede ir justo en un MTL cerrado. Mejor un 50/50 si la cápsula es estrecha.",
     };
@@ -337,11 +481,13 @@ function fitVariation(
   if (coil.draws.some((draw) => draws.includes(draw))) {
     return {
       fit: "directo",
+      requiresPreparation: false,
       reason: `La calada encaja con el montaje ${coil.draws.join("/")}.`,
     };
   }
   return {
     fit: "posible",
+    requiresPreparation: false,
     reason: "Se puede usar, pero no es el cruce más natural de formato y calada.",
   };
 }
@@ -353,9 +499,16 @@ export function recommendLiquids(coil: Coil, liquids: Liquid[]): LiquidFit[] {
   for (const liquid of liquids) {
     let best: LiquidFit | null = null;
     for (const variation of liquid.variations) {
-      const evaluation = fitVariation(coil, variation, liquid.draws);
+      const evaluation = fitVariation(coil, variation, liquid.draws, liquid.genreId);
+      const candidate: LiquidFit = {
+        liquid,
+        variation,
+        fit: evaluation.fit,
+        reason: evaluation.reason,
+        requiresPreparation: evaluation.requiresPreparation,
+      };
       if (!best || FIT_RANK[evaluation.fit] > FIT_RANK[best.fit]) {
-        best = { liquid, variation, fit: evaluation.fit, reason: evaluation.reason };
+        best = candidate;
       }
     }
     if (best) fits.push(best);
@@ -371,12 +524,19 @@ export function availableOhms(coils: Coil[]): number[] {
   return [...new Set(coils.map((coil) => round(coil.ohms, 2)))].sort((a, b) => a - b);
 }
 
+export interface CoilPowerReference {
+  coilId: string;
+  coilSlug: string;
+  coilName: string;
+  wattMin: number;
+  wattMax: number;
+}
+
 export interface RecommendedPower {
   hasPublished: boolean;
-  wattMin: number | null;
-  wattMax: number | null;
-  representative: number | null;
-  sourceCount: number;
+  /** Rangos de cada resistencia identificada; no hay agregado universal. */
+  references: CoilPowerReference[];
+  matchingCoilCount: number;
   note: string;
 }
 
@@ -389,21 +549,25 @@ export function recommendedPowerForOhms(ohms: number, coils: Coil[]): Recommende
   if (matching.length === 0) {
     return {
       hasPublished: false,
-      wattMin: null,
-      wattMax: null,
-      representative: null,
-      sourceCount: 0,
+      references: [],
+      matchingCoilCount: 0,
       note: "No se publica un rango de vatios propio para este valor de resistencia.",
     };
   }
-  const wattMin = Math.min(...matching.map((coil) => coil.wattMin as number));
-  const wattMax = Math.max(...matching.map((coil) => coil.wattMax as number));
+  const references: CoilPowerReference[] = matching.map((coil) => ({
+    coilId: coil.id,
+    coilSlug: coil.slug,
+    coilName: coil.name,
+    wattMin: coil.wattMin as number,
+    wattMax: coil.wattMax as number,
+  }));
   return {
     hasPublished: true,
-    wattMin,
-    wattMax,
-    representative: round((wattMin + wattMax) / 2),
-    sourceCount: matching.length,
-    note: `Sugerido a partir de ${matching.length} resistencia(s) del archivo (${wattMin}–${wattMax} W).`,
+    references,
+    matchingCoilCount: references.length,
+    note:
+      references.length === 1
+        ? `${references[0]!.coilName}: ${references[0]!.wattMin}–${references[0]!.wattMax} W (rango publicado de esa resistencia).`
+        : `${references.length} resistencias del archivo a ${target} Ω con rangos propios; no hay una potencia recomendada única.`,
   };
 }

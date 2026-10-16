@@ -11,9 +11,14 @@ import {
   taxa,
   taxonById,
 } from "./catalog.ts";
-import { normalize } from "./logic.ts";
+import {
+  isKnownPositiveNicotine,
+  isKnownZeroNicotine,
+  isUnknownNicotine,
+  normalize,
+} from "./logic.ts";
 import { ohmBandId, ohmBands, powerBandId, powerBands, ratioParts } from "./measures.ts";
-import type { CatalogItem, Domain, Draw, Ratio } from "./types.ts";
+import type { CatalogItem, Domain, Draw, Liquid, LiquidVariation, Ratio } from "./types.ts";
 import { EMPTY, powerSummary, relationRows, specFacts } from "./specs.ts";
 
 export type OhmBand = "baja" | "media" | "alta" | "muy";
@@ -202,17 +207,63 @@ export function matches(
   if (on("genero") && search.genero) {
     if (item.domain !== "liquid" || item.genreId !== search.genero) return false;
   }
-  if (on("tieneNicotina") && search.tieneNicotina != null) {
-    if (item.domain !== "liquid") return false;
-    const wanted = search.tieneNicotina;
-    if (item.variations.some((variation) => variation.hasNicotine) !== wanted) return false;
-  }
-  if (on("ratio") && search.ratio) {
-    if (item.domain !== "liquid") return false;
-    if (!item.variations.some((variation) => variation.ratio === search.ratio)) return false;
+  if (item.domain === "liquid") {
+    const variantFiltersActive =
+      (on("tieneNicotina") && search.tieneNicotina != null) || (on("ratio") && !!search.ratio);
+    if (variantFiltersActive) {
+      if (matchingVariantIds(item, search, except).length === 0) return false;
+    }
   }
   if (on("q") && search.q && !blob(item).includes(normalize(search.q))) return false;
   return true;
+}
+
+function variationPassesNicotine(variation: LiquidVariation, wanted: boolean): boolean {
+  if (isUnknownNicotine(variation)) return false;
+  if (wanted) return isKnownPositiveNicotine(variation);
+  return isKnownZeroNicotine(variation);
+}
+
+/**
+ * Variantes que cumplen a la vez todos los filtros de variante activos.
+ * Nicotina desconocida no entra en «con» ni en «sin».
+ */
+export function matchingVariantIds(
+  liquid: Liquid,
+  search: CatalogSearch,
+  except?: keyof CatalogSearch,
+): string[] {
+  const on = (key: keyof CatalogSearch) => except !== key;
+  const checkNicotine = on("tieneNicotina") && search.tieneNicotina != null;
+  const checkRatio = on("ratio") && !!search.ratio;
+  if (!checkNicotine && !checkRatio) {
+    return liquid.variations.map((variation) => variation.id);
+  }
+  return liquid.variations
+    .filter((variation) => {
+      if (checkNicotine && !variationPassesNicotine(variation, search.tieneNicotina as boolean)) {
+        return false;
+      }
+      if (checkRatio && variation.ratio !== search.ratio) return false;
+      return true;
+    })
+    .map((variation) => variation.id);
+}
+
+export interface MatchResult {
+  matches: boolean;
+  matchingVariantIds: string[];
+}
+
+export function matchResult(
+  item: CatalogItem,
+  search: CatalogSearch,
+  except?: keyof CatalogSearch,
+): MatchResult {
+  const ok = matches(item, search, except);
+  if (!ok) return { matches: false, matchingVariantIds: [] };
+  if (item.domain !== "liquid") return { matches: true, matchingVariantIds: [] };
+  return { matches: true, matchingVariantIds: matchingVariantIds(item, search, except) };
 }
 
 function wattSort(item: CatalogItem): number {

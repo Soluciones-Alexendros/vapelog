@@ -74,12 +74,14 @@ export function compatTone(kind: CompatKind): Tone {
 export function fitLabel(fit: LiquidFitKind): string {
   if (fit === "directo") return "Encaje directo";
   if (fit === "posible") return "Se puede usar";
+  if (fit === "preparacion") return "Requiere preparación";
   return "Mejor evitar";
 }
 
 export function fitTone(fit: LiquidFitKind): Tone {
   if (fit === "directo") return "success";
   if (fit === "posible") return "info";
+  if (fit === "preparacion") return "primary";
   return "warning";
 }
 

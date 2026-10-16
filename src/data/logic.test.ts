@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { coilBySlug, deviceBySlug, coils, devices, parts } from "./catalog.ts";
+import { coilBySlug, deviceBySlug, coils, devices, liquidBySlug, parts } from "./catalog.ts";
+import { editorialRuleById } from "./editorial-rules.ts";
 import {
   availableOhms,
   compatibility,
+  knownNicotineMgPerMl,
   mixNicotine,
   partsForDevice,
+  powerNotes,
   recommendedPowerForOhms,
   recommendLiquids,
   round,
+  shotAlternatives,
   shotsForTarget,
   solveOhm,
 } from "./logic.ts";
@@ -144,7 +148,7 @@ describe("ley de Ohm", () => {
 describe("nicokit", () => {
   it("50 ml + un shot de 10 ml a 20 mg quedan en 3,33 mg/ml", () => {
     const result = mixNicotine({
-      aromaMl: 50,
+      initialZeroMgMl: 50,
       bottleMl: 60,
       shotMl: 10,
       shotMg: 20,
@@ -155,11 +159,13 @@ describe("nicokit", () => {
     assert.equal(round(result.mgPerMl, 2), 3.33);
     assert.equal(result.overflow, false);
     assert.equal(result.overTpdStrength, false);
+    assert.equal(result.freeMl, 10);
+    assert.equal(result.remainingMl, 0);
   });
 
   it("avisa si el shot no cabe", () => {
     const result = mixNicotine({
-      aromaMl: 50,
+      initialZeroMgMl: 50,
       bottleMl: 60,
       shotMl: 10,
       shotMg: 20,
@@ -168,13 +174,40 @@ describe("nicokit", () => {
     assert.equal("error" in result, false);
     if ("error" in result) return;
     assert.equal(result.overflow, true);
+    assert.ok(result.remainingMl < 0);
   });
 
   it("calcula un shot para el ejemplo clásico", () => {
-    const shots = shotsForTarget(50, 10, 20, 20 / 6);
-    assert.equal(typeof shots, "number");
-    if (typeof shots !== "number") return;
-    assert.ok(Math.abs(shots - 1) < 0.02);
+    const result = shotsForTarget(50, 10, 20, 20 / 6);
+    assert.equal("error" in result, false);
+    if ("error" in result) return;
+    assert.ok(Math.abs(result.shots - 1) < 0.02);
+  });
+
+  it("objetivo cero no añade nicokits", () => {
+    const result = shotsForTarget(50, 10, 20, 0, 60);
+    assert.equal("error" in result, false);
+    if ("error" in result) return;
+    assert.equal(result.shots, 0);
+    assert.equal(result.mgPerMl, 0);
+    assert.equal(result.overflow, false);
+  });
+
+  it("las alternativas enteras marcan desbordamiento", () => {
+    const alts = shotAlternatives(55, 60, 10, 20, 5);
+    assert.ok(alts.length > 0);
+    assert.ok(alts.some((alt) => alt.overflow));
+  });
+
+  it("rechaza un número de nicokits no entero", () => {
+    const result = mixNicotine({
+      initialZeroMgMl: 50,
+      bottleMl: 60,
+      shotMl: 10,
+      shotMg: 20,
+      shots: 1.5,
+    });
+    assert.equal("error" in result, true);
   });
 });
 
@@ -369,7 +402,9 @@ describe("regresión de catálogo", () => {
 });
 
 describe("líquidos por coil", () => {
-  it("una coil MTL con graduación alta cruza a evitar", () => {
+  it("la regla de umbral 12 mg/ml queda retirada", () => {
+    const rule = editorialRuleById("nicotine-mg-draw-threshold-12");
+    assert.equal(rule?.status, "withdrawn");
     const coil = syntheticCoil({ slug: "coil-mtl", ohms: 0.8, draws: ["MTL"] });
     const liquid = syntheticLiquid({
       slug: "sales-20",
@@ -387,30 +422,23 @@ describe("líquidos por coil", () => {
       ],
     });
     const [fit] = recommendLiquids(coil, [liquid]);
-    assert.equal(fit?.fit, "evitar");
-    assert.match(fit?.reason ?? "", /MTL/);
+    assert.equal(fit?.fit, "directo");
   });
 
-  it("una coil de calada abierta desaconseja graduaciones altas", () => {
-    const coil = syntheticCoil({ slug: "coil-rdl", ohms: 0.4, draws: ["RDL"] });
-    const liquid = syntheticLiquid({
-      slug: "sales-20",
-      draws: ["MTL", "RDL"],
-      variations: [
-        {
-          id: "sal-20",
-          label: "20 mg/ml · 10 ml",
-          volumeMl: 10,
-          hasNicotine: true,
-          nicotineMg: 20,
-          ratio: "50/50",
-          tpd: "si",
-        },
-      ],
+  it("un aroma no se clasifica como listo para uso directo", () => {
+    const coil = syntheticCoil({
+      slug: "coil-mtl",
+      ohms: 1.2,
+      draws: ["MTL"],
+      refillable: true,
     });
-    const [fit] = recommendLiquids(coil, [liquid]);
-    assert.equal(fit?.fit, "evitar");
-    assert.match(fit?.reason ?? "", /calada abierta \(RDL\/DL\)/);
+    const aroma = liquidBySlug("herrera-abarra-aroma");
+    assert.ok(aroma);
+    if (!aroma) return;
+    const [fit] = recommendLiquids(coil, [aroma]);
+    assert.equal(fit?.fit, "preparacion");
+    assert.equal(fit?.requiresPreparation, true);
+    assert.match(fit?.reason ?? "", /preparación/i);
   });
 
   it("un 70/30 en una MTL de 0,8 Ω queda en posible con su aviso", () => {
@@ -421,35 +449,64 @@ describe("líquidos por coil", () => {
     assert.match(fit?.reason ?? "", /VG alto/);
   });
 
-  it("elige por variación la que mejor encaja con la calada", () => {
-    const coil = syntheticCoil({ slug: "coil-rdl", ohms: 0.4, draws: ["RDL"] });
+  it("elige la variación con mejor encaje cuando el VG alto baja el rango", () => {
+    const coil = syntheticCoil({ slug: "coil-mtl", ohms: 0.8, draws: ["MTL"] });
     const liquid = syntheticLiquid({
       slug: "doble-variacion",
-      draws: ["MTL", "RDL", "DL"],
+      draws: ["MTL"],
       variations: [
         {
-          id: "sal-20",
-          label: "20 mg/ml · 10 ml",
-          volumeMl: 10,
-          hasNicotine: true,
-          nicotineMg: 20,
-          ratio: "50/50",
-          tpd: "si",
-        },
-        {
-          id: "short-0",
-          label: "0 mg/ml · 50 ml",
+          id: "alto-vg",
+          label: "0 mg/ml · 70/30",
           volumeMl: 50,
           hasNicotine: false,
           nicotineMg: 0,
           ratio: "70/30",
           tpd: "si",
         },
+        {
+          id: "fifty",
+          label: "0 mg/ml · 50/50",
+          volumeMl: 10,
+          hasNicotine: false,
+          nicotineMg: 0,
+          ratio: "50/50",
+          tpd: "si",
+        },
       ],
     });
     const [fit] = recommendLiquids(coil, [liquid]);
     assert.equal(fit?.fit, "directo");
-    assert.equal(fit?.variation.id, "short-0");
+    assert.equal(fit?.variation.id, "fifty");
+  });
+
+  it("una concentración desconocida no se lee como cero", () => {
+    const variation = {
+      id: "unk",
+      label: "sin dato",
+      volumeMl: 10,
+      hasNicotine: true,
+      ratio: "50/50" as Ratio,
+      tpd: "si" as const,
+    };
+    assert.equal(knownNicotineMgPerMl(variation), null);
+  });
+});
+
+describe("ventana eléctrica estructurada", () => {
+  it("sin límites publicados no afirma estar dentro", () => {
+    const device = syntheticDevice({
+      slug: "sin-ventana",
+      powerMinW: null,
+      powerMaxW: null,
+      ohmMin: null,
+      ohmMax: null,
+    });
+    const result = powerNotes(device, 20, 0.5);
+    assert.equal(result.power, "unknown");
+    assert.equal(result.ohms, "unknown");
+    assert.ok(result.notes.some((note) => /no se puede afirmar/i.test(note)));
+    assert.ok(!result.notes.some((note) => /^Dentro de la ventana/.test(note)));
   });
 });
 
@@ -479,7 +536,7 @@ describe("recommendedPowerForOhms", () => {
       syntheticCoil({ slug: "c-float", ohms: 0.1 + 0.2, wattMin: 10, wattMax: 20 }),
     ]);
     assert.equal(result.hasPublished, true);
-    assert.equal(result.sourceCount, 1);
+    assert.equal(result.matchingCoilCount, 1);
   });
 
   it("devuelve caveat cuando no hay coils publicadas para el valor", () => {
@@ -488,38 +545,37 @@ describe("recommendedPowerForOhms", () => {
       syntheticCoil({ slug: "c-otro", ohms: 0.8, wattMin: 12, wattMax: 18 }),
     ]);
     assert.equal(result.hasPublished, false);
-    assert.equal(result.wattMin, null);
-    assert.equal(result.wattMax, null);
-    assert.equal(result.representative, null);
-    assert.equal(result.sourceCount, 0);
+    assert.deepEqual(result.references, []);
+    assert.equal(result.matchingCoilCount, 0);
     assert.equal(
       result.note,
       "No se publica un rango de vatios propio para este valor de resistencia.",
     );
   });
 
-  it("una sola coil devuelve su rango exacto", () => {
+  it("una sola coil devuelve su rango exacto como referencia", () => {
     const result = recommendedPowerForOhms(0.8, [
-      syntheticCoil({ slug: "c-unica", ohms: 0.8, wattMin: 12, wattMax: 18 }),
+      syntheticCoil({ slug: "c-unica", ohms: 0.8, wattMin: 12, wattMax: 18, name: "Única" }),
     ]);
     assert.equal(result.hasPublished, true);
-    assert.equal(result.wattMin, 12);
-    assert.equal(result.wattMax, 18);
-    assert.equal(result.representative, 15);
-    assert.equal(result.sourceCount, 1);
-    assert.equal(result.note, "Sugerido a partir de 1 resistencia(s) del archivo (12–18 W).");
+    assert.equal(result.matchingCoilCount, 1);
+    assert.equal(result.references[0]?.wattMin, 12);
+    assert.equal(result.references[0]?.wattMax, 18);
+    assert.match(result.note, /Única/);
   });
 
-  it("varias coils combinan min/max con nota y representative", () => {
+  it("varias coils del mismo ohmiaje no fabrican una potencia universal", () => {
     const result = recommendedPowerForOhms(0.4, [
-      syntheticCoil({ slug: "c-a", ohms: 0.4, wattMin: 15, wattMax: 25 }),
-      syntheticCoil({ slug: "c-b", ohms: 0.4, wattMin: 20, wattMax: 30 }),
+      syntheticCoil({ slug: "c-a", ohms: 0.4, wattMin: 15, wattMax: 25, name: "A" }),
+      syntheticCoil({ slug: "c-b", ohms: 0.4, wattMin: 20, wattMax: 30, name: "B" }),
     ]);
     assert.equal(result.hasPublished, true);
-    assert.equal(result.wattMin, 15);
-    assert.equal(result.wattMax, 30);
-    assert.equal(result.representative, 22.5);
-    assert.equal(result.sourceCount, 2);
-    assert.equal(result.note, "Sugerido a partir de 2 resistencia(s) del archivo (15–30 W).");
+    assert.equal(result.matchingCoilCount, 2);
+    assert.equal(result.references.length, 2);
+    assert.equal(result.references[0]?.wattMin, 15);
+    assert.equal(result.references[0]?.wattMax, 25);
+    assert.equal(result.references[1]?.wattMin, 20);
+    assert.equal(result.references[1]?.wattMax, 30);
+    assert.match(result.note, /no hay una potencia recomendada única/i);
   });
 });

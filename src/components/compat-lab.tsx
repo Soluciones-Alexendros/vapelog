@@ -187,7 +187,7 @@ export function CompatLab({
               calada publicada. Se agrupan por tipo de encaje.
             </p>
             <Accordion type="multiple" className="mt-4">
-              {(["directo", "posible", "evitar"] as const).map((kind) => {
+              {(["directo", "posible", "preparacion", "evitar"] as const).map((kind) => {
                 const rows = byKind[kind];
                 if (rows.length === 0) return null;
                 return (
@@ -243,7 +243,12 @@ export function CompatLab({
 }
 
 function groupFits(fits: LiquidFit[]): Record<LiquidFitKind, LiquidFit[]> {
-  const groups: Record<LiquidFitKind, LiquidFit[]> = { directo: [], posible: [], evitar: [] };
+  const groups: Record<LiquidFitKind, LiquidFit[]> = {
+    directo: [],
+    posible: [],
+    preparacion: [],
+    evitar: [],
+  };
   for (const fit of fits) groups[fit.fit].push(fit);
   return groups;
 }
