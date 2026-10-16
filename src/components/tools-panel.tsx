@@ -6,10 +6,12 @@ import {
   powerNotes,
   recommendedPowerForOhms,
   round,
+  shotAlternatives,
   shotsForTarget,
   solveOhm,
 } from "@/data/logic";
-import { formatPlain, toneTextClass } from "@/components/labels";
+import { formatPlain } from "@/components/labels";
+import { Link } from "@tanstack/react-router";
 import { KineticHeading } from "@/components/kinetic-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,18 +106,10 @@ function OhmForm({
     volts: mode === "volts" ? num(volts) : undefined,
   });
   const device = deviceSlug ? deviceBySlug(deviceSlug) : undefined;
-  const notes = device && !("error" in solved) ? powerNotes(device, solved.watts, solved.ohms) : [];
+  const powerEval =
+    device && !("error" in solved) ? powerNotes(device, solved.watts, solved.ohms) : null;
+  const notes = powerEval?.notes ?? [];
   const recommendation = recommendedPowerForOhms(num(ohms), coils);
-  const currentWatts = mode === "watts" ? num(watts) : "error" in solved ? NaN : solved.watts;
-  const rangeMin = recommendation.wattMin;
-  const rangeMax = recommendation.wattMax;
-  const hasRange = recommendation.hasPublished && rangeMin != null && rangeMax != null;
-  const inRecommendedRange =
-    hasRange &&
-    rangeMin != null &&
-    rangeMax != null &&
-    currentWatts >= rangeMin &&
-    currentWatts <= rangeMax;
 
   return (
     <form
@@ -165,27 +159,7 @@ function OhmForm({
             className="mt-2"
             value={ohms}
             onChange={(event) => {
-              const v = event.target.value;
-              const rec = recommendedPowerForOhms(num(v), coils);
-              if (!rec.hasPublished || rec.representative == null) {
-                onSearch({ ...search, tab: "ohm", ohms: v });
-                return;
-              }
-              if (mode === "watts") {
-                onSearch({ ...search, tab: "ohm", ohms: v, watts: String(rec.representative) });
-                return;
-              }
-              const sv = solveOhm({ ohms: num(v), watts: rec.representative });
-              if (!("error" in sv)) {
-                onSearch({
-                  ...search,
-                  tab: "ohm",
-                  ohms: v,
-                  volts: String(round(sv.volts, 2)),
-                });
-              } else {
-                onSearch({ ...search, tab: "ohm", ohms: v });
-              }
+              onSearch({ ...search, tab: "ohm", ohms: event.target.value });
             }}
           >
             <option value="">Selecciona resistencia</option>
@@ -212,10 +186,24 @@ function OhmForm({
           />
         )}
       </div>
-      {hasRange ? (
-        <p className={`mt-2 text-sm ${toneTextClass(inRecommendedRange ? "success" : "warning")}`}>
-          {`Sugerido: ${formatPlain(rangeMin)}–${formatPlain(rangeMax)} W`}
-        </p>
+      {recommendation.hasPublished ? (
+        <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+          <p>{recommendation.note}</p>
+          <ul className="list-inside list-disc">
+            {recommendation.references.map((ref) => (
+              <li key={ref.coilId}>
+                <Link
+                  to="/resistencias/$slug"
+                  params={{ slug: ref.coilSlug }}
+                  className="underline decoration-border underline-offset-4"
+                >
+                  {ref.coilName}
+                </Link>
+                {`: ${formatPlain(ref.wattMin)}–${formatPlain(ref.wattMax)} W`}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">{recommendation.note}</p>
       )}
@@ -275,18 +263,26 @@ function NicoForm({
   const shotMg = search.shotMg ?? "20";
   const shots = search.shots ?? "1";
   const objetivo = search.objetivo ?? "3";
+  const shotCount = (() => {
+    if (shots === "") return NaN;
+    const parsed = num(shots);
+    return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : NaN;
+  })();
   const mixed = mixNicotine({
-    aromaMl: num(aroma),
+    initialZeroMgMl: num(aroma),
     bottleMl: num(botella),
     shotMl: num(shotMl),
     shotMg: num(shotMg),
-    shots: num(shots),
+    shots: Number.isFinite(shotCount) ? shotCount : 0,
   });
-  const target = shotsForTarget(num(aroma), num(shotMl), num(shotMg), num(objetivo));
-  const reachableShots =
-    typeof target === "number"
-      ? Array.from(new Set([Math.floor(target), Math.ceil(target)])).filter((k) => k >= 0)
-      : [];
+  const target = shotsForTarget(num(aroma), num(shotMl), num(shotMg), num(objetivo), num(botella));
+  const alternatives = shotAlternatives(
+    num(aroma),
+    num(botella),
+    num(shotMl),
+    num(shotMg),
+    num(objetivo),
+  );
 
   const patch = (partial: ToolSearch) => onSearch({ ...search, tab: "nicokit", ...partial });
 
@@ -349,7 +345,11 @@ function NicoForm({
           <dl className="grid grid-cols-2 gap-3">
             <Result label="Volumen final" value={`${formatPlain(round(mixed.finalMl, 2))} ml`} />
             <Result label="Graduación" value={`${formatPlain(round(mixed.mgPerMl, 2))} mg/ml`} />
-            <Result label="Hueco libre" value={`${formatPlain(round(mixed.freeMl, 2))} ml`} />
+            <Result label="Hueco inicial" value={`${formatPlain(round(mixed.freeMl, 2))} ml`} />
+            <Result
+              label="Espacio tras la mezcla"
+              value={`${formatPlain(round(mixed.remainingMl, 2))} ml`}
+            />
             <Result
               label="Nicokits que caben enteros"
               value={String(Math.floor(mixed.freeMl / num(shotMl)))}
@@ -368,32 +368,27 @@ function NicoForm({
         </div>
       )}
       <div className="mt-6 border-t border-border pt-4">
-        {typeof target === "number" ? (
+        {"error" in target ? (
+          <p className="text-sm text-primary">{target.error}</p>
+        ) : (
           <>
             <p className="text-sm text-foreground">
-              Para acercarse a {formatPlain(num(objetivo))} mg/ml harían falta{" "}
-              <span className="tabular-nums">{formatPlain(round(target, 1))}</span> nicokits de{" "}
-              {shotMl} ml a {shotMg} mg/ml, partiendo de {aroma} ml a 0 mg. Redondea al entero y
-              vuelve a leer el resultado: un nicokit no se parte con precisión de laboratorio.
+              {num(objetivo) === 0
+                ? `Objetivo 0 mg/ml: no hace falta añadir nicokits. Quedan ${formatPlain(round(target.finalMl, 2))} ml a 0 mg.`
+                : `Para acercarse a ${formatPlain(num(objetivo))} mg/ml harían falta ${formatPlain(round(target.shots, 1))} nicokits de ${shotMl} ml a ${shotMg} mg/ml, partiendo de ${aroma} ml a 0 mg. Redondea al entero y vuelve a leer el resultado: un nicokit no se parte con precisión de laboratorio.`}
             </p>
-            {reachableShots.map((k) => {
-              const probe = mixNicotine({
-                aromaMl: num(aroma),
-                bottleMl: num(botella),
-                shotMl: num(shotMl),
-                shotMg: num(shotMg),
-                shots: k,
-              });
-              if ("error" in probe) return null;
-              return (
-                <p key={k} className="mt-2 text-sm text-muted-foreground">
-                  {`Con ${k} nicokit(s) enteros: ${formatPlain(round(probe.mgPerMl, 2))} mg/ml`}
-                </p>
-              );
-            })}
+            {target.overflow ? (
+              <p className="mt-2 text-sm text-primary" role="alert">
+                Esa cantidad exacta desbordaría la botella.
+              </p>
+            ) : null}
+            {alternatives.map((alt) => (
+              <p key={alt.shots} className="mt-2 text-sm text-muted-foreground">
+                {`Con ${alt.shots} nicokit(s) enteros: ${formatPlain(round(alt.mgPerMl, 2))} mg/ml`}
+                {alt.overflow ? " (desborda la botella)" : ""}
+              </p>
+            ))}
           </>
-        ) : (
-          <p className="text-sm text-primary">{target.error}</p>
         )}
       </div>
       <p className="mt-4 text-sm text-muted-foreground">

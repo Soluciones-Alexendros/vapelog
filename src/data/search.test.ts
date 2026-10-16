@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { coils } from "./catalog.ts";
-import { TABLE_KEYS, buildFacets, hasDraw, matches, query } from "./search.ts";
+import {
+  TABLE_KEYS,
+  buildFacets,
+  hasDraw,
+  matchResult,
+  matchingVariantIds,
+  matches,
+  query,
+} from "./search.ts";
+import type { Liquid } from "./types.ts";
 
 describe("búsqueda por característica", () => {
   it("no confunde DL con RDL", () => {
@@ -70,6 +79,64 @@ describe("filtros de líquido por variación", () => {
           item.domain === "liquid" && item.variations.some((variation) => variation.hasNicotine),
       ),
     );
+  });
+
+  it("Abarra freebase aparece en sin nicotina por su variante a 0 mg/ml", () => {
+    const hits = query("liquid", { tieneNicotina: false });
+    const abarra = hits.find((item) => item.slug === "herrera-abarra-freebase");
+    assert.ok(abarra && abarra.domain === "liquid");
+    if (!abarra || abarra.domain !== "liquid") return;
+    const ids = matchingVariantIds(abarra, { tieneNicotina: false });
+    assert.ok(ids.some((id) => id.includes("-libre-0") || id.includes("0")));
+    const zero = abarra.variations.find((variation) => ids.includes(variation.id));
+    assert.ok(zero && !zero.hasNicotine);
+  });
+
+  it("filtros de nicotina y ratio se evalúan en la misma variante", () => {
+    const liquid: Liquid = {
+      domain: "liquid",
+      id: "cruce-imposible",
+      slug: "cruce-imposible",
+      archiveId: "TEST-CRUCE",
+      brandId: "test",
+      name: "Cruce",
+      genreId: "freebase",
+      line: "test",
+      summary: "Fixture de filtros cruzados.",
+      confidence: "ficha",
+      sources: [],
+      caveats: [],
+      tags: [],
+      status: "referenciado",
+      flavorIds: [],
+      draws: ["MTL"],
+      variations: [
+        {
+          id: "zero-5050",
+          label: "0 mg · 50/50",
+          volumeMl: 10,
+          hasNicotine: false,
+          nicotineMg: 0,
+          ratio: "50/50",
+        },
+        {
+          id: "nic-7030",
+          label: "12 mg · 70/30",
+          volumeMl: 10,
+          hasNicotine: true,
+          nicotineMg: 12,
+          ratio: "70/30",
+        },
+      ],
+    };
+    assert.equal(matches(liquid, { tieneNicotina: false, ratio: "70/30" }), false);
+    assert.deepEqual(matchingVariantIds(liquid, { tieneNicotina: false, ratio: "70/30" }), []);
+    assert.deepEqual(matchingVariantIds(liquid, { tieneNicotina: false, ratio: "50/50" }), [
+      "zero-5050",
+    ]);
+    const result = matchResult(liquid, { tieneNicotina: false, ratio: "50/50" });
+    assert.equal(result.matches, true);
+    assert.deepEqual(result.matchingVariantIds, ["zero-5050"]);
   });
 
   it("la faceta de ratio sale de la unión de variaciones", () => {

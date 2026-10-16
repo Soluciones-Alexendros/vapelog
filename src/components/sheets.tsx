@@ -803,7 +803,7 @@ function CompatRows({
   );
 }
 
-const LIQUID_FIT_KINDS: LiquidFitKind[] = ["directo", "posible", "evitar"];
+const LIQUID_FIT_KINDS: LiquidFitKind[] = ["directo", "posible", "preparacion", "evitar"];
 const LIQUID_FIT_PAGE = 12;
 
 function LiquidFits({ byKind }: { byKind: Record<LiquidFitKind, LiquidFit[]> }) {
@@ -983,6 +983,9 @@ function LiquidFitItem({ fit }: { fit: LiquidFit }) {
       >
         {fit.liquid.name}
       </Link>
+      {fit.requiresPreparation ? (
+        <p className="mt-1 text-xs tracking-widest text-primary uppercase">Requiere preparación</p>
+      ) : null}
       <p id={reasonId} className="mt-1 text-sm text-muted-foreground">
         {fit.reason}
       </p>
@@ -991,7 +994,12 @@ function LiquidFitItem({ fit }: { fit: LiquidFit }) {
 }
 
 function groupFits(fits: LiquidFit[]): Record<LiquidFitKind, LiquidFit[]> {
-  const groups: Record<LiquidFitKind, LiquidFit[]> = { directo: [], posible: [], evitar: [] };
+  const groups: Record<LiquidFitKind, LiquidFit[]> = {
+    directo: [],
+    posible: [],
+    preparacion: [],
+    evitar: [],
+  };
   for (const fit of fits) groups[fit.fit].push(fit);
   return groups;
 }
