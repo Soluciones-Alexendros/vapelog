@@ -12,6 +12,14 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-16
+
+### Cambios
+
+- Merge pull request #15 from Soluciones-Alexendros/feat/normalizacion-pr2-liquidos
+- fix(deps): bump @tanstack/react-start past XSS advisory
+- feat(data): normalizar líquidos, entidades, SQL y repositorio
+
 ## [0.11.2] - 2026-10-16
 
 ### Cambios
