@@ -65,9 +65,10 @@ describe("ficha plana", () => {
       assert.ok(rows.every((row) => row.display.includes("ml")));
       rows.forEach((row, index) => {
         const variation = liquid.variations[index]!;
-        if (variation.hasNicotine) {
+        const mg = variation.nicotineMgPerMl;
+        if (mg != null && mg > 0) {
           assert.ok(row.display.includes("mg/ml"));
-        } else {
+        } else if (mg === 0) {
           assert.ok(row.display.includes("sin nicotina"));
         }
       });

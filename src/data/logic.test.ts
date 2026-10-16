@@ -6,6 +6,7 @@ import {
   availableOhms,
   compatibility,
   knownNicotineMgPerMl,
+  leadVariation,
   mixNicotine,
   partsForDevice,
   powerNotes,
@@ -95,9 +96,16 @@ function syntheticCoil(overrides: Partial<Coil> & Pick<Coil, "slug" | "ohms">): 
 }
 
 function syntheticLiquid(
-  overrides: Partial<Liquid> & Pick<Liquid, "slug"> & { ratio?: Ratio | null },
+  overrides: Partial<Liquid> &
+    Pick<Liquid, "slug"> & {
+      ratio?: Ratio | null;
+      ratioVgPct?: number | null;
+      ratioPgPct?: number | null;
+    },
 ): Liquid {
-  const { ratio = null, ...rest } = overrides;
+  const { ratio = null, ratioVgPct, ratioPgPct, ...rest } = overrides;
+  const vg = ratioVgPct ?? (ratio ? Number(ratio.split("/")[0]) : null);
+  const pg = ratioPgPct ?? (ratio ? Number(ratio.split("/")[1]) : null);
   return {
     domain: "liquid",
     id: overrides.slug,
@@ -118,10 +126,11 @@ function syntheticLiquid(
       {
         id: "base",
         label: "50 ml · 0 mg/ml",
-        volumeMl: 50,
-        hasNicotine: false,
-        nicotineMg: 0,
-        ratio,
+        fillVolumeMl: 50,
+        containerCapacityMl: 50,
+        nicotineMgPerMl: 0,
+        ratioVgPct: vg,
+        ratioPgPct: pg,
         bottle: "",
         tpd: "si",
       },
@@ -413,10 +422,11 @@ describe("líquidos por coil", () => {
         {
           id: "sal-20",
           label: "20 mg/ml · 10 ml",
-          volumeMl: 10,
-          hasNicotine: true,
-          nicotineMg: 20,
-          ratio: "50/50",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 20,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
           tpd: "si",
         },
       ],
@@ -458,19 +468,21 @@ describe("líquidos por coil", () => {
         {
           id: "alto-vg",
           label: "0 mg/ml · 70/30",
-          volumeMl: 50,
-          hasNicotine: false,
-          nicotineMg: 0,
-          ratio: "70/30",
+          fillVolumeMl: 50,
+          containerCapacityMl: 50,
+          nicotineMgPerMl: 0,
+          ratioVgPct: 70,
+          ratioPgPct: 30,
           tpd: "si",
         },
         {
           id: "fifty",
           label: "0 mg/ml · 50/50",
-          volumeMl: 10,
-          hasNicotine: false,
-          nicotineMg: 0,
-          ratio: "50/50",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 0,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
           tpd: "si",
         },
       ],
@@ -484,12 +496,56 @@ describe("líquidos por coil", () => {
     const variation = {
       id: "unk",
       label: "sin dato",
-      volumeMl: 10,
-      hasNicotine: true,
-      ratio: "50/50" as Ratio,
+      fillVolumeMl: 10,
+      containerCapacityMl: 10,
+      nicotineMgPerMl: null,
+      ratioVgPct: 50,
+      ratioPgPct: 50,
       tpd: "si" as const,
     };
     assert.equal(knownNicotineMgPerMl(variation), null);
+  });
+
+  it("Herrera aroma30 separa contenido y envase", () => {
+    const aroma = liquidBySlug("herrera-abarra-aroma");
+    assert.ok(aroma);
+    const mini = aroma?.variations.find((variation) => variation.id.endsWith("-30"));
+    assert.ok(mini);
+    assert.equal(mini?.fillVolumeMl, 10);
+    assert.equal(mini?.containerCapacityMl, 30);
+  });
+
+  it("Herrera aroma60 conserva el conflicto documentado", () => {
+    const aroma = liquidBySlug("herrera-abarra-aroma");
+    const sixty = aroma?.variations.find((variation) => variation.id.endsWith("-60"));
+    assert.ok(sixty?.conflictNotes && sixty.conflictNotes.length >= 2);
+  });
+
+  it("leadVariation es la primera, no la de más nicotina", () => {
+    const liquid = syntheticLiquid({
+      slug: "orden-variantes",
+      variations: [
+        {
+          id: "cero",
+          label: "0",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 0,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
+        },
+        {
+          id: "alta",
+          label: "18",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 18,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
+        },
+      ],
+    });
+    assert.equal(leadVariation(liquid)?.id, "cero");
   });
 });
 

@@ -44,30 +44,40 @@ function rangeText(min: number, max: number): string {
 function liquidVolumeText(item: CatalogItem): string | null {
   const row = liquid(item);
   if (!row || row.variations.length === 0) return null;
-  const values = row.variations.map((variation) => variation.volumeMl);
+  const values = row.variations.map((variation) => variation.fillVolumeMl);
   return rangeText(Math.min(...values), Math.max(...values));
 }
 
 function liquidNicotineText(item: CatalogItem): string | null {
   const row = liquid(item);
   if (!row) return null;
-  if (!row.variations.some((variation) => variation.hasNicotine)) return "Sin nicotina";
-  const values = row.variations
-    .filter((variation) => variation.hasNicotine && variation.nicotineMg != null)
-    .map((variation) => variation.nicotineMg as number);
-  if (values.length === 0) return null;
-  return rangeText(Math.min(...values), Math.max(...values));
+  const known = row.variations
+    .map((variation) => variation.nicotineMgPerMl)
+    .filter((mg): mg is number => mg != null);
+  if (known.length === 0) return null;
+  if (known.every((mg) => mg === 0)) return "Sin nicotina";
+  const positives = known.filter((mg) => mg > 0);
+  if (positives.length === 0) return "Sin nicotina";
+  return rangeText(Math.min(...positives), Math.max(...positives));
 }
 
 function liquidHasNicotine(item: CatalogItem): string | null {
   const row = liquid(item);
   if (!row) return null;
-  return row.variations.some((variation) => variation.hasNicotine) ? "Sí" : "No";
+  const known = row.variations.map((variation) => variation.nicotineMgPerMl);
+  if (known.every((mg) => mg == null)) return null;
+  return known.some((mg) => mg != null && mg > 0) ? "Sí" : "No";
 }
 
 function liquidRatio(item: CatalogItem): string | null {
   const row = liquid(item);
-  return row?.variations.find((variation) => variation.ratio != null)?.ratio ?? null;
+  if (!row) return null;
+  for (const variation of row.variations) {
+    if (variation.ratioVgPct != null && variation.ratioPgPct != null) {
+      return `${variation.ratioVgPct}/${variation.ratioPgPct}`;
+    }
+  }
+  return null;
 }
 
 function liquidGenre(item: CatalogItem): string | null {

@@ -11,10 +11,10 @@
 
 ## Versiones
 
-| Constante          | Valor actual     | Significado                             |
-| ------------------ | ---------------- | --------------------------------------- |
-| `SCHEMA_VERSION`   | `1.1.0`          | Contrato TypeScript y reglas de dominio |
-| `CATALOG_REVISION` | `2026-10-16.pr1` | Contenido del catálogo en archivos      |
+| Constante          | Valor actual               | Significado                             |
+| ------------------ | -------------------------- | --------------------------------------- |
+| `SCHEMA_VERSION`   | `1.3.0`                    | Contrato TypeScript y reglas de dominio |
+| `CATALOG_REVISION` | `2026-10-16.normalizacion` | Contenido del catálogo en archivos      |
 
 ## Entidades actuales (fase 1)
 

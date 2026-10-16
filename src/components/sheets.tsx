@@ -344,15 +344,16 @@ export function LiquidSheet({ slug }: { slug: string }) {
     values.min === values.max
       ? formatPlain(values.min)
       : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
-  const volumeText = range ? spanText(range.volumeMl) : "Sin dato";
+  const volumeText = range ? spanText(range.fillVolumeMl) : "Sin dato";
   const strengths = liquid.variations
-    .filter((variation) => variation.hasNicotine && variation.nicotineMg != null)
-    .map((variation) => variation.nicotineMg as number);
+    .map((variation) => variation.nicotineMgPerMl)
+    .filter((mg): mg is number => mg != null && mg > 0);
   const nicotineText = strengths.length
     ? spanText({ min: Math.min(...strengths), max: Math.max(...strengths) })
     : null;
   const nicokit = liquid.variations.find(
-    (variation) => !variation.hasNicotine && variation.assumedBottleMl != null,
+    (variation) =>
+      variation.nicotineMgPerMl === 0 && variation.containerCapacityMl > variation.fillVolumeMl,
   );
   const genreText = genreById(liquid.genreId)?.es ?? liquid.genreId;
   const nicotineSuffix = nicotineText ? ` · ${nicotineText} mg/ml` : " · sin nicotina";
@@ -385,8 +386,8 @@ export function LiquidSheet({ slug }: { slug: string }) {
             to="/herramientas"
             search={{
               tab: "nicokit",
-              aroma: String(nicokit.volumeMl),
-              botella: String(nicokit.assumedBottleMl),
+              aroma: String(nicokit.fillVolumeMl),
+              botella: String(nicokit.containerCapacityMl),
             }}
           >
             Abrir en la calculadora de nicokit

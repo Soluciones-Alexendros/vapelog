@@ -41,11 +41,12 @@ create table taxon (
   unique (domain, path)
 );
 
+-- El conector pertenece al dispositivo o a la interfaz de mateo, no a la
+-- plataforma comercial (ADR-0011 / normalización TS↔SQL).
 create table platform (
   id uuid primary key default gen_random_uuid(),
   slug citext not null unique,
-  name text not null,
-  connector archivo_connector not null
+  name text not null
 );
 
 create table device (
@@ -145,6 +146,16 @@ create table coil_variant (
 );
 
 create table compat_exclusion (
+  device_id uuid not null references device (id) on delete cascade,
+  coil_id uuid not null references coil (id) on delete cascade,
+  blocked_kind text not null check (blocked_kind in ('nativa', 'kit')),
+  reason text not null,
+  primary key (device_id, coil_id, blocked_kind)
+);
+
+-- Semilla por slug (resuelta a id en migración de datos). Conservada para
+-- documentación; la FK canónica es por id.
+create table compat_exclusion_seed (
   device_slug citext not null,
   coil_slug citext not null,
   blocked_kind text not null check (blocked_kind in ('nativa', 'kit')),
@@ -152,7 +163,7 @@ create table compat_exclusion (
   primary key (device_slug, coil_slug, blocked_kind)
 );
 
-insert into compat_exclusion (device_slug, coil_slug, blocked_kind, reason) values
+insert into compat_exclusion_seed (device_slug, coil_slug, blocked_kind, reason) values
   (
     'geekvape-aegis-legend-2',
     'geekvape-z-0-15',
@@ -172,6 +183,7 @@ create table liquid (
   slug citext not null unique,
   brand_id uuid not null references brand (id),
   genre text not null check (genre in ('sales', 'freebase', 'shortfill', 'aroma')),
+  line text not null default '',
   name text not null,
   summary text not null,
   confidence archivo_confidence not null,
@@ -185,27 +197,38 @@ create table liquid (
   updated_at timestamptz not null default now()
 );
 
--- Cada ficha agrupa variaciones (volumen × nicotina) del mismo género.
--- Una fila por variación; has_nicotine decide si nicotine_mg_ml se publica.
+-- Contenido, capacidad y preparación separados. Nicotina: null = desconocido,
+-- 0 = cero conocido. VG/PG numéricos (no enum de dos cadenas).
 create table liquid_variation (
   id uuid primary key default gen_random_uuid(),
   liquid_id uuid not null references liquid (id) on delete cascade,
   slug citext not null,
   label text not null,
-  volume_ml numeric(7, 2) not null check (volume_ml > 0),
-  has_nicotine boolean not null default false,
-  nicotine_mg_ml numeric(6, 2) check (nicotine_mg_ml >= 0 and nicotine_mg_ml <= 20),
-  ratio text check (ratio in ('50/50', '70/30')),
+  fill_volume_ml numeric(7, 2) not null check (fill_volume_ml > 0),
+  container_capacity_ml numeric(7, 2) not null check (container_capacity_ml > 0),
+  prepared_volume_ml numeric(7, 2) check (prepared_volume_ml is null or prepared_volume_ml > 0),
+  nicotine_mg_per_ml numeric(6, 2) check (
+    nicotine_mg_per_ml is null
+    or (nicotine_mg_per_ml >= 0 and nicotine_mg_per_ml <= 50)
+  ),
+  ratio_vg_pct numeric(5, 2) check (ratio_vg_pct is null or (ratio_vg_pct >= 0 and ratio_vg_pct <= 100)),
+  ratio_pg_pct numeric(5, 2) check (ratio_pg_pct is null or (ratio_pg_pct >= 0 and ratio_pg_pct <= 100)),
   bottle text,
-  assumed_bottle_ml numeric(7, 2) check (assumed_bottle_ml is null or assumed_bottle_ml > 0),
+  line_variant text,
+  conflict_notes text[] not null default '{}',
+  composition_vg_pct numeric(5, 2),
+  composition_pg_pct numeric(5, 2),
+  composition_aroma_pct numeric(5, 2),
+  composition_note text,
+  recipe_note text,
   tpd archivo_tpd,
   note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (liquid_id, slug),
-  constraint liquid_variation_nicotine check (
-    (not has_nicotine and nicotine_mg_ml is null)
-    or (has_nicotine and nicotine_mg_ml is not null and nicotine_mg_ml > 0)
+  constraint liquid_variation_ratio_pair check (
+    (ratio_vg_pct is null and ratio_pg_pct is null)
+    or (ratio_vg_pct is not null and ratio_pg_pct is not null)
   )
 );
 

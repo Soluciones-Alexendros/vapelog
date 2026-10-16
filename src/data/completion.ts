@@ -23,7 +23,9 @@ export function specApplies(item: CatalogItem, def: SpecDef): boolean {
     if (def.key === "battery_mah") return item.batteryKind === "integrada";
   }
   if (item.domain === "liquid" && def.key === "nicotine_mg") {
-    return item.variations.some((variation) => variation.hasNicotine);
+    return item.variations.some(
+      (variation) => variation.nicotineMgPerMl != null && variation.nicotineMgPerMl > 0,
+    );
   }
   if (item.domain === "part") {
     if (def.key === "drip_mm") return item.familyId === "boquilla";

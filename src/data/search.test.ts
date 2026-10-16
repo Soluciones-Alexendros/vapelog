@@ -76,7 +76,10 @@ describe("filtros de líquido por variación", () => {
     assert.ok(
       hits.every(
         (item) =>
-          item.domain === "liquid" && item.variations.some((variation) => variation.hasNicotine),
+          item.domain === "liquid" &&
+          item.variations.some(
+            (variation) => variation.nicotineMgPerMl != null && variation.nicotineMgPerMl > 0,
+          ),
       ),
     );
   });
@@ -89,7 +92,7 @@ describe("filtros de líquido por variación", () => {
     const ids = matchingVariantIds(abarra, { tieneNicotina: false });
     assert.ok(ids.some((id) => id.includes("-libre-0") || id.includes("0")));
     const zero = abarra.variations.find((variation) => ids.includes(variation.id));
-    assert.ok(zero && !zero.hasNicotine);
+    assert.ok(zero && zero.nicotineMgPerMl === 0);
   });
 
   it("filtros de nicotina y ratio se evalúan en la misma variante", () => {
@@ -114,18 +117,20 @@ describe("filtros de líquido por variación", () => {
         {
           id: "zero-5050",
           label: "0 mg · 50/50",
-          volumeMl: 10,
-          hasNicotine: false,
-          nicotineMg: 0,
-          ratio: "50/50",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 0,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
         },
         {
           id: "nic-7030",
           label: "12 mg · 70/30",
-          volumeMl: 10,
-          hasNicotine: true,
-          nicotineMg: 12,
-          ratio: "70/30",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 12,
+          ratioVgPct: 70,
+          ratioPgPct: 30,
         },
       ],
     };

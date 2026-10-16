@@ -17,7 +17,14 @@ import {
   isUnknownNicotine,
   normalize,
 } from "./logic.ts";
-import { ohmBandId, ohmBands, powerBandId, powerBands, ratioParts } from "./measures.ts";
+import {
+  formatRatioLabel,
+  ohmBandId,
+  ohmBands,
+  powerBandId,
+  powerBands,
+  ratioParts,
+} from "./measures.ts";
 import type { CatalogItem, Domain, Draw, Liquid, LiquidVariation, Ratio } from "./types.ts";
 import { EMPTY, powerSummary, relationRows, specFacts } from "./specs.ts";
 
@@ -130,11 +137,13 @@ function itemTpd(item: CatalogItem) {
 }
 
 function liquidBlob(item: Extract<CatalogItem, { domain: "liquid" }>): string {
-  const ratios = item.variations.map((variation) => variation.ratio ?? "");
-  const volumes = item.variations.map((variation) => variation.volumeMl);
+  const ratios = item.variations.map(
+    (variation) => formatRatioLabel(variation.ratioVgPct, variation.ratioPgPct) ?? "",
+  );
+  const volumes = item.variations.map((variation) => variation.fillVolumeMl);
   const strengths = item.variations
-    .filter((variation) => variation.nicotineMg != null)
-    .map((variation) => variation.nicotineMg);
+    .map((variation) => variation.nicotineMgPerMl)
+    .filter((mg): mg is number => mg != null);
   return `${item.genreId} ${ratios.join(" ")} ${volumes.join(" ")} ${strengths.join(" ")}`;
 }
 
@@ -244,7 +253,12 @@ export function matchingVariantIds(
       if (checkNicotine && !variationPassesNicotine(variation, search.tieneNicotina as boolean)) {
         return false;
       }
-      if (checkRatio && variation.ratio !== search.ratio) return false;
+      if (
+        checkRatio &&
+        formatRatioLabel(variation.ratioVgPct, variation.ratioPgPct) !== search.ratio
+      ) {
+        return false;
+      }
       return true;
     })
     .map((variation) => variation.id);
@@ -371,7 +385,7 @@ export function buildFacets(domain: Domain, search: CatalogSearch): Facet[] {
       pool.flatMap((item) =>
         item.domain === "liquid"
           ? item.variations
-              .map((variation) => variation.ratio)
+              .map((variation) => formatRatioLabel(variation.ratioVgPct, variation.ratioPgPct))
               .filter((ratio): ratio is Ratio => ratio != null)
           : [],
       ),

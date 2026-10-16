@@ -1,4 +1,4 @@
-import type { Ratio } from "./types.ts";
+import type { LiquidVariation, Ratio } from "./types.ts";
 
 const UNPUBLISHED = /no publicad|sin dato|no fijad|leer la etiqueta/i;
 
@@ -9,6 +9,32 @@ export function publishedText(value: string | null | undefined): string | null {
   return trimmed;
 }
 
+/** Etiqueta VG/PG derivada de porcentajes numéricos (primer número = VG). */
+export function formatRatioLabel(
+  vgPct: number | null | undefined,
+  pgPct: number | null | undefined,
+): Ratio | null {
+  if (vgPct == null || pgPct == null) return null;
+  if (!Number.isFinite(vgPct) || !Number.isFinite(pgPct)) return null;
+  return `${vgPct}/${pgPct}` as Ratio;
+}
+
+export function ratioPartsFromVariation(
+  variation: Pick<LiquidVariation, "ratioVgPct" | "ratioPgPct">,
+): { vg: number; pg: number } | null {
+  return formatRatioParts(variation.ratioVgPct, variation.ratioPgPct);
+}
+
+export function formatRatioParts(
+  vgPct: number | null | undefined,
+  pgPct: number | null | undefined,
+): { vg: number; pg: number } | null {
+  if (vgPct == null || pgPct == null) return null;
+  if (!Number.isFinite(vgPct) || !Number.isFinite(pgPct)) return null;
+  return { vg: vgPct, pg: pgPct };
+}
+
+/** Parsea una etiqueta VG/PG de consulta (`70/30` → VG 70, PG 30). */
 export function ratioParts(ratio: Ratio | null | undefined): { vg: number; pg: number } | null {
   if (!ratio) return null;
   const match = ratio.match(/^\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*$/);
