@@ -4,6 +4,7 @@ import { Menu, Scale } from "lucide-react";
 import { BrandLogo } from "@/components/brand-mark";
 import { CommandPalette } from "@/components/command-palette";
 import { CompareContext, useCompare, type CompareRef } from "@/components/compare-context";
+import { domainLabel } from "@/components/labels";
 import { RevealManager } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -18,6 +19,17 @@ import {
   partBySlug,
   parts,
 } from "@/data/catalog";
+import type { Domain } from "@/data/types";
+import {
+  AGE_STORAGE_KEY,
+  AGE_STORAGE_OK,
+  COMPARE_STORAGE_KEY,
+  localStore,
+  sessionStore,
+  storeGet,
+  storeSet,
+} from "@/lib/browser-store";
+import { parseCompareJson, shouldPersistCompare, slugExistsInCatalog } from "@/lib/compare-store";
 import { kindOf } from "@/lib/kind";
 import { KindCard } from "@/components/ui/kind-card";
 
@@ -30,48 +42,51 @@ const catalogNav = [
 
 const secondaryNav = [
   { to: "/buscar", label: "Buscar", exact: true },
-  { to: "/compatibilidad", label: "Cruce", exact: false },
-  { to: "/herramientas", label: "Cálculo", exact: false },
-  { to: "/archivo", label: "Tabla", exact: false },
+  { to: "/compatibilidad", label: "Compatibilidad", exact: false },
+  { to: "/herramientas", label: "Calculadoras", exact: false },
+  { to: "/archivo", label: "Catálogo completo", exact: false },
   { to: "/blog", label: "Blog", exact: false },
-  { to: "/modelo", label: "Modelo", exact: false },
 ] as const;
 
+function compareExists(domain: Domain, slug: string): boolean {
+  return slugExistsInCatalog(domain, slug, {
+    device: deviceBySlug,
+    coil: coilBySlug,
+    liquid: liquidBySlug,
+    part: partBySlug,
+  });
+}
+
 function readStoredCompare(): CompareRef[] {
-  try {
-    if (typeof localStorage === "undefined") return [];
-    const raw = localStorage.getItem("vapelog-compare");
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as CompareRef[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(
-        (item) =>
-          item &&
-          (item.domain === "device" ||
-            item.domain === "coil" ||
-            item.domain === "liquid" ||
-            item.domain === "part") &&
-          typeof item.slug === "string",
-      )
-      .slice(0, 4);
-  } catch {
-    /* selección ilegible: se ignora */
-    return [];
-  }
+  const raw = storeGet(COMPARE_STORAGE_KEY, localStore());
+  return parseCompareJson(raw, compareExists);
+}
+
+function domainPlural(domain: Domain, count: number): string {
+  if (domain === "device") return count === 1 ? "dispositivo" : "dispositivos";
+  if (domain === "coil") return count === 1 ? "resistencia" : "resistencias";
+  if (domain === "liquid") return count === 1 ? "líquido" : "líquidos";
+  return count === 1 ? "componente" : "componentes";
 }
 
 function CompareProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CompareRef[]>(readStoredCompare);
+  const [items, setItems] = useState<CompareRef[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [pending, setPending] = useState<CompareRef | null>(null);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("vapelog-compare", JSON.stringify(items));
-    } catch {
-      /* almacenamiento no disponible: se ignora */
-    }
-  }, [items]);
+    // Restauración post-hidratación: el estado inicial es [] en servidor y
+    // cliente para evitar divergencia; localStorage solo existe en el cliente.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setItems(readStoredCompare());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!shouldPersistCompare(hydrated)) return;
+    storeSet(COMPARE_STORAGE_KEY, JSON.stringify(items), localStore());
+  }, [items, hydrated]);
 
   const api = useMemo(
     () => ({
@@ -82,19 +97,19 @@ function CompareProvider({ children }: { children: ReactNode }) {
       clear: () => {
         setItems([]);
         setNotice(null);
+        setPending(null);
       },
       toggle: (item: CompareRef) => {
         const exists = items.some((current) => current.slug === item.slug);
         if (exists) {
           setItems((current) => current.filter((entry) => entry.slug !== item.slug));
           setNotice(null);
+          setPending(null);
           return;
         }
         if (items.length > 0 && items[0]?.domain !== item.domain) {
-          setItems([item]);
-          setNotice(
-            "El comparador solo mezcla fichas del mismo tipo. La selección anterior se ha sustituido.",
-          );
+          setPending(item);
+          setNotice(null);
           return;
         }
         if (items.length >= 4) {
@@ -108,7 +123,47 @@ function CompareProvider({ children }: { children: ReactNode }) {
     [items, notice],
   );
 
-  return <CompareContext.Provider value={api}>{children}</CompareContext.Provider>;
+  const confirmReplace = () => {
+    if (!pending) return;
+    setItems([pending]);
+    setPending(null);
+    setNotice(null);
+  };
+
+  const cancelReplace = () => setPending(null);
+
+  return (
+    <CompareContext.Provider value={api}>
+      {children}
+      {pending && items[0] ? (
+        <Dialog open onOpenChange={(open) => !open && cancelReplace()}>
+          <DialogContent
+            aria-describedby="compare-replace-body"
+            onPointerDownOutside={(event) => event.preventDefault()}
+          >
+            <DialogTitle>Cambiar categoría del comparador</DialogTitle>
+            <DialogDescription id="compare-replace-body">
+              Tienes {items.length} {domainPlural(items[0].domain, items.length)} seleccionados.
+              ¿Quieres sustituirlos por{" "}
+              {pending.domain === "coil" || pending.domain === "part" ? "esta" : "este"}{" "}
+              {domainLabel(pending.domain).toLowerCase()}?
+            </DialogDescription>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Solo puedes comparar productos de la misma categoría.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button type="button" onClick={confirmReplace}>
+                Sustituir selección
+              </Button>
+              <Button type="button" variant="secondary" onClick={cancelReplace}>
+                Cancelar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </CompareContext.Provider>
+  );
 }
 
 function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boolean }) {
@@ -210,7 +265,11 @@ function Header() {
           <ThemeToggle />
           <Link
             to="/comparar"
-            className="inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground sm:px-3"
+            className={
+              compare.items.length > 0
+                ? "inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground sm:px-3"
+                : "hidden min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground sm:px-3 lg:inline-flex"
+            }
           >
             <Scale className="size-4 sm:hidden" aria-hidden />
             <span className="sr-only sm:not-sr-only">Comparador</span>
@@ -220,7 +279,7 @@ function Header() {
           </Link>
         </div>
       </div>
-      <div className="border-t border-border">
+      <div className="hidden border-t border-border lg:block">
         <nav
           className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 px-4"
           aria-label="Otras secciones"
@@ -247,7 +306,12 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="mt-16 border-t border-border">
+    <footer
+      className="mt-16 border-t border-border"
+      style={{
+        paddingBottom: "calc(var(--compare-dock-h, 0px) + env(safe-area-inset-bottom, 0px))",
+      }}
+    >
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 text-sm text-muted-foreground sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div>
           <p className="font-medium text-foreground">Vapelog</p>
@@ -283,7 +347,7 @@ function Footer() {
                 to="/archivo"
                 className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground focus-visible:text-foreground"
               >
-                Tabla
+                Catálogo completo
               </Link>
             </li>
             <li>
@@ -291,7 +355,7 @@ function Footer() {
                 to="/modelo"
                 className="inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground focus-visible:text-foreground"
               >
-                Modelo
+                Modelo de datos
               </Link>
             </li>
           </ul>
@@ -324,11 +388,27 @@ function nameForSlug(slug: string): string {
   );
 }
 
+function setDockHeight(px: number) {
+  document.documentElement.style.setProperty("--compare-dock-h", `${Math.max(0, Math.ceil(px))}px`);
+}
+
 function CompareDock() {
   const compare = useCompare();
   const [log, setLog] = useState<string | null>(null);
+  const [narrow, setNarrow] = useState(false);
+  const [userExpanded, setUserExpanded] = useState(false);
   const prevKey = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const expanded = !narrow || userExpanded;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const key = JSON.stringify(compare.items.map((item) => item.slug).sort());
@@ -359,9 +439,34 @@ function CompareDock() {
     [],
   );
 
-  if (compare.items.length === 0 && !compare.notice && !log) return null;
+  const visible = compare.items.length > 0 || Boolean(compare.notice) || Boolean(log);
+
+  useEffect(() => {
+    if (!visible) {
+      setDockHeight(0);
+      return;
+    }
+    const node = dockRef.current;
+    if (!node) return;
+    const publish = () => setDockHeight(node.getBoundingClientRect().height);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      setDockHeight(0);
+    };
+  }, [visible, expanded, compare.items, compare.notice, log, narrow]);
+
+  if (!visible) return null;
+
+  const showList = compare.items.length > 0 && (!narrow || expanded);
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card">
+    <div
+      ref={dockRef}
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card pb-[env(safe-area-inset-bottom,0px)]"
+    >
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">
@@ -371,7 +476,18 @@ function CompareDock() {
               <span className="mt-1 block text-primary">{compare.notice}</span>
             ) : null}
           </p>
-          {compare.items.length > 0 ? (
+          {narrow && compare.items.length > 0 ? (
+            <Button
+              type="button"
+              variant="quiet"
+              className="mt-1 px-0"
+              aria-expanded={userExpanded}
+              onClick={() => setUserExpanded((current) => !current)}
+            >
+              {userExpanded ? "Ocultar selección" : "Ver selección"}
+            </Button>
+          ) : null}
+          {showList ? (
             <ul className="mt-2 flex flex-wrap gap-2" aria-label="Fichas en el comparador">
               {compare.items.map((item) => (
                 <li key={item.slug}>
@@ -417,22 +533,32 @@ function RouteFocus() {
   useEffect(() => {
     // La ruta puede llegar antes que su chunk (code-splitting): el h1 nuevo
     // aún no está en el DOM cuando corre el efecto. Se reintenta de forma
-    // acotada hasta que aparece. Con overlay modal (AgeGate) el foco lo
-    // retiene el diálogo: no robarlo.
+    // acotada hasta el primer enfoque satisfactorio. Si el usuario ya movió
+    // el foco, no se reasigna.
     let cancelled = false;
+    let done = false;
     const timers: number[] = [];
     const focusH1 = () => {
-      if (cancelled) return;
+      if (cancelled || done) return;
       if (document.querySelector('[role="dialog"]')) return;
       const h1 = document.querySelector("main h1");
       if (!(h1 instanceof HTMLElement)) return;
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        active !== document.body &&
+        active !== h1 &&
+        !h1.contains(active)
+      ) {
+        done = true;
+        return;
+      }
       if (!h1.hasAttribute("tabindex")) h1.setAttribute("tabindex", "-1");
       h1.focus({ preventScroll: true });
+      done = true;
     };
     const raf = requestAnimationFrame(() => {
-      if (!cancelled) {
-        focusH1();
-      }
+      if (!cancelled) focusH1();
     });
     for (const delay of [150, 500]) {
       timers.push(window.setTimeout(focusH1, delay));
@@ -454,7 +580,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // Sincronización post-hidratación con sessionStorage, que no existe en SSR:
     // el contenido viaja en el HTML y el gate solo lo cubre como overlay.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (sessionStorage.getItem("vapelog-edad") !== "ok") setAllowed(false);
+    if (storeGet(AGE_STORAGE_KEY, sessionStore()) !== AGE_STORAGE_OK) setAllowed(false);
     setChecked(true);
   }, []);
 
@@ -472,7 +598,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Solo se monta cuando bloquea: montarlo cerrado y abrirlo después
           dispara un race de react-remove-scroll (classList de null). */}
       {checked && !allowed ? <AgeGate open onAllow={() => setAllowed(true)} /> : null}
-      <main id="contenido" className="pb-28">
+      <main
+        id="contenido"
+        style={{
+          paddingBottom: "calc(var(--compare-dock-h, 0px) + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         {children}
       </main>
       <Footer />
@@ -516,7 +647,7 @@ function AgeGate({ open, onAllow }: { open: boolean; onAllow: () => void }) {
             <Button
               type="button"
               onClick={() => {
-                sessionStorage.setItem("vapelog-edad", "ok");
+                storeSet(AGE_STORAGE_KEY, AGE_STORAGE_OK, sessionStore());
                 onAllow();
               }}
             >
@@ -525,7 +656,7 @@ function AgeGate({ open, onAllow }: { open: boolean; onAllow: () => void }) {
           )}
           {decision === "ask" ? (
             <Button type="button" variant="secondary" onClick={() => setDecision("out")}>
-              Salir
+              No tengo 18 años
             </Button>
           ) : null}
         </div>

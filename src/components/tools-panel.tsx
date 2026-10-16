@@ -30,7 +30,7 @@ export function ToolsPanel({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Herramientas</p>
-      <KineticHeading as="h1" text="Cálculo" className="mt-2 text-4xl text-foreground" />
+      <KineticHeading as="h1" text="Calculadoras" className="mt-2 text-4xl text-foreground" />
       <p className="mt-3 text-muted-foreground">
         Ley de Ohm para un montaje regulado, y la mezcla de un shortfill con nicokits. No es una
         autorización para un mod mecánico.
