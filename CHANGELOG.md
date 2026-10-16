@@ -12,6 +12,13 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-10-16
+
+### Cambios
+
+- Merge pull request #14 from Soluciones-Alexendros/feat/normalizacion-pr1-recomendaciones
+- fix(data): recomendaciones y filtros sin conclusiones por defecto
+
 ## [0.11.1] - 2026-10-16
 
 ### Cambios
