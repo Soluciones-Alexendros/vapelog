@@ -12,6 +12,13 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-16
+
+### Cambios
+
+- Merge pull request #13 from Soluciones-Alexendros/fix/cierre-interaccion-claridad
+- fix(ui): robustez del shell y claridad de producto
+
 ## [0.11.0] - 2026-09-30
 
 ### Cambios
