@@ -24,14 +24,15 @@ const NO10_CAVEAT =
   "La marca no publica formato de 10 ml listo para vapear para este sabor; sólo longfill de 30, 60 y 120 ml.";
 
 function libre10(flavorId: string, mg: number): LiquidVariation {
-  const variation: LiquidVariation = {
+  return {
     id: `${flavorId}-10-libre-${mg}`,
     label: mg === 0 ? "10 ml · 0 mg/ml (sin nicotina)" : `10 ml · nicotina libre ${mg} mg/ml`,
-    volumeMl: 10,
-    hasNicotine: mg > 0,
-    ratio: "50/50",
+    fillVolumeMl: 10,
+    containerCapacityMl: 10,
+    nicotineMgPerMl: mg,
+    ratioVgPct: 50,
+    ratioPgPct: 50,
     bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     tpd: "si",
     composition: {
       vgPct: 50,
@@ -39,20 +40,18 @@ function libre10(flavorId: string, mg: number): LiquidVariation {
       note: "Ratio 50 % PG / 50 % VG según la página oficial PG y VG de la marca.",
     },
   };
-  if (mg > 0) variation.nicotineMg = mg;
-  return variation;
 }
 
 function sales10(flavorId: string, mg: number): LiquidVariation {
   return {
     id: `${flavorId}-10-sales-${mg}`,
     label: `10 ml · sales de nicotina ${mg} mg/ml`,
-    volumeMl: 10,
-    hasNicotine: true,
-    nicotineMg: mg,
-    ratio: "50/50",
+    fillVolumeMl: 10,
+    containerCapacityMl: 10,
+    nicotineMgPerMl: mg,
+    ratioVgPct: 50,
+    ratioPgPct: 50,
     bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     tpd: "si",
     composition: {
       vgPct: 50,
@@ -62,19 +61,31 @@ function sales10(flavorId: string, mg: number): LiquidVariation {
   };
 }
 
+function aromaLineVariant(name: string): string | undefined {
+  return /reserva/i.test(name) ? "reserva" : undefined;
+}
+
 function aroma30(flavorId: string, name: string): LiquidVariation {
   return {
     id: `${flavorId}-30`,
     label: `${name} · mini longfill 30 ml`,
-    volumeMl: 30,
-    hasNicotine: false,
-    ratio: null,
+    fillVolumeMl: 10,
+    containerCapacityMl: 30,
+    preparedVolumeMl: 30,
+    nicotineMgPerMl: 0,
+    ratioVgPct: null,
+    ratioPgPct: null,
     bottle: "Mini longfill 30 ml con 10 ml de aroma",
-    assumedBottleMl: 30,
     tpd: "no-aplica",
+    lineVariant: aromaLineVariant(name),
     composition: {
       aromaPct: 33.3,
       note: "Botella de 30 ml con 10 ml de aroma concentrado en base 100 % PG. Para 30 ml listos hay que añadir 10 ml de VG y 10 ml de base 50/50 (botellas no incluidas).",
+    },
+    recipe: {
+      aromaMl: 10,
+      baseMl: 20,
+      note: "10 ml VG + 10 ml base 50/50 sobre 10 ml de aroma → 30 ml preparados.",
     },
   };
 }
@@ -83,14 +94,20 @@ function aroma60(flavorId: string, name: string): LiquidVariation {
   return {
     id: `${flavorId}-60`,
     label: `${name} · longfill 60 ml`,
-    volumeMl: 60,
-    hasNicotine: false,
-    ratio: null,
+    fillVolumeMl: 40,
+    containerCapacityMl: 60,
+    nicotineMgPerMl: 0,
+    ratioVgPct: null,
+    ratioPgPct: null,
     bottle: "Envase de 60 ml",
-    assumedBottleMl: 60,
     tpd: "no-aplica",
+    lineVariant: aromaLineVariant(name),
+    conflictNotes: [
+      "La web de marca y la ficha de categoría describen 40 ml de concentrado en envase de 60 ml.",
+      "La pestaña de descripción de varios productos aún indica 5 ml de aroma concentrado + 30 ml de VG + 25 ml de PG.",
+    ],
     composition: {
-      note: "La marca describe 40 ml de concentrado en un envase de 60 ml, completado con una botella de PG y otra de VG de Herrera. La pestaña de producto de varios sabores aún indica 5 ml de aroma concentrado + 30 ml de VG + 25 ml de PG.",
+      note: "Conflicto documentado entre fuentes archivadas; fillVolumeMl refleja la cifra de marca (40 ml) sin resolver la discrepancia.",
     },
   };
 }
@@ -99,15 +116,25 @@ function aroma120(flavorId: string, name: string): LiquidVariation {
   return {
     id: `${flavorId}-120`,
     label: `${name} · longfill 120 ml`,
-    volumeMl: 120,
-    hasNicotine: false,
-    ratio: null,
+    fillVolumeMl: 10,
+    containerCapacityMl: 120,
+    preparedVolumeMl: 120,
+    nicotineMgPerMl: 0,
+    ratioVgPct: null,
+    ratioPgPct: null,
     bottle: "Botella de 120 ml con 10 ml de aroma súper concentrado",
-    assumedBottleMl: 120,
     tpd: "no-aplica",
+    lineVariant: aromaLineVariant(name),
     composition: {
       aromaPct: 8.3,
       note: "Botella de 120 ml con 10 ml de aroma súper concentrado en base 100 % PG. Añadir 110 ml de PG/VG; para un 50/50, 60 ml de VG y 50 ml de PG.",
+    },
+    recipe: {
+      aromaMl: 10,
+      baseMl: 110,
+      vgPct: 50,
+      pgPct: 50,
+      note: "Para 50/50: 60 ml VG + 50 ml PG sobre 10 ml de aroma.",
     },
   };
 }

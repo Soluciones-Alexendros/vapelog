@@ -63,20 +63,17 @@ function slugify(value: string): string {
 }
 
 function oxvaVariation(slug: string, mg: number): LiquidVariation {
-  const variation: LiquidVariation = {
+  return {
     id: `${slug}-${mg}`,
     label: `10 ml · ${mg} mg/ml`,
-    volumeMl: 10,
-    hasNicotine: mg > 0,
-    ratio: "50/50",
+    fillVolumeMl: 10,
+    containerCapacityMl: 10,
+    nicotineMgPerMl: mg,
+    ratioVgPct: 50,
+    ratioPgPct: 50,
     bottle: "10 ml listo para vapear",
-    assumedBottleMl: 10,
     tpd: "si",
   };
-  if (mg > 0) {
-    variation.nicotineMg = mg;
-  }
-  return variation;
 }
 
 function oxvaFlavor(input: {

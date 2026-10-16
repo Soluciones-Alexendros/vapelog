@@ -1,8 +1,8 @@
 /** Versión del contrato de tipos y reglas de dominio (semántica del modelo). */
-export const SCHEMA_VERSION = "1.1.0" as const;
+export const SCHEMA_VERSION = "1.3.0" as const;
 
 /** Revisión del contenido del catálogo en archivos (datos, no contrato). */
-export const CATALOG_REVISION = "2026-10-16.pr1" as const;
+export const CATALOG_REVISION = "2026-10-16.normalizacion" as const;
 
 export type Domain = "device" | "coil" | "liquid" | "part";
 
@@ -107,9 +107,11 @@ export interface Coil extends ItemBase {
   tpd?: TpdStatus;
 }
 
+/** Etiqueta derivada VG/PG; no se almacena como fuente de verdad. */
 export type Ratio = `${number}/${number}`;
 
 export interface LiquidComposition {
+  /** Porcentajes del producto vendido (no de la receta final). */
   vgPct?: number;
   pgPct?: number;
   aromaPct?: number;
@@ -118,17 +120,41 @@ export interface LiquidComposition {
   note?: string;
 }
 
+export interface LiquidRecipe {
+  /** Proporciones de la mezcla final documentada. */
+  vgPct?: number;
+  pgPct?: number;
+  aromaMl?: number;
+  baseMl?: number;
+  note?: string;
+}
+
 export interface LiquidVariation {
   id: string;
   label: string;
-  volumeMl: number;
-  hasNicotine: boolean;
-  nicotineMg?: number;
-  ratio: Ratio | null;
+  /** Volumen de contenido del producto (ml). */
+  fillVolumeMl: number;
+  /** Capacidad del envase (ml). */
+  containerCapacityMl: number;
+  /** Volumen preparado; solo si la receta está publicada. */
+  preparedVolumeMl?: number;
+  /**
+   * Concentración mg/ml: `0` cero conocido, `>0` positivo conocido,
+   * `null` desconocido (nunca se interpreta como cero).
+   */
+  nicotineMgPerMl: number | null;
+  /** Porcentaje VG del ratio publicado; `null` si no hay dato. */
+  ratioVgPct: number | null;
+  /** Porcentaje PG del ratio publicado; `null` si no hay dato. */
+  ratioPgPct: number | null;
   bottle?: string;
-  assumedBottleMl?: number;
   tpd?: TpdStatus;
   composition?: LiquidComposition;
+  recipe?: LiquidRecipe;
+  /** Discrepancias documentadas entre fuentes (p. ej. Herrera 60 ml). */
+  conflictNotes?: string[];
+  /** Diferencia estructurada de línea (p. ej. `reserva`). */
+  lineVariant?: string;
 }
 
 export interface Liquid extends ItemBase {

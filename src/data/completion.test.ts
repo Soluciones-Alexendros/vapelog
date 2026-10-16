@@ -28,7 +28,11 @@ test("un mod de celda externa no cuenta los mAh integrados", () => {
 });
 
 test("un líquido a 0 mg no trata la nicotina como hueco", () => {
-  const item = liquids.find((row) => row.variations.every((variation) => !variation.hasNicotine));
+  const item = liquids.find((row) =>
+    row.variations.every(
+      (variation) => variation.nicotineMgPerMl == null || variation.nicotineMgPerMl === 0,
+    ),
+  );
   assert.ok(item);
   const nic = defsFor("liquid").find((def) => def.key === "nicotine_mg");
   assert.ok(nic);

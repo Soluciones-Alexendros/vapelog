@@ -76,10 +76,11 @@ function freeBaseVariations(slug: string): LiquidVariation[] {
       variations.push({
         id: `${slug}-${volumeMl}ml-${nicotineMg}mg`,
         label: `${volumeMl} ml · ${nicotineMg} mg`,
-        volumeMl,
-        hasNicotine: nicotineMg > 0,
-        ...(nicotineMg > 0 ? { nicotineMg } : {}),
-        ratio: "70/30",
+        fillVolumeMl: volumeMl,
+        containerCapacityMl: volumeMl,
+        nicotineMgPerMl: nicotineMg,
+        ratioVgPct: 70,
+        ratioPgPct: 30,
         bottle: `${volumeMl} ml listo para vapear`,
         composition: {
           vgPct: 70,
@@ -98,10 +99,11 @@ function barSaltVariations(slug: string): LiquidVariation[] {
   return BAR_SALT_MG.map((nicotineMg) => ({
     id: `${slug}-30ml-${nicotineMg}mg`,
     label: `30 ml · ${nicotineMg} mg sal`,
-    volumeMl: 30,
-    hasNicotine: true,
-    nicotineMg,
-    ratio: "50/50",
+    fillVolumeMl: 30,
+    containerCapacityMl: 30,
+    nicotineMgPerMl: nicotineMg,
+    ratioVgPct: 50,
+    ratioPgPct: 50,
     bottle: "30 ml listo para vapear",
     composition: {
       vgPct: 50,

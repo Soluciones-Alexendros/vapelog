@@ -717,12 +717,12 @@ export const liquids: Liquid[] = [
       {
         id: "heisenberg-sal-20",
         label: "20 mg/ml · 10 ml",
-        volumeMl: 10,
-        hasNicotine: true,
-        nicotineMg: 20,
-        ratio: "50/50",
+        fillVolumeMl: 10,
+        nicotineMgPerMl: 20,
+        ratioVgPct: 50,
+        ratioPgPct: 50,
         bottle: "10 ml listo para vapear",
-        assumedBottleMl: 10,
+        containerCapacityMl: 10,
         tpd: "si",
       },
     ],
@@ -757,11 +757,12 @@ export const liquids: Liquid[] = [
       {
         id: "heisenberg-short-0",
         label: "0 mg/ml · 50 ml",
-        volumeMl: 50,
-        hasNicotine: false,
-        ratio: null,
+        fillVolumeMl: 50,
+        ratioVgPct: null,
+        ratioPgPct: null,
         bottle: "Shortfill con espacio para nicokit",
-        assumedBottleMl: 60,
+        containerCapacityMl: 60,
+        nicotineMgPerMl: 0,
         tpd: "si",
       },
     ],
@@ -788,11 +789,12 @@ export const liquids: Liquid[] = [
       {
         id: "lemon-tart-short-0",
         label: "0 mg/ml · 50 ml",
-        volumeMl: 50,
-        hasNicotine: false,
-        ratio: null,
+        fillVolumeMl: 50,
+        ratioVgPct: null,
+        ratioPgPct: null,
         bottle: "Shortfill con espacio para nicokit",
-        assumedBottleMl: 60,
+        containerCapacityMl: 60,
+        nicotineMgPerMl: 0,
         tpd: "si",
       },
     ],
@@ -818,12 +820,12 @@ export const liquids: Liquid[] = [
       {
         id: "lemon-tart-sal-20",
         label: "20 mg/ml · 10 ml",
-        volumeMl: 10,
-        hasNicotine: true,
-        nicotineMg: 20,
-        ratio: "50/50",
+        fillVolumeMl: 10,
+        nicotineMgPerMl: 20,
+        ratioVgPct: 50,
+        ratioPgPct: 50,
         bottle: "10 ml listo para vapear",
-        assumedBottleMl: 10,
+        containerCapacityMl: 10,
         tpd: "si",
       },
     ],
@@ -849,11 +851,12 @@ export const liquids: Liquid[] = [
       {
         id: "bad-blood-0",
         label: "0 mg/ml · 50 ml",
-        volumeMl: 50,
-        hasNicotine: false,
-        ratio: null,
+        fillVolumeMl: 50,
+        ratioVgPct: null,
+        ratioPgPct: null,
         bottle: "Shortfill con espacio para nicokit",
-        assumedBottleMl: 60,
+        containerCapacityMl: 60,
+        nicotineMgPerMl: 0,
         tpd: "si",
       },
     ],
@@ -883,12 +886,12 @@ export const liquids: Liquid[] = [
       {
         id: "mango-20",
         label: "20 mg/ml · 10 ml",
-        volumeMl: 10,
-        hasNicotine: true,
-        nicotineMg: 20,
-        ratio: "50/50",
+        fillVolumeMl: 10,
+        nicotineMgPerMl: 20,
+        ratioVgPct: 50,
+        ratioPgPct: 50,
         bottle: "10 ml listo para vapear",
-        assumedBottleMl: 10,
+        containerCapacityMl: 10,
         tpd: "si",
       },
     ],
@@ -914,12 +917,12 @@ export const liquids: Liquid[] = [
       {
         id: "ivg-blue-20",
         label: "20 mg/ml · 10 ml",
-        volumeMl: 10,
-        hasNicotine: true,
-        nicotineMg: 20,
-        ratio: "50/50",
+        fillVolumeMl: 10,
+        nicotineMgPerMl: 20,
+        ratioVgPct: 50,
+        ratioPgPct: 50,
         bottle: "10 ml listo para vapear",
-        assumedBottleMl: 10,
+        containerCapacityMl: 10,
         tpd: "si",
       },
     ],
@@ -949,12 +952,12 @@ export const liquids: Liquid[] = [
       {
         id: "tribeca-12",
         label: "12 mg/ml · 10 ml",
-        volumeMl: 10,
-        hasNicotine: true,
-        nicotineMg: 12,
-        ratio: "50/50",
+        fillVolumeMl: 10,
+        nicotineMgPerMl: 12,
+        ratioVgPct: 50,
+        ratioPgPct: 50,
         bottle: "10 ml listo para vapear",
-        assumedBottleMl: 10,
+        containerCapacityMl: 10,
         tpd: "si",
       },
     ],
@@ -974,18 +977,24 @@ export function primaryVariation(liquid: Liquid): LiquidVariation | undefined {
 
 export interface VariationRange {
   count: number;
-  volumeMl: { min: number; max: number };
-  nicotineMg: { min: number; max: number };
+  fillVolumeMl: { min: number; max: number };
+  containerCapacityMl: { min: number; max: number };
+  nicotineMgPerMl: { min: number; max: number } | null;
 }
 
 export function variationRange(liquid: Liquid): VariationRange | null {
   if (liquid.variations.length === 0) return null;
-  const volumes = liquid.variations.map((variation) => variation.volumeMl);
-  const strengths = liquid.variations.map((variation) => variation.nicotineMg ?? 0);
+  const fills = liquid.variations.map((variation) => variation.fillVolumeMl);
+  const containers = liquid.variations.map((variation) => variation.containerCapacityMl);
+  const strengths = liquid.variations
+    .map((variation) => variation.nicotineMgPerMl)
+    .filter((mg): mg is number => mg != null);
   return {
     count: liquid.variations.length,
-    volumeMl: { min: Math.min(...volumes), max: Math.max(...volumes) },
-    nicotineMg: { min: Math.min(...strengths), max: Math.max(...strengths) },
+    fillVolumeMl: { min: Math.min(...fills), max: Math.max(...fills) },
+    containerCapacityMl: { min: Math.min(...containers), max: Math.max(...containers) },
+    nicotineMgPerMl:
+      strengths.length === 0 ? null : { min: Math.min(...strengths), max: Math.max(...strengths) },
   };
 }
 

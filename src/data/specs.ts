@@ -117,11 +117,18 @@ export function variationRows(liquid: Liquid): SpecFact[] {
 }
 
 function variationDisplay(variation: LiquidVariation): string {
-  const parts: string[] = [`${formatPlain(variation.volumeMl)} ml`];
+  const parts: string[] = [`${formatPlain(variation.fillVolumeMl)} ml`];
+  if (variation.containerCapacityMl !== variation.fillVolumeMl) {
+    parts.push(`envase ${formatPlain(variation.containerCapacityMl)} ml`);
+  }
+  const mg = variation.nicotineMgPerMl;
   parts.push(
-    variation.hasNicotine ? `${formatPlain(variation.nicotineMg ?? 0)} mg/ml` : "sin nicotina",
+    mg == null ? "nicotina sin dato" : mg > 0 ? `${formatPlain(mg)} mg/ml` : "sin nicotina",
   );
-  if (variation.ratio) parts.push(variation.ratio);
+  if (variation.ratioVgPct != null && variation.ratioPgPct != null) {
+    parts.push(`${variation.ratioVgPct}/${variation.ratioPgPct}`);
+  }
+  if (variation.lineVariant) parts.push(variation.lineVariant);
   if (variation.bottle) parts.push(variation.bottle);
   return parts.join(" · ");
 }

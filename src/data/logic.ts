@@ -1,5 +1,5 @@
 import { exclusionReason } from "./compat-rules.ts";
-import { ratioParts } from "./measures.ts";
+import { formatRatioLabel, ratioPartsFromVariation } from "./measures.ts";
 import type {
   Coil,
   CompatResult,
@@ -8,6 +8,7 @@ import type {
   Liquid,
   LiquidVariation,
   Part,
+  Ratio,
   TpdStatus,
 } from "./types";
 
@@ -377,18 +378,13 @@ export interface LiquidFit {
  * - null: desconocido (no se interpreta como cero)
  */
 export function knownNicotineMgPerMl(variation: LiquidVariation): number | null {
-  if (variation.hasNicotine) {
-    if (variation.nicotineMg == null || !Number.isFinite(variation.nicotineMg)) return null;
-    return variation.nicotineMg;
-  }
-  if (variation.nicotineMg == null) return 0;
-  if (!Number.isFinite(variation.nicotineMg)) return null;
-  return variation.nicotineMg;
+  if (variation.nicotineMgPerMl == null) return null;
+  if (!Number.isFinite(variation.nicotineMgPerMl)) return null;
+  return variation.nicotineMgPerMl;
 }
 
 export function isKnownZeroNicotine(variation: LiquidVariation): boolean {
-  const mg = knownNicotineMgPerMl(variation);
-  return mg === 0;
+  return knownNicotineMgPerMl(variation) === 0;
 }
 
 export function isKnownPositiveNicotine(variation: LiquidVariation): boolean {
@@ -400,20 +396,13 @@ export function isUnknownNicotine(variation: LiquidVariation): boolean {
   return knownNicotineMgPerMl(variation) == null;
 }
 
+/** Primera variación del producto; no elige por nicotina máxima. */
 export function leadVariation(liquid: Liquid): LiquidVariation | undefined {
-  return liquid.variations.reduce<LiquidVariation | undefined>((lead, variation) => {
-    if (!lead) return variation;
-    const leadMg = knownNicotineMgPerMl(lead);
-    const nextMg = knownNicotineMgPerMl(variation);
-    if (leadMg == null && nextMg == null) return lead;
-    if (leadMg == null) return variation;
-    if (nextMg == null) return lead;
-    return nextMg > leadMg ? variation : lead;
-  }, undefined);
+  return liquid.variations[0];
 }
 
 export function liquidVolumeMl(liquid: Liquid): number | null {
-  return leadVariation(liquid)?.volumeMl ?? null;
+  return leadVariation(liquid)?.fillVolumeMl ?? null;
 }
 
 export function liquidNicotineMg(liquid: Liquid): number | null {
@@ -425,8 +414,10 @@ export function hasNicotineVariation(variation: LiquidVariation): boolean {
   return isKnownPositiveNicotine(variation);
 }
 
-export function liquidRatio(liquid: Liquid): LiquidVariation["ratio"] {
-  return leadVariation(liquid)?.ratio ?? null;
+export function liquidRatio(liquid: Liquid): Ratio | null {
+  const lead = leadVariation(liquid);
+  if (!lead) return null;
+  return formatRatioLabel(lead.ratioVgPct, lead.ratioPgPct);
 }
 
 export function liquidBottle(liquid: Liquid): string | null {
@@ -434,15 +425,18 @@ export function liquidBottle(liquid: Liquid): string | null {
 }
 
 export function liquidAssumedBottleMl(liquid: Liquid): number | null {
-  return leadVariation(liquid)?.assumedBottleMl ?? null;
+  return leadVariation(liquid)?.containerCapacityMl ?? null;
 }
 
 export function liquidTpd(liquid: Liquid): TpdStatus {
   return leadVariation(liquid)?.tpd ?? "no-aplica";
 }
 
-export function liquidHasRatio(liquid: Liquid, ratio: LiquidVariation["ratio"]): boolean {
-  return liquid.variations.some((variation) => variation.ratio === ratio);
+export function liquidHasRatio(liquid: Liquid, ratio: Ratio | null): boolean {
+  if (!ratio) return false;
+  return liquid.variations.some(
+    (variation) => formatRatioLabel(variation.ratioVgPct, variation.ratioPgPct) === ratio,
+  );
 }
 
 const FIT_RANK: Record<LiquidFitKind, number> = {
@@ -469,7 +463,7 @@ function fitVariation(
     };
   }
 
-  const parts = ratioParts(variation.ratio);
+  const parts = ratioPartsFromVariation(variation);
   if (parts && parts.vg >= 70 && coil.draws.includes("MTL")) {
     return {
       fit: "posible",

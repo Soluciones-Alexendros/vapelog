@@ -59,12 +59,12 @@ function liquidDetail(item: Liquid): string {
       ? formatPlain(values.min)
       : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
   const strengths = item.variations
-    .filter((variation) => variation.hasNicotine && variation.nicotineMg != null)
-    .map((variation) => variation.nicotineMg as number);
+    .map((variation) => variation.nicotineMgPerMl)
+    .filter((mg): mg is number => mg != null && mg > 0);
   const nicotine = strengths.length
     ? `${span({ min: Math.min(...strengths), max: Math.max(...strengths) })} mg/ml`
     : "sin nicotina";
-  return `${span(range.volumeMl)} ml · ${nicotine}`;
+  return `${span(range.fillVolumeMl)} ml · ${nicotine}`;
 }
 
 export function ArchiveTable() {
