@@ -1,5 +1,15 @@
 import { brands, coils, devices, liquids, parts, platforms, taxa } from "./catalog.ts";
-import type { CatalogItem, Domain, Taxon } from "./types.ts";
+import type {
+  Brand,
+  CatalogItem,
+  Coil,
+  Device,
+  Domain,
+  Liquid,
+  Part,
+  Platform,
+  Taxon,
+} from "./types.ts";
 
 export type CatalogIssueSeverity = "error" | "warning";
 
@@ -10,8 +20,18 @@ export interface CatalogIssue {
   path?: string;
 }
 
-function allItems(): CatalogItem[] {
-  return [...devices, ...coils, ...liquids, ...parts];
+export interface CatalogSnapshot {
+  devices: readonly Device[];
+  coils: readonly Coil[];
+  liquids: readonly Liquid[];
+  parts: readonly Part[];
+  brands: readonly Brand[];
+  platforms: readonly Platform[];
+  taxa: readonly Taxon[];
+}
+
+function defaultSnapshot(): CatalogSnapshot {
+  return { devices, coils, liquids, parts, brands, platforms, taxa };
 }
 
 function taxonAncestors(id: string, byId: Map<string, Taxon>): string[] {
@@ -30,15 +50,20 @@ function taxonAncestors(id: string, byId: Map<string, Taxon>): string[] {
   return chain;
 }
 
-/** Validación pura de integridad del catálogo en archivos (ADR-0011). */
-export function validateCatalog(): CatalogIssue[] {
+function allItems(snapshot: CatalogSnapshot): CatalogItem[] {
+  return [...snapshot.devices, ...snapshot.coils, ...snapshot.liquids, ...snapshot.parts];
+}
+
+/** Validación pura; acepta snapshot inyectable (OBJ-013). */
+export function validateCatalog(snapshot: CatalogSnapshot = defaultSnapshot()): CatalogIssue[] {
   const issues: CatalogIssue[] = [];
-  const items = allItems();
+  const items = allItems(snapshot);
   const ids = new Map<string, Domain>();
+  const archiveIds = new Map<string, string>();
   const slugs = new Map<string, Domain>();
-  const brandIds = new Set(brands.map((brand) => brand.id));
-  const platformIds = new Set(platforms.map((platform) => platform.id));
-  const taxonById = new Map(taxa.map((taxon) => [taxon.id, taxon]));
+  const brandIds = new Set(snapshot.brands.map((brand) => brand.id));
+  const platformIds = new Set(snapshot.platforms.map((platform) => platform.id));
+  const taxonById = new Map(snapshot.taxa.map((taxon) => [taxon.id, taxon]));
 
   for (const item of items) {
     if (ids.has(item.id)) {
@@ -50,6 +75,16 @@ export function validateCatalog(): CatalogIssue[] {
       });
     } else {
       ids.set(item.id, item.domain);
+    }
+    if (archiveIds.has(item.archiveId)) {
+      issues.push({
+        severity: "error",
+        code: "duplicate_archive_id",
+        message: `archiveId duplicado: ${item.archiveId}`,
+        path: `${item.domain}/${item.slug}`,
+      });
+    } else {
+      archiveIds.set(item.archiveId, item.id);
     }
     const slugKey = `${item.domain}:${item.slug}`;
     if (slugs.has(slugKey)) {
@@ -88,7 +123,7 @@ export function validateCatalog(): CatalogIssue[] {
     }
   }
 
-  for (const taxon of taxa) {
+  for (const taxon of snapshot.taxa) {
     const chain = taxonAncestors(taxon.id, taxonById);
     if (chain.length !== new Set(chain).size) {
       issues.push({
@@ -106,16 +141,53 @@ export function validateCatalog(): CatalogIssue[] {
         path: `taxon/${taxon.id}`,
       });
     }
+    if (taxon.parentId) {
+      const parent = taxonById.get(taxon.parentId);
+      if (parent && parent.domain !== taxon.domain && parent.domain !== "flavor") {
+        // flavor parents can span; device/coil/liquid/part must match
+        if (taxon.domain !== "flavor") {
+          issues.push({
+            severity: "error",
+            code: "taxon_domain_mismatch",
+            message: `Dominio de taxón ${taxon.id} (${taxon.domain}) incompatible con padre ${parent.id} (${parent.domain})`,
+            path: `taxon/${taxon.id}`,
+          });
+        }
+      }
+    }
   }
 
-  for (const liquid of liquids) {
+  for (const liquid of snapshot.liquids) {
+    const variationIds = new Set<string>();
     for (const variation of liquid.variations) {
       const path = `liquid/${liquid.slug}#${variation.id}`;
+      if (variationIds.has(variation.id)) {
+        issues.push({
+          severity: "error",
+          code: "duplicate_variation_id",
+          message: `Variación duplicada: ${variation.id}`,
+          path,
+        });
+      }
+      variationIds.add(variation.id);
       if (variation.nicotineMgPerMl != null && !Number.isFinite(variation.nicotineMgPerMl)) {
         issues.push({
           severity: "error",
           code: "invalid_nicotine",
           message: "nicotineMgPerMl no finito",
+          path,
+        });
+      }
+      if (
+        !Number.isFinite(variation.fillVolumeMl) ||
+        variation.fillVolumeMl <= 0 ||
+        !Number.isFinite(variation.containerCapacityMl) ||
+        variation.containerCapacityMl <= 0
+      ) {
+        issues.push({
+          severity: "error",
+          code: "invalid_volume",
+          message: "Volúmenes deben ser finitos y positivos",
           path,
         });
       }
@@ -153,26 +225,64 @@ export function validateCatalog(): CatalogIssue[] {
     }
   }
 
-  for (const device of devices) {
+  for (const device of snapshot.devices) {
+    const path = `device/${device.slug}`;
+    if (
+      device.powerMinW != null &&
+      device.powerMaxW != null &&
+      device.powerMinW > device.powerMaxW
+    ) {
+      issues.push({
+        severity: "error",
+        code: "inverted_power_range",
+        message: `powerMinW (${device.powerMinW}) > powerMaxW (${device.powerMaxW})`,
+        path,
+      });
+    }
+    if (device.ohmMin != null && device.ohmMax != null && device.ohmMin > device.ohmMax) {
+      issues.push({
+        severity: "error",
+        code: "inverted_ohm_range",
+        message: `ohmMin (${device.ohmMin}) > ohmMax (${device.ohmMax})`,
+        path,
+      });
+    }
     for (const id of [...device.platformIds, ...device.kitPlatformIds]) {
       if (!platformIds.has(id)) {
         issues.push({
           severity: "error",
           code: "broken_platform",
           message: `Plataforma inexistente: ${id}`,
-          path: `device/${device.slug}`,
+          path,
         });
       }
     }
   }
-  for (const coil of coils) {
+  for (const coil of snapshot.coils) {
+    const path = `coil/${coil.slug}`;
+    if (coil.wattMin != null && coil.wattMax != null && coil.wattMin > coil.wattMax) {
+      issues.push({
+        severity: "error",
+        code: "inverted_watt_range",
+        message: `wattMin (${coil.wattMin}) > wattMax (${coil.wattMax})`,
+        path,
+      });
+    }
+    if (!Number.isFinite(coil.ohms) || coil.ohms <= 0) {
+      issues.push({
+        severity: "error",
+        code: "invalid_ohms",
+        message: "ohms debe ser finito y positivo",
+        path,
+      });
+    }
     for (const id of coil.platformIds) {
       if (!platformIds.has(id)) {
         issues.push({
           severity: "error",
           code: "broken_platform",
           message: `Plataforma inexistente: ${id}`,
-          path: `coil/${coil.slug}`,
+          path,
         });
       }
     }
@@ -181,6 +291,6 @@ export function validateCatalog(): CatalogIssue[] {
   return issues;
 }
 
-export function catalogErrors(): CatalogIssue[] {
-  return validateCatalog().filter((issue) => issue.severity === "error");
+export function catalogErrors(snapshot?: CatalogSnapshot): CatalogIssue[] {
+  return validateCatalog(snapshot).filter((issue) => issue.severity === "error");
 }
