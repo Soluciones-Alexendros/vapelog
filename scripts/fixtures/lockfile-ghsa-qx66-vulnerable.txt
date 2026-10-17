@@ -1,0 +1,10 @@
+# Fixture sintético VAL-005-01 — NO es el lockfile del proyecto.
+# Contiene una versión conocida dentro del rango GHSA-qx66-fv34-fjm8
+# para @tanstack/start-server-core (< 1.169.39). No se instala.
+
+lockfileVersion: '9.0'
+
+packages:
+  '@tanstack/start-server-core@1.169.20':
+    resolution: {integrity: sha512-fixture-not-installed}
+    engines: {node: '>=22'}

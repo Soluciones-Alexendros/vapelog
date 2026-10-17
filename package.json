@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "node scripts/write-build-manifest.mjs && vite build",
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
     "format:check": "prettier --check .",
@@ -23,6 +23,8 @@
     "smoke-bench": "node scripts/smoke-bench.mjs",
     "smoke-verify": "node scripts/smoke-verify.mjs",
     "check:env": "node scripts/check-env.mjs",
+    "check:manifest": "node scripts/check-manifest.mjs",
+    "check:supply-chain": "node scripts/supply-chain-audit.mjs",
     "icons": "node scripts/build-icons.mjs",
     "logo": "node scripts/build-logo.mjs",
     "sitemap": "node scripts/build-sitemap.mjs",

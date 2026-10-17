@@ -13,20 +13,28 @@
 
 No hay pasos manuales: todo se dispara con un push a `main`.
 
-1. **CI** (`ci.yml`): `quality` → `test` (cobertura ≥70 %) → `build` →
-   `smoke` y `browser` (Playwright: a11y-pass + browser-smoke contra el
-   build Nitro).
-2. **Release** (job `release`, solo en `main` y solo si `smoke` y `browser`
-   pasan): `scripts/release.mjs` decide el semver desde los Conventional
+1. **CI** (`ci.yml`): `quality` → en paralelo `test`, `build` y
+   `supply-chain`; tras `build` → `smoke`, `browser` y `fx-e2e`.
+   `smoke-bench` es informativo (`continue-on-error`) y **no** bloquea.
+2. **Gate** (job `release-ready`, `if: always()`): solo pasa si
+   `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e` y
+   `supply-chain` están en `success`. Un job `skipped`, `cancelled` o
+   `failure` deja el gate en rojo (script `scripts/release-ready.mjs`).
+3. **Release** (job `release`, solo en `main` y solo si `release-ready`
+   pasa): `scripts/release.mjs` decide el semver desde los Conventional
    Commits (`feat!`/BREAKING → major, `feat` → minor, `fix` → patch),
    mueve el contenido de `## [Unreleased]` en `CHANGELOG.md`, sube
    `package.json`, crea commit `chore(release): vX.Y.Z`, tag y
-   **GitHub Release** con las notas del changelog. Si no hay `feat`/`fix`
-   nuevos, no publica nada.
-3. **Vercel** (GitHub App del proyecto `alexendros-team/vapelog`): cada push
-   a `main` despliega a producción automáticamente. El build emite el
-   Build Output API (`.vercel/output`) porque `vite.config.ts` activa el
-   preset `vercel` de Nitro cuando `VERCEL=1`.
+   **GitHub Release** con las notas del changelog más `Tested-SHA` (SHA
+   del workflow que pasó el gate; no confundir con el commit de versión).
+   Si no hay `feat`/`fix` nuevos, no publica nada.
+4. **Vercel** (GitHub App del proyecto `alexendros-team/vapelog`): cada
+   push a `main` despliega a producción automáticamente. El acoplamiento
+   «push a main → deploy» se conserva; este runbook no reconfigura el
+   proyecto Vercel. El build emite el Build Output API (`.vercel/output`)
+   porque `vite.config.ts` activa el preset `vercel` de Nitro cuando
+   `VERCEL=1`. El build genera `public/build-manifest.json` (identidad
+   del artefacto).
 
 El commit de release vuelve a pasar la CI y no dispara otra versión (un
 `chore(release)` no contiene `feat`/`fix`): no hay bucle.
@@ -39,17 +47,20 @@ El commit de release vuelve a pasar la CI y no dispara otra versión (un
 
 ## Verificación tras un push
 
-1. Check «Vercel» en verde en el commit de `main`.
+1. Check `release-ready` en verde en el commit de `main` (y check
+   «Vercel»).
 2. `curl -s https://vapelog-alexendros.vercel.app/dispositivos | grep "XROS 4"`
    (el HTML sirve contenido real; ver ADR-0004).
-3. Una ficha de cada dominio y el toggle de tema (claro y oscuro).
-4. Nueva versión y release en
+3. Si existe, contrastar `/build-manifest.json` con el `Tested-SHA` del
+   release (si el SHA servido no se puede leer: **NO VERIFICADO**).
+4. Una ficha de cada dominio y el toggle de tema (claro y oscuro).
+5. Nueva versión y release en
    <https://github.com/Soluciones-Alexendros/vapelog/releases>.
 
 ## Excepciones
 
-- **Publicar sin release**: un cambio `docs:`/`chore:` llega a producción
-  sin versión nueva; es lo previsto.
+- **Publicar sin release**: un cambio `docs:`/`chore:`/`ci:` llega a
+  producción sin versión nueva; es lo previsto.
 - **Release manual local** (p. ej. tras un merge retrasado):
   `node scripts/release.mjs --dry-run` para previsualizar y, con la CI en
   verde, `node scripts/release.mjs` sobre `main` actualizado.

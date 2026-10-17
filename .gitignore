@@ -19,3 +19,4 @@ pnpm-debug*
 .idea
 .vscode/*
 !.vscode/extensions.json
+public/build-manifest.json

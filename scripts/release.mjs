@@ -103,7 +103,20 @@ writeFileSync(CHANGELOG, updated);
 run("git", ["add", CHANGELOG, "package.json"]);
 run("git", ["commit", "-m", `chore(release): v${version}`]);
 run("git", ["tag", `v${version}`]);
+// SHA del workflow que pasó el gate (antes del commit chore(release)).
+// No confundir el tag/commit de versión con el artefacto probado.
+const testedSha =
+  process.env.GITHUB_SHA ||
+  (() => {
+    try {
+      return run("git", ["rev-parse", "HEAD"]);
+    } catch {
+      return "unknown";
+    }
+  })();
+const releaseNotes = `${notes}\n\n---\nTested-SHA: ${testedSha}\n`;
+
 run("git", ["push", "origin", "HEAD:main"]);
 run("git", ["push", "origin", `v${version}`]);
-run("gh", ["release", "create", `v${version}`, "--title", `v${version}`, "--notes", notes]);
-console.log(`publicado v${version} (commit, tag y GitHub Release)`);
+run("gh", ["release", "create", `v${version}`, "--title", `v${version}`, "--notes", releaseNotes]);
+console.log(`publicado v${version} (commit, tag y GitHub Release; Tested-SHA=${testedSha})`);
