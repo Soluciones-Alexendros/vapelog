@@ -12,6 +12,10 @@ const deps = {
   "supply-chain": { result: "success" },
 };
 
+test("VAL-003-01 fallo controlado (rama desechable)", () => {
+  assert.equal(true, false, "fallo intencional para evidencia negativa del gate");
+});
+
 test("pasa solo si todas las dependencias están en success", () => {
   const { ok, failures } = evaluateReleaseReady(deps);
   assert.equal(ok, true);
