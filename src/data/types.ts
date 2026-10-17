@@ -1,8 +1,8 @@
 /** Versión del contrato de tipos y reglas de dominio (semántica del modelo). */
-export const SCHEMA_VERSION = "1.3.0" as const;
+export const SCHEMA_VERSION = "1.4.0" as const;
 
 /** Revisión del contenido del catálogo en archivos (datos, no contrato). */
-export const CATALOG_REVISION = "2026-10-16.normalizacion" as const;
+export const CATALOG_REVISION = "2026-10-17.entidades-fisicas" as const;
 
 export type Domain = "device" | "coil" | "liquid" | "part";
 
