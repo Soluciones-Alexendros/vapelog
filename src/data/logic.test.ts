@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { coilBySlug, deviceBySlug, coils, devices, liquidBySlug, parts } from "./catalog.ts";
+import { evaluateCompatibility } from "./compat-evaluation.ts";
 import { editorialRuleById } from "./editorial-rules.ts";
 import {
   availableOhms,
@@ -155,7 +156,7 @@ describe("ley de Ohm", () => {
 });
 
 describe("nicokit", () => {
-  it("50 ml + un shot de 10 ml a 20 mg quedan en 3,33 mg/ml", () => {
+  it("VAL-008-01: 50 ml + un shot de 10 ml a 20 mg → 60 ml y 200/60 mg/ml pre-redondeo", () => {
     const result = mixNicotine({
       initialZeroMgMl: 50,
       bottleMl: 60,
@@ -165,6 +166,8 @@ describe("nicokit", () => {
     });
     assert.equal("error" in result, false);
     if ("error" in result) return;
+    assert.equal(result.finalMl, 60);
+    assert.equal(result.mgPerMl, 200 / 60);
     assert.equal(round(result.mgPerMl, 2), 3.33);
     assert.equal(result.overflow, false);
     assert.equal(result.overTpdStrength, false);
@@ -217,6 +220,20 @@ describe("nicokit", () => {
       shots: 1.5,
     });
     assert.equal("error" in result, true);
+  });
+
+  it("VAL-008-02: NaN, Infinity y negativos producen error tipado", () => {
+    for (const bad of [
+      { initialZeroMgMl: Number.NaN, bottleMl: 60, shotMl: 10, shotMg: 20, shots: 1 },
+      { initialZeroMgMl: 50, bottleMl: Number.POSITIVE_INFINITY, shotMl: 10, shotMg: 20, shots: 1 },
+      { initialZeroMgMl: -1, bottleMl: 60, shotMl: 10, shotMg: 20, shots: 1 },
+    ]) {
+      const result = mixNicotine(bad);
+      assert.equal("error" in result, true);
+      if ("error" in result) {
+        assert.ok(typeof result.error === "string" && result.error.length > 0);
+      }
+    }
   });
 });
 
@@ -504,6 +521,46 @@ describe("líquidos por coil", () => {
       tpd: "si" as const,
     };
     assert.equal(knownNicotineMgPerMl(variation), null);
+  });
+
+  it("VAL-007-03: nicotina desconocida no se recomienda como directo/cero", () => {
+    const coil = syntheticCoil({
+      slug: "coil-mtl-unk",
+      ohms: 1.2,
+      draws: ["MTL"],
+      refillable: true,
+    });
+    const liquid = syntheticLiquid({
+      slug: "liq-nic-unk",
+      draws: ["MTL"],
+      variations: [
+        {
+          id: "unk",
+          label: "sin nicotina publicada",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: null,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
+          tpd: "si",
+        },
+      ],
+    });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.ok(fit);
+    assert.notEqual(fit?.fit, "directo");
+    assert.match(fit?.reason ?? "", /desconocida|no se presume/i);
+  });
+
+  it("VAL-007-04: evaluateCompatibility y compatibility coinciden en dominio", () => {
+    const device = deviceBySlug("vaporesso-luxe-x");
+    const coil = coilBySlug("vaporesso-gtx-0-15");
+    assert.ok(device && coil);
+    const evaluation = evaluateCompatibility(device!, coil!);
+    const legacy = compatibility(device!, coil!);
+    assert.equal(legacy.kind, evaluation.legacyKind);
+    assert.equal(evaluation.physical.status, "match");
+    assert.equal(evaluation.electrical.status, "mismatch");
   });
 
   it("Herrera aroma30 separa contenido y envase", () => {

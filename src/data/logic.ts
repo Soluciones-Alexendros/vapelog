@@ -1,4 +1,4 @@
-import { exclusionReason } from "./compat-rules.ts";
+import { evaluateCompatibility, toCompatResult } from "./compat-evaluation.ts";
 import { formatRatioLabel, ratioPartsFromVariation } from "./measures.ts";
 import type {
   Coil,
@@ -241,114 +241,9 @@ export function shotAlternatives(
   });
 }
 
+/** Adaptador legado: delega en la evaluación dimensional canónica. */
 export function compatibility(device: Device, coil: Coil): CompatResult {
-  const sharedNative = device.platformIds.filter((id) => coil.platformIds.includes(id));
-  if (sharedNative.length > 0 && !exclusionReason(device.slug, coil.slug, "nativa")) {
-    const clash = wattClash(device, coil);
-    if (clash) {
-      return {
-        kind: "no",
-        reasons: ["La plataforma coincide, pero la ventana de potencia no.", clash],
-      };
-    }
-    const ohm = ohmClash(device, coil);
-    if (ohm) {
-      return {
-        kind: "no",
-        reasons: [
-          "La plataforma coincide, pero la resistencia queda fuera de la ventana publicada.",
-          ohm,
-        ],
-      };
-    }
-    return {
-      kind: "nativa",
-      reasons: [
-        "Comparten plataforma de cápsula. La coil o el pod entra en el dispositivo sin adaptador.",
-      ],
-    };
-  }
-
-  const sharedKit = device.kitPlatformIds.filter((id) => coil.platformIds.includes(id));
-  const kitBlocked = exclusionReason(device.slug, coil.slug, "kit");
-  if (sharedKit.length > 0 && !kitBlocked) {
-    const clash = wattClash(device, coil);
-    if (clash) {
-      return {
-        kind: "no",
-        reasons: [
-          "El kit trae ese atomizador, pero la coil pide más potencia de la publicada.",
-          clash,
-        ],
-      };
-    }
-    const ohm = ohmClash(device, coil);
-    if (ohm) {
-      return {
-        kind: "no",
-        reasons: [
-          "El kit trae ese atomizador, pero la resistencia queda fuera de la ventana publicada.",
-          ohm,
-        ],
-      };
-    }
-    return {
-      kind: "kit",
-      reasons: [
-        "El kit incluye un atomizador de esa plataforma. La coil no se enchufa al mod: va en el tanque del kit.",
-        "Si se cambia el atomizador 510, la compatibilidad pasa a ser solo eléctrica y hay que repetir el cruce.",
-      ],
-    };
-  }
-
-  if (device.connector === "510" && coil.connector === "510") {
-    const reasons = [
-      "Los dos usan rosca 510. Eso no significa que la coil quepa en cualquier tanque.",
-    ];
-    if (kitBlocked) reasons.unshift(kitBlocked);
-    const ohm = ohmClash(device, coil);
-    if (ohm) {
-      reasons.push(ohm);
-      return { kind: "no", reasons };
-    }
-    if (device.ohmMin != null && device.ohmMax != null) {
-      reasons.push(`La resistencia entra en la ventana ${device.ohmMin}–${device.ohmMax} Ω.`);
-    }
-    const clash = wattClash(device, coil);
-    if (clash) {
-      reasons.push(clash);
-      return { kind: "no", reasons };
-    }
-    reasons.push(
-      "Cruce eléctrico posible. La coil tiene que pertenecer al atomizador que esté montado.",
-    );
-    return { kind: "electrica", reasons };
-  }
-
-  return {
-    kind: "no",
-    reasons: ["Plataforma y conector no coinciden. No son intercambiables."],
-  };
-}
-
-function wattClash(device: Device, coil: Coil): string | null {
-  if (device.powerMaxW != null && coil.wattMin != null && coil.wattMin > device.powerMaxW) {
-    return `La coil está recomendada desde ${coil.wattMin} W y el dispositivo publica un máximo de ${device.powerMaxW} W.`;
-  }
-  if (device.powerMinW != null && coil.wattMax != null && coil.wattMax < device.powerMinW) {
-    return `La coil se recomienda hasta ${coil.wattMax} W y el dispositivo publica un mínimo de ${device.powerMinW} W.`;
-  }
-  return null;
-}
-
-function ohmClash(device: Device, coil: Coil): string | null {
-  if (device.ohmMin != null && coil.ohms < device.ohmMin) {
-    return `${coil.ohms} Ω queda por debajo del mínimo publicado (${device.ohmMin} Ω).`;
-  }
-  if (device.ohmMax != null && coil.ohms > device.ohmMax) {
-    return `${coil.ohms} Ω supera el máximo publicado (${device.ohmMax} Ω).`;
-  }
-  return null;
+  return toCompatResult(evaluateCompatibility(device, coil));
 }
 
 export function partsForDevice(device: Device, parts: Part[]): Part[] {
@@ -473,10 +368,25 @@ function fitVariation(
     };
   }
   if (coil.draws.some((draw) => draws.includes(draw))) {
+    if (isUnknownNicotine(variation)) {
+      return {
+        fit: "posible",
+        requiresPreparation: false,
+        reason:
+          "La calada encaja, pero la concentración de nicotina no está publicada: no se presume cero ni adecuación.",
+      };
+    }
     return {
       fit: "directo",
       requiresPreparation: false,
       reason: `La calada encaja con el montaje ${coil.draws.join("/")}.`,
+    };
+  }
+  if (isUnknownNicotine(variation)) {
+    return {
+      fit: "posible",
+      requiresPreparation: false,
+      reason: "Concentración de nicotina desconocida: no se presume cero ni adecuación al montaje.",
     };
   }
   return {
