@@ -29,4 +29,15 @@ Procedimiento:
    (solo se ejecuta en `main`).
 5. Borrar la rama.
 
-El resultado observado se anota al completar el push en la sesión PR-A.
+## Resultado observado (2026-10-17)
+
+- PR desechable: https://github.com/Soluciones-Alexendros/vapelog/pull/16
+- Run CI: `38987221994` (SHA `abc7c8ff1490b6c2d222878c68c24abec83c1515`)
+- `test`: failure (assert intencional VAL-003-01)
+- `supply-chain`: failure (gitleaks-action exigía licencia; sustituido por
+  trufflehog fijado por SHA en el commit correctivo del PR-A)
+- `release-ready`: failure (exit 2 / gate rojo)
+- `release`: skipped (no corre fuera de `main`; no se ejecutó)
+
+La rama `ci/pr-a-gate-negative` y el PR #16 se cierran/borran tras registrar
+esta evidencia. No se fusiona a `main`.

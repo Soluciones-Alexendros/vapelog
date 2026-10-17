@@ -356,14 +356,14 @@ jobs:
       - name: Lint workflows (actionlint por SHA)
         uses: reviewdog/action-actionlint@086cc5300a077f608b81d2b03801bc382e417264 # v1.65.2
         with:
-          fail_on_error: true
+          fail_level: error
           reporter: github-check
           filter_mode: nofilter
 
-      - name: Escáner de secretos (gitleaks por SHA)
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Escáner de secretos (trufflehog por SHA)
+        uses: trufflesecurity/trufflehog@90190deac64289cb10bb694894be8db9ead8790b # v3.88.29
+        with:
+          extra_args: --results=verified,unknown --exclude-paths=.trufflehogignore
 
   release-ready:
     name: release-ready
