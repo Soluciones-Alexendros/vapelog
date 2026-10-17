@@ -368,10 +368,65 @@ jobs:
         with:
           extra_args: --results=verified,unknown --exclude-paths=.trufflehogignore
 
+  sql-integration:
+    name: sql-integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [quality]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vapelog
+          POSTGRES_PASSWORD: vapelog
+          POSTGRES_DB: vapelog
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vapelog -d vapelog"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://vapelog:vapelog@localhost:5432/vapelog
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply schema with ON_ERROR_STOP
+        run: node scripts/sql-install.mjs
+
+      - name: Reject uniqueness / FK fixtures
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "insert into platform (slug, name) values ('fixture-plat', 'Fixture');"
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "insert into platform (slug, name) values ('fixture-plat', 'Dup');" \
+            2>/tmp/uniq-err.txt; then
+            echo "Se esperaba fallo de unicidad en platform.slug" >&2
+            exit 1
+          fi
+          grep -qi 'unique\|duplicate\|violates' /tmp/uniq-err.txt
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+            "insert into device_platform (device_id, platform_id, role)
+             values ('00000000-0000-4000-8000-000000000001',
+                     (select id from platform where slug = 'fixture-plat'),
+                     'nativa');" \
+            2>/tmp/fk-err.txt; then
+            echo "Se esperaba fallo FK device_platform" >&2
+            exit 1
+          fi
+          grep -qi 'foreign key\|violates' /tmp/fk-err.txt
+
   release-ready:
     name: release-ready
     if: always()
-    needs: [quality, test, build, smoke, browser, fx-e2e, supply-chain]
+    needs: [quality, test, build, smoke, browser, fx-e2e, supply-chain, sql-integration]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
