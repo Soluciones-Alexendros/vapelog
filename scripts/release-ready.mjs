@@ -23,7 +23,16 @@ export function evaluateReleaseReady(needs) {
 
 function main() {
   const arg = process.argv[2];
-  const raw = arg && arg !== "-" ? arg : readFileSync(0, "utf8");
+  // CI escribe needs en un fichero y pasa la ruta; "-" o sin arg → stdin.
+  let raw;
+  try {
+    raw = !arg || arg === "-" ? readFileSync(0, "utf8") : readFileSync(arg, "utf8");
+  } catch (err) {
+    console.error(
+      `release-ready: no se pudo leer entrada: ${err instanceof Error ? err.message : err}`,
+    );
+    process.exit(2);
+  }
   let needs;
   try {
     needs = JSON.parse(raw);

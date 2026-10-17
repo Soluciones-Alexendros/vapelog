@@ -237,8 +237,11 @@ jobs:
         run: |
           set -euo pipefail
           PORT=4175
-          HOST=127.0.0.1 NITRO_HOST=127.0.0.1 NITRO_PORT="${PORT}" PORT="${PORT}" \
-            node .output/server/index.mjs >nitro-fx-e2e.log 2>&1 &
+          export HOST=127.0.0.1
+          export NITRO_HOST=127.0.0.1
+          export NITRO_PORT="${PORT}"
+          export PORT
+          node .output/server/index.mjs >nitro-fx-e2e.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           ready=0
@@ -311,13 +314,13 @@ jobs:
             for (const r of rows) {
               const meanMax = r.cpu > 1 ? 4 : 2;
               if (r.smokeMeanMs > meanMax || r.smokeP95Ms > 4) {
-                over.push(`${r.theme}/cpu${r.cpu}: mean=${r.smokeMeanMs}ms p95=${r.smokeP95Ms}ms`);
+                over.push(r.theme + "/cpu" + r.cpu + ": mean=" + r.smokeMeanMs + "ms p95=" + r.smokeP95Ms + "ms");
               }
             }
             if (over.length) {
-              console.log(`::warning title=Umbral de humo superado::${over.join("; ")}`);
+              console.log("::warning title=Umbral de humo superado::" + over.join("; "));
             } else {
-              console.log(`Humo dentro de umbrales (≤2 ms/frame desktop, ≤4 ms con CPU ×4).`);
+              console.log("Humo dentro de umbrales (≤2 ms/frame desktop, ≤4 ms con CPU ×4).");
             }
           '
 
