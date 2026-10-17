@@ -398,6 +398,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Apply schema with ON_ERROR_STOP
+        env:
+          SQL_INTEGRATION: "1"
         run: node scripts/sql-install.mjs
 
       - name: Reject uniqueness / FK fixtures
