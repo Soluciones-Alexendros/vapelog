@@ -10,6 +10,7 @@ const deps = {
   browser: { result: "success" },
   "fx-e2e": { result: "success" },
   "supply-chain": { result: "success" },
+  "sql-integration": { result: "success" },
 };
 
 test("pasa solo si todas las dependencias están en success", () => {

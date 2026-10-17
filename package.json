@@ -25,6 +25,8 @@
     "check:env": "node scripts/check-env.mjs",
     "check:manifest": "node scripts/check-manifest.mjs",
     "check:supply-chain": "node scripts/supply-chain-audit.mjs",
+    "test:sql": "node scripts/sql-install.mjs",
+    "test:postdeploy": "node scripts/postdeploy-check.mjs",
     "icons": "node scripts/build-icons.mjs",
     "logo": "node scripts/build-logo.mjs",
     "sitemap": "node scripts/build-sitemap.mjs",

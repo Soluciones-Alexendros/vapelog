@@ -13,14 +13,19 @@
 
 No hay pasos manuales: todo se dispara con un push a `main`.
 
-1. **CI** (`ci.yml`): `quality` → en paralelo `test`, `build` y
-   `supply-chain`; tras `build` → `smoke`, `browser` y `fx-e2e`.
+1. **CI** (`ci.yml`): `quality` → en paralelo `test`, `build`,
+   `supply-chain` y `sql-integration` (Postgres 16 efímero + DDL);
+   tras `build` → `smoke`, `browser` y `fx-e2e`.
    `smoke-bench` es informativo (`continue-on-error`) y **no** bloquea.
 2. **Gate** (job `release-ready`, `if: always()`): solo pasa si
-   `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e` y
-   `supply-chain` están en `success`. Un job `skipped`, `cancelled` o
-   `failure` deja el gate en rojo (script `scripts/release-ready.mjs`).
-3. **Release** (job `release`, solo en `main` y solo si `release-ready`
+   `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e`,
+   `supply-chain` y `sql-integration` están en `success`. Un job
+   `skipped`, `cancelled` o `failure` deja el gate en rojo
+   (`scripts/release-ready.mjs`).
+3. **Postdeploy** (manual o pipeline futuro):
+   `POSTDEPLOY_URL=… EXPECTED_COMMIT=… pnpm run test:postdeploy`
+   contra `/build-manifest.json`.
+4. **Release** (job `release`, solo en `main` y solo si `release-ready`
    pasa): `scripts/release.mjs` decide el semver desde los Conventional
    Commits (`feat!`/BREAKING → major, `feat` → minor, `fix` → patch),
    mueve el contenido de `## [Unreleased]` en `CHANGELOG.md`, sube
@@ -28,7 +33,7 @@ No hay pasos manuales: todo se dispara con un push a `main`.
    **GitHub Release** con las notas del changelog más `Tested-SHA` (SHA
    del workflow que pasó el gate; no confundir con el commit de versión).
    Si no hay `feat`/`fix` nuevos, no publica nada.
-4. **Vercel** (GitHub App del proyecto `alexendros-team/vapelog`): cada
+5. **Vercel** (GitHub App del proyecto `alexendros-team/vapelog`): cada
    push a `main` despliega a producción automáticamente. El acoplamiento
    «push a main → deploy» se conserva; este runbook no reconfigura el
    proyecto Vercel. El build emite el Build Output API (`.vercel/output`)

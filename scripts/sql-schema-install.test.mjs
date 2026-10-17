@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 
 const sql = readFileSync(new URL("../public/vapelog-esquema.sql", import.meta.url), "utf8");
 
-describe("esquema SQL objetivo", () => {
+describe("esquema SQL objetivo (estático)", () => {
   it("platform no exige connector", () => {
     assert.match(sql, /create table platform \(/);
     const block = sql.slice(
@@ -34,13 +34,23 @@ describe("esquema SQL objetivo", () => {
   });
 });
 
-describe("instalación Postgres", () => {
-  it("requiere DATABASE_URL; no simula el resultado si falta", async () => {
-    if (!process.env.DATABASE_URL) {
-      assert.ok(true, "sin DATABASE_URL: la instalación real queda pendiente de CI/servicio");
+describe("instalación Postgres (contrato)", () => {
+  it("con DATABASE_URL valida el esquema de URL; sin ella el skip es explícito", () => {
+    if (process.env.DATABASE_URL) {
+      assert.match(process.env.DATABASE_URL, /^postgres/i);
       return;
     }
-    // Si hay servidor, psql aplicaría el esquema; aquí solo documentamos el contrato.
-    assert.match(process.env.DATABASE_URL, /^postgres/);
+    // La instalación real vive en el job sql-integration (`pnpm run test:sql`).
+    // Este suite unitario no debe fallar por ausencia de Postgres.
+    if (process.env.SQL_INTEGRATION === "1") {
+      assert.fail(
+        "DATABASE_URL ausente con SQL_INTEGRATION=1: el job sql-integration debe proveer Postgres",
+      );
+    }
+    assert.equal(
+      process.env.DATABASE_URL,
+      undefined,
+      "sin DATABASE_URL: instalación real queda en pnpm run test:sql / job sql-integration",
+    );
   });
 });

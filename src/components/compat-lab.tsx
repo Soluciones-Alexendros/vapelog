@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { coilBySlug, coils, deviceBySlug, devices, liquids } from "@/data/catalog";
-import { compatibility, recommendLiquids, type LiquidFit, type LiquidFitKind } from "@/data/logic";
+import { evaluateCompatibility } from "@/data/compat-evaluation";
+import { recommendLiquids, type LiquidFit, type LiquidFitKind } from "@/data/logic";
 import {
   compatLabel,
   compatTone,
@@ -33,7 +34,15 @@ export function CompatLab({
     search.coil || coils.find((coil) => coil.slug.includes("0-8"))?.slug || coils[0]?.slug || "";
   const device = deviceBySlug(deviceSlug);
   const coil = coilBySlug(coilSlug);
-  const result = device && coil ? compatibility(device, coil) : null;
+  const evaluation = device && coil ? evaluateCompatibility(device, coil) : null;
+  const result = evaluation
+    ? {
+        kind: evaluation.legacyKind,
+        reasons: evaluation.physical.reasons.concat(
+          evaluation.electrical.reasons.filter((r) => !evaluation.physical.reasons.includes(r)),
+        ),
+      }
+    : null;
   const fits = coil ? recommendLiquids(coil, liquids) : [];
   const byKind = groupFits(fits);
   const total = fits.length;
@@ -120,6 +129,22 @@ export function CompatLab({
           >
             {compatLabel(result.kind)}
           </p>
+          {evaluation ? (
+            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-muted-foreground">Físico</dt>
+                <dd className="font-medium text-foreground">{evaluation.physical.status}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Eléctrico</dt>
+                <dd className="font-medium text-foreground">{evaluation.electrical.status}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Régimen</dt>
+                <dd className="font-medium text-foreground">{evaluation.operating.status}</dd>
+              </div>
+            </dl>
+          ) : null}
           <ul className="mt-2 flex flex-col gap-2">
             {result.reasons.map((reason, index) => (
               <li
