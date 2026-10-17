@@ -22,5 +22,13 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    // Multibrowser (OBJ-023): activar con E2E_ALL_BROWSERS=1 tras instalar motores.
+    ...(process.env.E2E_ALL_BROWSERS === "1"
+      ? [
+          { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+          { name: "webkit", use: { ...devices["Desktop Safari"] } },
+          { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
+        ]
+      : []),
   ],
 });
