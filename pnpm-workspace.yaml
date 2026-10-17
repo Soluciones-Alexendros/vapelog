@@ -11,3 +11,6 @@ minimumReleaseAgeExclude:
   - "@tanstack/start-plugin-core@1.171.48"
   - "@tanstack/start-server-core@1.169.38"
   - "@tanstack/start-storage-context@1.167.35"
+
+overrides:
+  source-map-js: ">=1.2.2"
