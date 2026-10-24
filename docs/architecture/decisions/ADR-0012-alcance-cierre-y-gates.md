@@ -65,6 +65,7 @@ instala en CI; meterlo ahora como check verde sería evidencia falsa
   de producción.
 - El bypass de restricción de push (si se activa) debe incluir
   `github-actions[bot]` para que `scripts/release.mjs` pueda publicar el
-  tag; no se activa `enforce_admins`.
+  tag; no se activa `enforce_admins`. **Actualización (2026-10-25):** el
+  bump de versión ya no hace push a `main`; ver [ADR-0015](./ADR-0015-release-sin-push-a-main.md).
 - F02–F10 (compatibilidad canónica, entidades, SQL real, UI, E2E
   multibrowser, postdeploy) no se implementan en este ADR.

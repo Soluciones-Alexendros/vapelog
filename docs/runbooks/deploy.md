@@ -26,13 +26,14 @@ No hay pasos manuales: todo se dispara con un push a `main`.
    `POSTDEPLOY_URL=… EXPECTED_COMMIT=… pnpm run test:postdeploy`
    contra `/build-manifest.json`.
 4. **Release** (job `release`, solo en `main` y solo si `release-ready`
-   pasa): `scripts/release.mjs` decide el semver desde los Conventional
-   Commits (`feat!`/BREAKING → major, `feat` → minor, `fix` → patch),
-   mueve el contenido de `## [Unreleased]` en `CHANGELOG.md`, sube
-   `package.json`, crea commit `chore(release): vX.Y.Z`, tag y
-   **GitHub Release** con las notas del changelog más `Tested-SHA` (SHA
-   del workflow que pasó el gate; no confundir con el commit de versión).
-   Si no hay `feat`/`fix` nuevos, no publica nada.
+   pasa; ADR-0015): `scripts/release.mjs` decide el semver desde los
+   Conventional Commits (`feat!`/BREAKING → major, `feat` → minor,
+   `fix` → patch). **No hace push a `main`.** Si hace falta subir
+   versión, abre o actualiza la rama `chore/release-vX.Y.Z` y un PR con
+   `CHANGELOG.md` + `package.json`. Cuando ese PR ya está en `main` y el
+   tag aún no existe, publica el tag y el **GitHub Release** con las
+   notas del changelog más `Tested-SHA` (SHA del workflow que pasó el
+   gate). Si no hay `feat`/`fix` nuevos, no publica nada.
 5. **Vercel** (GitHub App del proyecto `alexendros-team/vapelog`): cada
    push a `main` despliega a producción automáticamente. El acoplamiento
    «push a main → deploy» se conserva; este runbook no reconfigura el
@@ -41,8 +42,8 @@ No hay pasos manuales: todo se dispara con un push a `main`.
    `VERCEL=1`. El build genera `public/build-manifest.json` (identidad
    del artefacto).
 
-El commit de release vuelve a pasar la CI y no dispara otra versión (un
-`chore(release)` no contiene `feat`/`fix`): no hay bucle.
+El PR `chore(release)` no contiene `feat`/`fix`: al fusionarlo el job
+vuelve a correr y entra en la fase `publish` (tag), sin abrir otro bump.
 
 ## Qué se publica
 
@@ -67,6 +68,9 @@ El commit de release vuelve a pasar la CI y no dispara otra versión (un
 - **Publicar sin release**: un cambio `docs:`/`chore:`/`ci:` llega a
   producción sin versión nueva; es lo previsto.
 - **Release manual local** (p. ej. tras un merge retrasado):
-  `node scripts/release.mjs --dry-run` para previsualizar y, con la CI en
-  verde, `node scripts/release.mjs` sobre `main` actualizado.
+  `node scripts/release.mjs --dry-run` para previsualizar. Con la CI en
+  verde sobre `main` actualizado, `node scripts/release.mjs` abre el PR
+  de bump o publica el tag según el plan; no empuja commits a `main`.
+  Fusionar el PR de release con token de usuario (un merge con
+  `GITHUB_TOKEN` no relanza workflows).
 - **Rotura en producción**: seguir [rollback.md](./rollback.md).
