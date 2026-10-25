@@ -25,3 +25,18 @@ Aplicación web Vapelog (catálogo estático + SSR TanStack Start). No hay
 autenticación de usuarios ni almacenamiento de secretos de producción en el
 repo. Infraestructura de terceros (Vercel, GitHub) debe reportarse también a
 sus programas respectivos cuando el fallo sea suyo.
+
+## CI de seguridad
+
+El workflow [`.github/workflows/security.yml`](.github/workflows/security.yml)
+corre en cada PR y push a `main`:
+
+- **`secrets`:** gitleaks (binario v8.30.1 con verificación sha256) sobre el
+  historial, con [`.gitleaksignore`](.gitleaksignore). Sin
+  `gitleaks-action` (licencia).
+- **`sca`:** `pnpm audit --prod --audit-level=high` más OSV-Scanner sobre
+  `pnpm-lock.yaml`.
+
+En cron semanal y `workflow_dispatch` también corre `supply-chain`
+(Trufflehog, actionlint y contraste GHSA). En PR/push esos controles viven
+en el job `supply-chain` de `ci.yml`.
