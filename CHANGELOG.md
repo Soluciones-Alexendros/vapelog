@@ -12,6 +12,29 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-24
+
+### Cambios
+
+- Merge pull request #22 from Soluciones-Alexendros/fix/ci-release-sin-push-a-main
+- fix(deps): regenerar lockfile con pnpm 11 y overrides
+- fix(deps): bump vite 8.3.5 y override zod >=4.6.6
+- fix(ci): release por PR sin push a main
+- Merge pull request #19 from Soluciones-Alexendros/feat/pr-c-entidades-canonicas
+- ci: no exigir DATABASE_URL en el job unitario
+- Merge pull request #21 from Soluciones-Alexendros/feat/pr-f-j-cierre-ops
+- feat: SQL en gate, UI dimensional, headers y expediente de cierre
+- merge: main tras PR-B
+- Merge pull request #20 from Soluciones-Alexendros/feat/pr-d-e-validacion-repo
+- feat(data): validador inyectable, evidencia honesta y repositorio seguro
+- Merge pull request #18 from Soluciones-Alexendros/feat/pr-b-compat-canonica
+- feat(data): entidades físicas canónicas y kits unknown
+- fix(data): compatibilidad dimensional canónica sin regex de legado
+- Merge pull request #17 from Soluciones-Alexendros/ci/pr-a-gates-manifiesto
+- ci: leer needs desde fichero y silenciar shellcheck en workflows
+- ci: sustituir gitleaks-action por trufflehog fijado por SHA
+- ci: cerrar gates de publicación, manifiesto y cadena de suministro
+
 ## [0.12.0] - 2026-10-16
 
 ### Cambios
