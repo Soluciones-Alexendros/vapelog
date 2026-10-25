@@ -57,12 +57,44 @@ function pickPreviewUrl(statuses) {
   return null;
 }
 
+/** Detecta el check/status de Vercel en rate limit para no quemar el timeout. */
+async function vercelRateLimited() {
+  const checks = await gh(
+    `/repos/${repo}/commits/${encodeURIComponent(sha)}/check-runs?per_page=40`,
+  );
+  const runs = Array.isArray(checks.check_runs) ? checks.check_runs : [];
+  for (const run of runs) {
+    const name = String(run.name ?? "");
+    if (!/^Vercel$/i.test(name) && !/vercel/i.test(name)) continue;
+    const blob = `${run.output?.title ?? ""} ${run.output?.summary ?? ""} ${run.details_url ?? ""}`;
+    if (/rate.?limit/i.test(blob) || /upgradeToPro=build-rate-limit/i.test(blob)) {
+      return true;
+    }
+    if (run.conclusion === "failure" && /rate.?limit/i.test(String(run.details_url ?? ""))) {
+      return true;
+    }
+  }
+  const combined = await gh(`/repos/${repo}/commits/${encodeURIComponent(sha)}/status`);
+  for (const s of Array.isArray(combined.statuses) ? combined.statuses : []) {
+    const blob = `${s.context ?? ""} ${s.description ?? ""} ${s.target_url ?? ""}`;
+    if (/vercel/i.test(blob) && /rate.?limit/i.test(blob)) return true;
+  }
+  return false;
+}
+
 const deadline = Date.now() + timeoutSec * 1000;
 let attempt = 0;
 let backoff = 5_000;
 
 while (Date.now() < deadline) {
   attempt += 1;
+  if (await vercelRateLimited()) {
+    console.error(
+      "Vercel Preview en rate limit (p. ej. upgradeToPro=build-rate-limit). " +
+        "No hay deployment que esperar; re-run cuando el límite caduque.",
+    );
+    process.exit(1);
+  }
   const deployments = await gh(
     `/repos/${repo}/deployments?sha=${encodeURIComponent(sha)}&per_page=20&environment=Preview`,
   );
