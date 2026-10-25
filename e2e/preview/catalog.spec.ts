@@ -1,12 +1,25 @@
 import { test, expect, type Page, type ConsoleMessage } from "playwright/test";
 
+/** Toolbar de Vercel Preview Comments: CSP report-only, no es fallo de la app. */
+function isPreviewHostNoise(text: string): boolean {
+  return (
+    /vercel\.live/i.test(text) &&
+    (/Content Security Policy/i.test(text) || /report-only/i.test(text) || /Framing '/i.test(text))
+  );
+}
+
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
   page.on("console", (msg: ConsoleMessage) => {
-    if (msg.type() === "error") errors.push(msg.text());
+    if (msg.type() !== "error") return;
+    const text = msg.text();
+    if (isPreviewHostNoise(text)) return;
+    errors.push(text);
   });
   page.on("pageerror", (err) => {
-    errors.push(String(err));
+    const text = String(err);
+    if (isPreviewHostNoise(text)) return;
+    errors.push(text);
   });
   return errors;
 }
