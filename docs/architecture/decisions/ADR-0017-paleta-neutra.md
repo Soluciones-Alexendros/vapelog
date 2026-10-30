@@ -31,9 +31,10 @@ Grok/xAI archivada en el repositorio: no se inventa una y no se afirma
 
 1. **D1 — Acento neutro-frío.** Neutros con tono ≈ 260. Primario azul-grisáceo
    (`oklch` L/C/H de la tabla). Se elimina el ámbar de `--primary`.
-2. **D2 — Color por categoría.** `--kind-*` con croma 0,045. Nunca como único
-   portador: los puntos `kind-mark` van siempre con texto (DISP / RES / LÍQ /
-   COMP o el nombre completo).
+2. **D2 — Color por categoría.** `--kind-*` pastel respecto al legado
+   (croma 0,15; la propuesta 0,045 no cumple ΔE OKLab ≥ 15 entre los cuatro
+   tonos del plan). Nunca como único portador: los puntos `kind-mark` van
+   siempre con texto (DISP / RES / LÍQ / COMP o el nombre completo).
 3. **D3 — Estado en la URL.** Además del `theme-color` sincronizado con
    `--background`, `/comparar` publica `dominio` y `fichas` en la query. Una
    selección válida en la URL manda sobre `localStorage` al entrar en esa
@@ -70,10 +71,10 @@ se derivan del mismo paso OKLCH→sRGB que usa ese test.
 | `--primary`                   | `oklch(0.42 0.10 255)`                 | 8,1:1               |
 | `--primary-foreground`        | `oklch(0.99 0.003 260)`                | 8,3:1 sobre primary |
 | `--ring`                      | `oklch(0.50 0.13 255)`                 | 5,8:1               |
-| `--kind-dispositivo`          | `oklch(0.50 0.045 85)`                 | 5,8:1               |
-| `--kind-resistencia`          | `oklch(0.50 0.045 200)`                | 5,6:1               |
-| `--kind-liquido`              | `oklch(0.50 0.045 330)`                | 5,9:1               |
-| `--kind-componente`           | `oklch(0.50 0.045 270)`                | 5,8:1               |
+| `--kind-dispositivo`          | `oklch(0.48 0.152 85)`                 | ≥ 4,5:1             |
+| `--kind-resistencia`          | `oklch(0.48 0.152 200)`                | ≥ 4,5:1             |
+| `--kind-liquido`              | `oklch(0.48 0.152 330)`                | ≥ 4,5:1             |
+| `--kind-componente`           | `oklch(0.48 0.152 270)`                | ≥ 4,5:1             |
 
 ### Oscuro (`.dark`)
 
@@ -88,7 +89,7 @@ se derivan del mismo paso OKLCH→sRGB que usa ese test.
 | `--primary`                   | `oklch(0.78 0.09 250)`                        | 9,9:1               |
 | `--primary-foreground`        | `oklch(0.15 0.01 260)`                        | 9,9:1 sobre primary |
 | `--ring`                      | `oklch(0.78 0.10 250)`                        | 9,9:1               |
-| `--kind-*`                    | L 0,80 · C 0,045 · tonos 85 / 200 / 330 / 270 | ≥ 10:1              |
+| `--kind-*`                    | L 0,82 · C 0,152 · tonos 85 / 200 / 330 / 270 | ≥ 4,5:1             |
 
 `--surface-1/2/3` y los bloques `@media (prefers-contrast: more)` y
 `forced-colors` se rehacen con tono 260 y croma ≤ 0,01.

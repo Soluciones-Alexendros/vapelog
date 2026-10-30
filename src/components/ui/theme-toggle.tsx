@@ -10,8 +10,8 @@ const STORAGE_KEY = "vapelog-theme";
  * fondo, deben cambiar estos valores. Deben seguir siendo los únicos hex de
  * 6 cifras de este archivo.
  */
-export const THEME_COLOR_LIGHT = "#FAF7EC";
-export const THEME_COLOR_DARK = "#100D09";
+export const THEME_COLOR_LIGHT = "#F9FAFC";
+export const THEME_COLOR_DARK = "#090A0C";
 
 type ThemePreference = "light" | "dark" | "system";
 type EffectiveTheme = "light" | "dark";
