@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   PRODUCTION_HOST,
   detectVercelRateLimit,
+  isTransientGithubError,
   pickPreviewUrl,
   probePreviewReady,
 } from "./wait-preview-url.mjs";
@@ -96,4 +97,11 @@ test("detectVercelRateLimit", () => {
     true,
   );
   assert.equal(detectVercelRateLimit({ check_runs: [] }, { statuses: [] }), false);
+});
+
+test("isTransientGithubError reconoce 5xx y red", () => {
+  assert.equal(isTransientGithubError(new Error("GitHub 500 /repos/x/status: ")), true);
+  assert.equal(isTransientGithubError(new Error("GitHub 429 /repos/x/status: ")), true);
+  assert.equal(isTransientGithubError(new Error("GitHub 404 /repos/x/status: ")), false);
+  assert.equal(isTransientGithubError(new Error("fetch failed")), true);
 });

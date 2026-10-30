@@ -157,6 +157,18 @@ export function detectVercelRateLimit(checks, combined) {
   return false;
 }
 
+/**
+ * Errores transitorios de la API de GitHub (reintentar, no exit 1 inmediato).
+ * @param {unknown} err
+ */
+export function isTransientGithubError(err) {
+  const msg = err instanceof Error ? err.message : String(err);
+  return (
+    /GitHub (408|425|429|5\d\d)\b/.test(msg) ||
+    /fetch failed|ECONNRESET|ETIMEDOUT|AbortError/i.test(msg)
+  );
+}
+
 async function mainCli() {
   const sha = process.argv[2];
   const timeoutSec = Number(process.argv[3] ?? 900);
@@ -196,37 +208,49 @@ async function mainCli() {
 
   while (Date.now() < deadline) {
     attempt += 1;
-    const checks = await gh(
-      `/repos/${repo}/commits/${encodeURIComponent(sha)}/check-runs?per_page=40`,
-    );
-    const combined = await gh(`/repos/${repo}/commits/${encodeURIComponent(sha)}/status`);
-    if (detectVercelRateLimit(checks, combined)) {
-      console.error(
-        "Vercel Preview en rate limit (p. ej. upgradeToPro=build-rate-limit). " +
-          "No hay deployment que esperar; re-run cuando el límite caduque.",
+    try {
+      const checks = await gh(
+        `/repos/${repo}/commits/${encodeURIComponent(sha)}/check-runs?per_page=40`,
       );
-      process.exit(1);
-    }
-
-    const deployments = await gh(
-      `/repos/${repo}/deployments?sha=${encodeURIComponent(sha)}&per_page=20&environment=Preview`,
-    );
-    const list = Array.isArray(deployments) ? deployments : [];
-
-    for (const d of list) {
-      const statuses = await gh(`/repos/${repo}/deployments/${d.id}/statuses`);
-      const url = pickPreviewUrl(Array.isArray(statuses) ? statuses : []);
-      if (!url) continue;
-      try {
-        await probePreviewReady(url, sha);
-        console.log(stripUrlForLog(url));
-        writeFileSync("preview-url.txt", `${url}\n`);
-        process.exit(0);
-      } catch (err) {
-        const fatal = err && typeof err === "object" && "fatal" in err && err.fatal;
-        console.error(`Intento ${attempt}: ${err instanceof Error ? err.message : err}`);
-        if (fatal) process.exit(1);
+      const combined = await gh(`/repos/${repo}/commits/${encodeURIComponent(sha)}/status`);
+      if (detectVercelRateLimit(checks, combined)) {
+        console.error(
+          "Vercel Preview en rate limit (p. ej. upgradeToPro=build-rate-limit). " +
+            "No hay deployment que esperar; re-run cuando el límite caduque.",
+        );
+        process.exit(1);
       }
+
+      const deployments = await gh(
+        `/repos/${repo}/deployments?sha=${encodeURIComponent(sha)}&per_page=20&environment=Preview`,
+      );
+      const list = Array.isArray(deployments) ? deployments : [];
+
+      for (const d of list) {
+        const statuses = await gh(`/repos/${repo}/deployments/${d.id}/statuses`);
+        const url = pickPreviewUrl(Array.isArray(statuses) ? statuses : []);
+        if (!url) continue;
+        try {
+          await probePreviewReady(url, sha);
+          console.log(stripUrlForLog(url));
+          writeFileSync("preview-url.txt", `${url}\n`);
+          process.exit(0);
+        } catch (err) {
+          const fatal = err && typeof err === "object" && "fatal" in err && err.fatal;
+          console.error(`Intento ${attempt}: ${err instanceof Error ? err.message : err}`);
+          if (fatal) process.exit(1);
+        }
+      }
+    } catch (err) {
+      if (isTransientGithubError(err)) {
+        console.error(
+          `Intento ${attempt}: API GitHub transitoria; reintento en ${Math.round(backoff / 1000)}s — ${err instanceof Error ? err.message : err}`,
+        );
+        await sleep(backoff);
+        backoff = Math.min(backoff + 5_000, 30_000);
+        continue;
+      }
+      throw err;
     }
 
     console.error(
