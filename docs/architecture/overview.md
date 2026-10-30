@@ -25,8 +25,11 @@ Regla: si no hay fuente, no se inventa el dato (`Sin dato publicado`).
 ## UI
 
 Componentes propios estilo shadcn en `src/components/ui/` con tokens OKLCH
-semánticos. Fichas en `sheets.tsx` (cabecera + hero chips + accordion). Tema
-claro/oscuro vía clase `.dark`.
+semánticos (neutros tono ≈ 260 y acento azul-grisáceo;
+[ADR-0017](./decisions/ADR-0017-paleta-neutra.md)). Fichas en `sheets.tsx`
+(cabecera + hero chips + accordion). Tema claro/oscuro vía clase `.dark`,
+clave `vapelog-theme`. Dirección sobria sin humo ni neón
+([ADR-0016](./decisions/ADR-0016-direccion-visual-sobria.md)).
 
 ## Deploy
 
