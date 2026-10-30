@@ -25,7 +25,6 @@ const STATIC_ROUTES = [
   { path: "/resistencias", changefreq: "weekly", priority: "0.8" },
   { path: "/liquidos", changefreq: "weekly", priority: "0.8" },
   { path: "/componentes", changefreq: "weekly", priority: "0.8" },
-  { path: "/blog", changefreq: "weekly", priority: "0.6" },
   { path: "/modelo", changefreq: "monthly", priority: "0.4" },
   { path: "/comparar", changefreq: "monthly", priority: "0.5" },
   { path: "/compatibilidad", changefreq: "monthly", priority: "0.5" },
@@ -53,20 +52,12 @@ async function importData(fileName) {
 
 async function loadCatalogFromModule() {
   const catalog = await importData("catalog.ts");
-  let posts;
-  try {
-    const blog = await importData("blog.ts");
-    posts = slugsOf(blog.blogPosts);
-  } catch {
-    posts = [];
-  }
   return {
     source: "module",
     devices: slugsOf(catalog.devices),
     coils: slugsOf(catalog.coils),
     liquids: slugsOf(catalog.liquids),
     parts: slugsOf(catalog.parts),
-    posts,
   };
 }
 
@@ -106,11 +97,10 @@ async function readSource(fileName) {
 }
 
 async function loadCatalogFromSource() {
-  const [catalog, expansion, heads, blog] = await Promise.all([
+  const [catalog, expansion, heads] = await Promise.all([
     readSource("catalog.ts"),
     readSource("expansion.ts"),
     readSource("heads.ts"),
-    readSource("blog.ts").catch(() => ""),
   ]);
 
   const liquidsFiles = (await readdir(DATA_DIR)).filter((name) => /^liquids-.*\.ts$/.test(name));
@@ -139,7 +129,6 @@ async function loadCatalogFromSource() {
     coils,
     liquids,
     parts,
-    posts: slugsFromBody(blog),
   };
 }
 
@@ -173,7 +162,6 @@ async function deriveEntries() {
   for (const { prefix, key } of DOMAIN_ROUTES) {
     for (const slug of catalog[key]) add(`${prefix}/${slug}`, "monthly", "0.6");
   }
-  for (const slug of catalog.posts) add(`/blog/${slug}`, "monthly", "0.5");
 
   return { entries, source: catalog.source, catalog };
 }
@@ -216,7 +204,7 @@ async function main() {
   const fichas =
     catalog.devices.length + catalog.coils.length + catalog.liquids.length + catalog.parts.length;
   console.log(
-    `sitemap: ${entries.length} URLs (${STATIC_ROUTES.length} estáticas, ${fichas} fichas, ${catalog.posts.length} posts) · fuente=${source} · base=${SITE_BASE}`,
+    `sitemap: ${entries.length} URLs (${STATIC_ROUTES.length} estáticas, ${fichas} fichas) · fuente=${source} · base=${SITE_BASE}`,
   );
 }
 

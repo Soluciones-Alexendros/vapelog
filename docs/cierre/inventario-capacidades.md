@@ -3,8 +3,8 @@
 ## Rutas (src/routes)
 
 src/routes/archivo.tsx
-src/routes/blog/$slug.tsx
-src/routes/blog/index.tsx
+src/routes/blog/$slug.tsx (redirige a /archivo)
+src/routes/blog/index.tsx (redirige a /archivo)
 src/routes/buscar.tsx
 src/routes/comparar.tsx
 src/routes/compatibilidad.tsx

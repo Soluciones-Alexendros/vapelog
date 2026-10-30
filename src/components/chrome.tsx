@@ -45,7 +45,6 @@ const secondaryNav = [
   { to: "/compatibilidad", label: "Compatibilidad", exact: false },
   { to: "/herramientas", label: "Calculadoras", exact: false },
   { to: "/archivo", label: "Catálogo completo", exact: false },
-  { to: "/blog", label: "Blog", exact: false },
 ] as const;
 
 function compareExists(domain: Domain, slug: string): boolean {
