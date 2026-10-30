@@ -21,7 +21,7 @@
 4. `pnpm run build && pnpm run smoke` (o `make validate`).
 5. PR con CI verde. El check agregador es **`release-ready`**: exige
    `success` en `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e`,
-   `supply-chain` y `sql-integration` (lista única en
+   `supply-chain`, `sql-integration`, `secrets` y `sca` (lista única en
    `scripts/release-ready.mjs` → `REQUIRED_JOBS`, paridad con
    `.github/workflows/ci.yml`). Fuera del agregador: `smoke-bench`
    (informativo), `release` (solo push a `main`), `preview-e2e` si existe

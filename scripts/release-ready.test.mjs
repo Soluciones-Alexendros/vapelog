@@ -50,6 +50,19 @@ test("falla si un job está cancelled", () => {
   assert.ok(failures.some((f) => f.includes("cancelled")));
 });
 
+test("falla si secrets o sca no están en success", () => {
+  assert.ok(
+    evaluateReleaseReady({ ...deps, secrets: { result: "failure" } }).failures.some((f) =>
+      f.startsWith("secrets:"),
+    ),
+  );
+  assert.ok(
+    evaluateReleaseReady({ ...deps, sca: { result: "failure" } }).failures.some((f) =>
+      f.startsWith("sca:"),
+    ),
+  );
+});
+
 test("falla con needs vacío, array o inválido", () => {
   assert.equal(evaluateReleaseReady(null).ok, false);
   assert.equal(evaluateReleaseReady(undefined).ok, false);

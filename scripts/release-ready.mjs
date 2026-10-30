@@ -19,6 +19,8 @@ export const REQUIRED_JOBS = Object.freeze([
   "fx-e2e",
   "supply-chain",
   "sql-integration",
+  "secrets",
+  "sca",
 ]);
 
 /**
@@ -61,13 +63,15 @@ export function evaluateReleaseReady(needs) {
 
 /**
  * Extrae el array `needs` del job `release-ready` en ci.yml (texto).
+ * Acepta `needs: [a, b]` en una línea o `needs:` + `[a, b]` en la siguiente.
  * @param {string} yaml
  * @returns {string[] | null}
  */
 export function parseReleaseReadyNeedsFromCi(yaml) {
   const lines = yaml.split(/\r?\n/);
   let inJob = false;
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (/^ {2}release-ready:\s*$/.test(line)) {
       inJob = true;
       continue;
@@ -76,12 +80,22 @@ export function parseReleaseReadyNeedsFromCi(yaml) {
       break;
     }
     if (!inJob) continue;
-    const m = line.match(/^\s+needs:\s*\[([^\]]*)\]\s*$/);
-    if (m) {
-      return m[1]
+    const inline = line.match(/^\s+needs:\s*\[([^\]]*)\]\s*$/);
+    if (inline) {
+      return inline[1]
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
+    }
+    if (/^\s+needs:\s*$/.test(line)) {
+      const next = lines[i + 1] ?? "";
+      const bracket = next.match(/^\s*\[([^\]]*)\]\s*$/);
+      if (bracket) {
+        return bracket[1]
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
     }
   }
   return null;

@@ -425,10 +425,49 @@ jobs:
           fi
           grep -qi 'foreign key\|violates' /tmp/fk-err.txt
 
+  # gitleaks: bloquea publicación vía release-ready. Duplicado temporal con
+  # security.yml (PR/push) hasta que el operador confirme el ruleset.
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # Binario gitleaks (no la action de pago). Checksum release v8.30.1.
+      - name: gitleaks
+        run: |
+          set -euo pipefail
+          curl -sSfL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks detect --source . --gitleaks-ignore-path=.gitleaksignore --redact --verbose
+
+  # OSV-Scanner: bloquea publicación vía release-ready. El audit alto/crítico
+  # vive solo en supply-chain (no se duplica aquí). Duplicado temporal de OSV
+  # con security.yml hasta confirmar ruleset.
+  sca:
+    name: sca
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@19ec1116569a47416e11a45848722b1af31a857b # v1.9.0
+        with:
+          scan-args: |-
+            --lockfile=pnpm-lock.yaml
+
   release-ready:
     name: release-ready
     if: always()
-    needs: [quality, test, build, smoke, browser, fx-e2e, supply-chain, sql-integration]
+    needs:
+      [quality, test, build, smoke, browser, fx-e2e, supply-chain, sql-integration, secrets, sca]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
