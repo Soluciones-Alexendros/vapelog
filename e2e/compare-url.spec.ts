@@ -32,12 +32,14 @@ test.describe("comparador URL", () => {
       sessionStorage.setItem("vapelog-edad", "ok");
     });
     await page.goto("/comparar?dominio=device&fichas=vaporesso-xros-4,vaporesso-xros-5");
+    // Vista y dock duplican Quitar/Vaciar; acotar al main evita strict mode.
     await page
+      .getByRole("main")
       .getByRole("button", { name: /Quitar/i })
       .first()
       .click();
     await expect(page).toHaveURL(/fichas=vaporesso-xros-/);
-    await page.getByRole("button", { name: "Vaciar" }).click();
+    await page.getByRole("main").getByRole("button", { name: "Vaciar" }).click();
     await expect(page).toHaveURL(/\/comparar\/?$/);
     await expect(page).not.toHaveURL(/fichas=/);
   });
