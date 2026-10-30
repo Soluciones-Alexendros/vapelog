@@ -77,7 +77,7 @@ test.describe("catálogo en Preview", () => {
     await page.getByRole("button", { name: "Comparar" }).click();
     await expect(page.getByRole("button", { name: "En el comparador" })).toBeVisible();
     await page.goto("/comparar");
-    await expect(page.getByRole("heading", { name: /Comparar/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Comparador/i })).toBeVisible();
     await expect(page.getByText(/XROS 4/i).first()).toBeVisible();
     await expect(page.getByText(/XROS 5/i).first()).toBeVisible();
     expect(errors).toEqual([]);

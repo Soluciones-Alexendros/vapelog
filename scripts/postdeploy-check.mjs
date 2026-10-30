@@ -53,6 +53,7 @@ export async function checkPostdeploy(opts) {
   } catch (err) {
     throw new Error(
       `postdeploy: fetch falló (${safeUrlForLog(manifestUrl)}): ${err instanceof Error ? err.message : err}`,
+      { cause: err },
     );
   } finally {
     clearTimeout(timer);
@@ -60,7 +61,7 @@ export async function checkPostdeploy(opts) {
 
   if (response.status >= 300 && response.status < 400) {
     const location = response.headers.get("location") ?? "";
-    let host = "";
+    let host;
     try {
       host = new URL(location, base).host;
     } catch {

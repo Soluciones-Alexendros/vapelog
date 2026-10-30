@@ -83,7 +83,7 @@ export async function probePreviewReady(url, expectedSha, opts = {}) {
   }
   if (probe.status >= 300 && probe.status < 400) {
     const location = probe.headers.get("location") ?? "";
-    let host = "";
+    let host;
     try {
       host = new URL(location, url).host;
     } catch {
