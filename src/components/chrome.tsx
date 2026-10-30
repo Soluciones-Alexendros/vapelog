@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Menu, Scale } from "lucide-react";
+import { Menu } from "lucide-react";
 import { BrandLogo } from "@/components/brand-mark";
 import { CommandPalette } from "@/components/command-palette";
 import { CompareContext, useCompare, type CompareRef } from "@/components/compare-context";
@@ -40,10 +40,15 @@ const catalogNav = [
   { to: "/componentes", label: "Componentes", exact: false },
 ] as const;
 
-const secondaryNav = [
-  { to: "/buscar", label: "Buscar", exact: true },
+const primaryNav = [
+  ...catalogNav,
   { to: "/compatibilidad", label: "Compatibilidad", exact: false },
   { to: "/herramientas", label: "Calculadoras", exact: false },
+  { to: "/comparar", label: "Comparador", exact: true },
+] as const;
+
+const secondaryNav = [
+  { to: "/buscar", label: "Resultados", exact: true },
   { to: "/archivo", label: "Catálogo completo", exact: false },
 ] as const;
 
@@ -167,10 +172,20 @@ function CompareProvider({ children }: { children: ReactNode }) {
 
 function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boolean }) {
   const [open, setOpen] = useState(false);
+  const compare = useCompare();
   const linkClass = (to: string, exact: boolean) =>
     active(to, exact)
       ? "inline-flex min-h-11 items-center text-base font-medium text-foreground underline decoration-primary underline-offset-4"
       : "inline-flex min-h-11 items-center text-base font-medium text-foreground hover:text-primary";
+
+  const navLabel = (item: (typeof primaryNav)[number]) =>
+    item.to === "/comparar" && compare.items.length > 0 ? (
+      <>
+        {item.label} <span className="ms-1 tabular-nums text-primary">{compare.items.length}</span>
+      </>
+    ) : (
+      item.label
+    );
 
   return (
     <>
@@ -180,14 +195,17 @@ function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boole
         className="lg:hidden"
         aria-expanded={open}
         aria-controls="catalog-menu"
-        aria-label="Catálogo"
+        aria-label="Menú"
         onClick={() => setOpen(true)}
       >
         <Menu className="size-4" aria-hidden />
-        <span className="hidden min-[400px]:inline">Catálogo</span>
+        <span className="hidden min-[400px]:inline">Menú</span>
       </Button>
-      <nav className="hidden min-w-0 flex-1 items-center gap-x-4 lg:flex" aria-label="Catálogo">
-        {catalogNav.map((item) => (
+      <nav
+        className="hidden min-w-0 flex-1 items-center gap-x-3 xl:gap-x-4 lg:flex"
+        aria-label="Principal"
+      >
+        {primaryNav.map((item) => (
           <Link
             key={item.to}
             to={item.to}
@@ -198,16 +216,16 @@ function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boole
                 : "inline-flex min-h-11 items-center border-b-2 border-transparent text-base font-medium text-foreground hover:border-primary focus-visible:border-primary"
             }
           >
-            {item.label}
+            {navLabel(item)}
           </Link>
         ))}
       </nav>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent id="catalog-menu" className="lg:hidden">
-          <DialogTitle>Catálogo</DialogTitle>
-          <DialogDescription>Listas del archivo y el resto de secciones.</DialogDescription>
-          <nav className="mt-4 flex flex-col" aria-label="Catálogo">
-            {catalogNav.map((item) => (
+          <DialogTitle>Menú</DialogTitle>
+          <DialogDescription>Secciones del archivo y herramientas.</DialogDescription>
+          <nav className="mt-4 flex flex-col" aria-label="Principal">
+            {primaryNav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -215,7 +233,7 @@ function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boole
                 className={linkClass(item.to, item.exact)}
                 onClick={() => setOpen(false)}
               >
-                {item.label}
+                {navLabel(item)}
               </Link>
             ))}
           </nav>
@@ -243,7 +261,6 @@ function CatalogMenu({ active }: { active: (to: string, exact: boolean) => boole
 
 function Header() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const compare = useCompare();
 
   const active = (to: string, exact: boolean) =>
     exact ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
@@ -262,20 +279,6 @@ function Header() {
         <div className="ms-auto flex shrink-0 items-center gap-1">
           <CommandPalette />
           <ThemeToggle />
-          <Link
-            to="/comparar"
-            className={
-              compare.items.length > 0
-                ? "inline-flex min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground sm:px-3"
-                : "hidden min-h-11 items-center gap-1 px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground sm:px-3 lg:inline-flex"
-            }
-          >
-            <Scale className="size-4 sm:hidden" aria-hidden />
-            <span className="sr-only sm:not-sr-only">Comparador</span>
-            {compare.items.length > 0 ? (
-              <span className="tabular-nums text-primary">{compare.items.length}</span>
-            ) : null}
-          </Link>
         </div>
       </div>
       <div className="hidden border-t border-border lg:block">
@@ -361,9 +364,9 @@ function Footer() {
         </nav>
       </div>
       <div className="border-t border-border">
-        <p className="mx-auto max-w-6xl px-4 py-3 font-mono text-xs text-muted-foreground tabular-nums">
-          vapelog@catalogo:~$ {devices.length} dispositivos · {coils.length} resistencias ·{" "}
-          {liquids.length} líquidos · {parts.length} componentes
+        <p className="mx-auto max-w-6xl px-4 py-3 text-xs text-muted-foreground tabular-nums">
+          {devices.length} dispositivos · {coils.length} resistencias · {liquids.length} líquidos ·{" "}
+          {parts.length} componentes
         </p>
       </div>
     </footer>

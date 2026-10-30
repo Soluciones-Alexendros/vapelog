@@ -35,7 +35,7 @@ const COMMANDS = [
   },
   { id: "liquidos", label: "Líquidos", hint: "Sales y shortfill", to: "/liquidos" },
   { id: "componentes", label: "Componentes", hint: "Celdas y boquillas", to: "/componentes" },
-  { id: "buscar", label: "Buscar", hint: "Por característica", to: "/buscar" },
+  { id: "buscar", label: "Resultados", hint: "Por característica", to: "/buscar" },
   {
     id: "cruce",
     label: "Compatibilidad",
@@ -70,9 +70,18 @@ function resultAnchors(list: HTMLElement | null): HTMLAnchorElement[] {
   return Array.from(list.querySelectorAll<HTMLAnchorElement>("a"));
 }
 
+function chordLabel(): string {
+  if (typeof navigator === "undefined") return "Ctrl K";
+  const platform = navigator.platform ?? "";
+  const ua = navigator.userAgent ?? "";
+  const mac = /Mac|iPhone|iPad|iPod/.test(platform) || /Mac OS|iPhone|iPad|iPod/.test(ua);
+  return mac ? "⌘K" : "Ctrl K";
+}
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [modChord, setModChord] = useState("Ctrl K");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -94,6 +103,12 @@ export function CommandPalette() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  useEffect(() => {
+    // Etiqueta del atajo según plataforma; SSR arranca con Ctrl K.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setModChord(chordLabel());
+  }, []);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -171,7 +186,7 @@ export function CommandPalette() {
           aria-hidden
           className="hidden rounded-sm border border-border px-1 text-xs text-muted-foreground md:inline"
         >
-          ⌘K
+          {modChord}
         </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
