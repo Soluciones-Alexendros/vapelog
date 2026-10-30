@@ -307,19 +307,37 @@ describe("contraste de los tokens", () => {
       }
     });
 
-    it("oscuro: kinds ≥3:1 sobre card y background", () => {
-      const card = requireToken(darkTokens, "--card");
-      const background = requireToken(darkTokens, "--background");
-      for (const name of KIND_TOKENS) {
-        const kind = requireToken(darkTokens, name);
-        for (const [surfaceName, surface] of [
-          ["--card", card],
-          ["--background", background],
-        ] as const) {
+    it("claro y oscuro: kinds ≥4,5:1 sobre background; controles ≥3:1", () => {
+      for (const [label, tokens] of [
+        ["claro", lightTokens],
+        ["oscuro", darkTokens],
+      ] as const) {
+        const background = requireToken(tokens, "--background");
+        const card = requireToken(tokens, "--card");
+        const muted = requireToken(tokens, "--muted-foreground");
+        const ring = requireToken(tokens, "--ring");
+        const primary = requireToken(tokens, "--primary");
+        const primaryFg = requireToken(tokens, "--primary-foreground");
+        const borderStrong = requireToken(tokens, "--border-strong");
+        const input = requireToken(tokens, "--input");
+
+        assert.ok(
+          contrast(requireToken(tokens, "--foreground"), background) >= 4.5,
+          `${label} foreground/background`,
+        );
+        assert.ok(contrast(muted, background) >= 4.5, `${label} muted-foreground/background`);
+        assert.ok(contrast(borderStrong, background) >= 3, `${label} border-strong/background`);
+        assert.ok(contrast(input, background) >= 3, `${label} input/background`);
+        assert.ok(contrast(ring, background) >= 3, `${label} ring/background`);
+        assert.ok(contrast(primaryFg, primary) >= 4.5, `${label} primary-foreground/primary`);
+
+        for (const name of KIND_TOKENS) {
+          const kind = requireToken(tokens, name);
           assert.ok(
-            contrast(kind, surface) >= 3,
-            `oscuro ${name}/${surfaceName} ${contrast(kind, surface)}`,
+            contrast(kind, background) >= 4.5,
+            `${label} ${name}/background ${contrast(kind, background)}`,
           );
+          assert.ok(contrast(kind, card) >= 3, `${label} ${name}/card ${contrast(kind, card)}`);
         }
       }
     });
