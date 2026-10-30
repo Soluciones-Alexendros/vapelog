@@ -175,6 +175,14 @@ describe("nicokit", () => {
     assert.equal(result.remainingMl, 0);
   });
 
+  it("el ejemplo de ayuda Nicokit coincide con VAL-008-01", async () => {
+    const { NICOKIT_EXAMPLE } = await import("../components/tool-search.ts");
+    const result = mixNicotine({ ...NICOKIT_EXAMPLE });
+    assert.equal("error" in result, false);
+    if ("error" in result) return;
+    assert.equal(round(result.mgPerMl, 2), 3.33);
+  });
+
   it("avisa si el shot no cabe", () => {
     const result = mixNicotine({
       initialZeroMgMl: 50,
