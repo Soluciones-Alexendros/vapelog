@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/public-sans/index.css";
-@import "@fontsource/space-mono/latin-400.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 
 :root {
   --background: oklch(0.985 0.003 260);
@@ -50,7 +50,7 @@
   --dur-4: 200ms;
   --font-sans: "Public Sans Variable", "Segoe UI", sans-serif;
   --font-display: "Public Sans Variable", "Segoe UI", sans-serif;
-  --font-mono: "Space Mono", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
   /* C 0,152: con los tonos del plan, C 0,045 no alcanza ΔE≥15 (ADR-0016). */
   --kind-dispositivo: oklch(0.48 0.152 85);
   --kind-resistencia: oklch(0.48 0.152 200);
@@ -462,7 +462,12 @@
   font-variant-numeric: tabular-nums;
 }
 
-.mono-label,
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .kind-label {
   font-family: var(--font-mono);
   text-transform: uppercase;
