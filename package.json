@@ -27,6 +27,7 @@
     "check:supply-chain": "node scripts/supply-chain-audit.mjs",
     "test:sql": "node scripts/sql-install.mjs",
     "test:postdeploy": "node scripts/postdeploy-check.mjs",
+    "harness": "node scripts/harness.mjs",
     "icons": "node scripts/build-icons.mjs",
     "logo": "node scripts/build-logo.mjs",
     "sitemap": "node scripts/build-sitemap.mjs",

@@ -1,24 +1,104 @@
 #!/usr/bin/env node
-// Agregador puro del gate de publicación: solo pasa si cada dependencia
-// está en `success`. skipped / cancelled / failure (u otro) fallan el gate.
+// Agregador del gate de publicación: solo pasa si el JSON trae exactamente
+// las dependencias obligatorias y cada una está en `success`.
+// skipped / cancelled / failure (u otro) fallan el gate.
+// Conjunto vacío, arrays o claves de más/menos → gate rojo.
 import { readFileSync } from "node:fs";
 
 /**
- * @param {Record<string, { result?: string } | null | undefined>} needs
+ * Lista única del contrato. El job `release-ready` de ci.yml debe declarar
+ * el mismo `needs`; el test de paridad lo comprueba.
+ * @type {readonly string[]}
+ */
+export const REQUIRED_JOBS = Object.freeze([
+  "quality",
+  "test",
+  "build",
+  "smoke",
+  "browser",
+  "fx-e2e",
+  "supply-chain",
+  "sql-integration",
+  "secrets",
+  "sca",
+]);
+
+/**
+ * @param {unknown} needs
  * @returns {{ ok: boolean, failures: string[] }}
  */
 export function evaluateReleaseReady(needs) {
   const failures = [];
-  if (!needs || typeof needs !== "object") {
+  if (needs == null || typeof needs !== "object" || Array.isArray(needs)) {
     return { ok: false, failures: ["needs ausente o inválido"] };
   }
-  for (const [name, job] of Object.entries(needs)) {
-    const result = job?.result;
+
+  /** @type {Record<string, { result?: string } | null | undefined>} */
+  const record = needs;
+  const keys = Object.keys(record);
+
+  if (keys.length === 0) {
+    failures.push("needs vacío: faltan dependencias obligatorias");
+  }
+
+  for (const name of REQUIRED_JOBS) {
+    if (!(name in record)) {
+      failures.push(`${name}: ausente`);
+      continue;
+    }
+    const result = record[name]?.result;
     if (result !== "success") {
       failures.push(`${name}: ${result ?? "undefined"}`);
     }
   }
+
+  for (const name of keys) {
+    if (!REQUIRED_JOBS.includes(name)) {
+      failures.push(`${name}: no está en el contrato`);
+    }
+  }
+
   return { ok: failures.length === 0, failures };
+}
+
+/**
+ * Extrae el array `needs` del job `release-ready` en ci.yml (texto).
+ * Acepta `needs: [a, b]` en una línea o `needs:` + `[a, b]` en la siguiente.
+ * @param {string} yaml
+ * @returns {string[] | null}
+ */
+export function parseReleaseReadyNeedsFromCi(yaml) {
+  const lines = yaml.split(/\r?\n/);
+  let inJob = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^ {2}release-ready:\s*$/.test(line)) {
+      inJob = true;
+      continue;
+    }
+    if (inJob && /^ {2}[A-Za-z0-9_-]+:\s*$/.test(line)) {
+      break;
+    }
+    if (!inJob) continue;
+    const inline = line.match(/^\s+needs:\s*\[([^\]]*)\]\s*$/);
+    if (inline) {
+      return inline[1]
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    if (/^\s+needs:\s*$/.test(line)) {
+      const next = lines[i + 1] ?? "";
+      const bracket = next.match(/^\s*\[([^\]]*)\]\s*$/);
+      if (bracket) {
+        return bracket[1]
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    }
+  }
+  return null;
 }
 
 function main() {

@@ -28,15 +28,15 @@ sus programas respectivos cuando el fallo sea suyo.
 
 ## CI de seguridad
 
+Los jobs **`secrets`** (gitleaks v8.30.1 con sha256) y **`sca`**
+(OSV-Scanner sobre `pnpm-lock.yaml`) viven en
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) y forman parte del
+`needs` de **`release-ready`**: un fallo impide la publicación. El audit
+`pnpm audit --prod --audit-level=high` y Trufflehog/actionlint/GHSA viven
+en el job `supply-chain` del mismo workflow (también obligatorio).
+
 El workflow [`.github/workflows/security.yml`](.github/workflows/security.yml)
-corre en cada PR y push a `main`:
-
-- **`secrets`:** gitleaks (binario v8.30.1 con verificación sha256) sobre el
-  historial, con [`.gitleaksignore`](.gitleaksignore). Sin
-  `gitleaks-action` (licencia).
-- **`sca`:** `pnpm audit --prod --audit-level=high` más OSV-Scanner sobre
-  `pnpm-lock.yaml`.
-
-En cron semanal y `workflow_dispatch` también corre `supply-chain`
-(Trufflehog, actionlint y contraste GHSA). En PR/push esos controles viven
-en el job `supply-chain` de `ci.yml`.
+sigue disparándose en PR/push a `main` (duplicado temporal de `secrets`/
+`sca` + audit en ese archivo) y en cron semanal / `workflow_dispatch`
+(`supply-chain`). No retirar el trigger de PR/push hasta confirmar el
+ruleset del operador.

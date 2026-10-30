@@ -263,6 +263,51 @@ jobs:
             exit 1
           fi
           E2E_BASE_URL="http://127.0.0.1:${PORT}" E2E_PORT="${PORT}" pnpm exec playwright test
+          # Misma suite de catálogo que Preview, contra Nitro (gate de integración).
+          E2E_BASE_URL="http://127.0.0.1:${PORT}" pnpm exec playwright test -c playwright.preview.config.ts
+
+  # Fuera de release-ready: espera el Preview de Vercel del PR.
+  # Si entrara en needs del gate, un required check bloquearía el deploy de Vercel.
+  preview-e2e:
+    name: preview-e2e
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      deployments: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium for preview e2e
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Esperar URL del Preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/wait-preview-url.mjs "${{ github.event.pull_request.head.sha }}" 900
+
+      - name: Playwright catálogo contra Preview
+        run: |
+          set -euo pipefail
+          E2E_BASE_URL="$(tr -d '\n' < preview-url.txt)"
+          export E2E_BASE_URL
+          # Sin querystring en el log (credenciales).
+          node -e 'const u=new URL(process.env.E2E_BASE_URL); u.search=""; console.log("E2E_BASE_URL="+u)'
+          pnpm exec playwright test -c playwright.preview.config.ts
 
   smoke-bench:
     name: smoke-bench (informativo)
@@ -425,10 +470,49 @@ jobs:
           fi
           grep -qi 'foreign key\|violates' /tmp/fk-err.txt
 
+  # gitleaks: bloquea publicación vía release-ready. Duplicado temporal con
+  # security.yml (PR/push) hasta que el operador confirme el ruleset.
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # Binario gitleaks (no la action de pago). Checksum release v8.30.1.
+      - name: gitleaks
+        run: |
+          set -euo pipefail
+          curl -sSfL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks detect --source . --gitleaks-ignore-path=.gitleaksignore --redact --verbose
+
+  # OSV-Scanner: bloquea publicación vía release-ready. El audit alto/crítico
+  # vive solo en supply-chain (no se duplica aquí). Duplicado temporal de OSV
+  # con security.yml hasta confirmar ruleset.
+  sca:
+    name: sca
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@19ec1116569a47416e11a45848722b1af31a857b # v1.9.0
+        with:
+          scan-args: |-
+            --lockfile=pnpm-lock.yaml
+
   release-ready:
     name: release-ready
     if: always()
-    needs: [quality, test, build, smoke, browser, fx-e2e, supply-chain, sql-integration]
+    needs:
+      [quality, test, build, smoke, browser, fx-e2e, supply-chain, sql-integration, secrets, sca]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

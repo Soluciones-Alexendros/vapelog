@@ -7,6 +7,8 @@ settings:
 overrides:
   source-map-js: '>=1.2.2'
   zod: '>=4.6.6'
+  seroval: '>=1.6.8'
+  seroval-plugins: '>=1.6.8'
 
 importers:
 
@@ -2044,15 +2046,15 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  seroval-plugins@1.6.7:
-    resolution: {integrity: sha512-4Nk35ttD3DTDJW4hgw5StsVAPeU6qnDFnULAouw6tQ7oLTV/ICXrWpsXo2EE52eSP2joUMazbVf52mFEcADqRw==}
-    engines: {node: '>=10'}
+  seroval-plugins@1.7.4:
+    resolution: {integrity: sha512-u8ievIFVjlXK0Ea7g+tUJD5fMZmrM0N7Tj2povSRUHaUfGqqy83yyuKi/cj3mKCLIUn51hS0VV5YEaKpHVOHsw==}
+    engines: {node: '>=20'}
     peerDependencies:
-      seroval: ^1.0
+      seroval: '>=1.6.8'
 
-  seroval@1.6.7:
-    resolution: {integrity: sha512-AeDcLh0yO2SFm9W71essgnSzLV9DI8ZH0x0knXn2DMnUZj728mpLbxjlbB6IqKCmqh8JA3cEqRyGoNkt584JcQ==}
-    engines: {node: '>=10'}
+  seroval@1.7.4:
+    resolution: {integrity: sha512-ssHqh9AYMnKytqsfxpC3Z8Mrn7kodvybd7kgtvnXr6qy6Nr2xA48/Y8xc367PYJpH87itPTpGTi2fY9JO1tQTw==}
+    engines: {node: '>=20'}
 
   sharp@0.35.5:
     resolution: {integrity: sha512-Ywn4OnzGukp7CDMrp08RQ50YKmuwG47brZgIVPTvBaaAfQlRlygrRqSrxdCiL9M+LlzLBiJ68IR1QqvzHyjC7g==}
@@ -3155,15 +3157,15 @@ snapshots:
     dependencies:
       '@tanstack/history': 1.162.4
       cookie-es: 3.1.1
-      seroval: 1.6.7
-      seroval-plugins: 1.6.7(seroval@1.6.7)
+      seroval: 1.7.4
+      seroval-plugins: 1.7.4(seroval@1.7.4)
 
   '@tanstack/router-core@1.171.37':
     dependencies:
       '@tanstack/history': 1.162.5
       cookie-es: 3.1.1
-      seroval: 1.6.7
-      seroval-plugins: 1.6.7(seroval@1.6.7)
+      seroval: 1.7.4
+      seroval-plugins: 1.7.4(seroval@1.7.4)
 
   '@tanstack/router-generator@1.167.44':
     dependencies:
@@ -3220,7 +3222,7 @@ snapshots:
       '@tanstack/router-core': 1.171.37
       '@tanstack/start-fn-stubs': 1.162.0
       '@tanstack/start-storage-context': 1.167.39
-      seroval: 1.6.7
+      seroval: 1.7.4
 
   '@tanstack/start-fn-stubs@1.162.0': {}
 
@@ -3239,7 +3241,7 @@ snapshots:
       lightningcss: 1.33.0
       pathe: 2.0.3
       picomatch: 4.0.7
-      seroval: 1.6.7
+      seroval: 1.7.4
       source-map: 0.7.6
       srvx: 1.0.5
       tinyglobby: 0.2.17
@@ -3270,7 +3272,7 @@ snapshots:
       '@tanstack/start-storage-context': 1.167.39
       cookie-es: 3.1.1
       fetchdts: 0.2.0
-      seroval: 1.6.7
+      seroval: 1.7.4
 
   '@tanstack/start-storage-context@1.167.39':
     dependencies:
@@ -4063,11 +4065,11 @@ snapshots:
 
   semver@7.8.5: {}
 
-  seroval-plugins@1.6.7(seroval@1.6.7):
+  seroval-plugins@1.7.4(seroval@1.7.4):
     dependencies:
-      seroval: 1.6.7
+      seroval: 1.7.4
 
-  seroval@1.6.7: {}
+  seroval@1.7.4: {}
 
   sharp@0.35.5(@types/node@26.6.3):
     dependencies:

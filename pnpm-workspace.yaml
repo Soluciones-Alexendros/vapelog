@@ -18,3 +18,5 @@ minimumReleaseAgeExclude:
 overrides:
   source-map-js: ">=1.2.2"
   zod: ">=4.6.6"
+  seroval: ">=1.6.8"
+  seroval-plugins: ">=1.6.8"
