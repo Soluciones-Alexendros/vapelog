@@ -2,12 +2,13 @@
 
 ### Propósito de este documento
 
-- **Objetivos:** Registrar la matriz mínima de aceptación manual, el SHA
-  candidato y los gates locales del cierre U1–U8 según ADR-0017.
-- **Estructura:** Candidato → gates → matriz → WCAG tocado → decisión.
-- **Contenido a integrar según contexto:** No inventa datos de ficha. La
-  aprobación humana de capturas cierra este expediente; `pnpm run a11y` no
-  declara cumplimiento WCAG completo.
+- **Objetivos:** Registrar la matriz mínima de aceptación, el SHA candidato,
+  los gates locales U1–U9 y las capturas Playwright según ADR-0017.
+- **Estructura:** Candidato → unidades → gates → capturas → matriz → WCAG →
+  decisión.
+- **Contenido a integrar según contexto:** No inventa datos de ficha. Las
+  capturas se regeneran con `pnpm run aceptacion:capturas`; las casillas ☐
+  las marca un humano. `pnpm run a11y` no declara cumplimiento WCAG completo.
 
 ## Candidato
 
@@ -35,6 +36,8 @@ U9. Cualquier Preview de PRs posteriores debe contrastarse otra vez.
 | U4     | #38 | Nav principal, Comparador visible, Resultados, pie sin prompt |
 | U7     | #39 | `/comparar?dominio=&fichas=` sobre localStorage               |
 | U8     | #40 | Ohm sin sustitución; Nicokit sin defaults silenciosos         |
+| U9     | #41 | Expediente, SHA candidato, gates locales documentados         |
+| —      | #42 | Harness + 44 capturas Playwright de la matriz                 |
 
 ## Gates locales (U9)
 
@@ -99,6 +102,9 @@ mejora**.
 
 ## Decisión
 
-Pendiente de aprobación humana de capturas y recorridos. Gates de la
-sección 9 del plan v2 en verde local; CI de `main` tras merge de U8 en verde
-respecto al candidato.
+**Entrega de plan (código + evidencia):** U1–U9 y capturas (#32–#42) en
+`main`; release empaquetado en v0.15.0. Gates locales y CI en verde.
+
+**Aprobación humana de casillas ☐:** pendiente del operador tras revisar
+[aceptacion-v2/capturas/indice.md](./aceptacion-v2/capturas/indice.md). Sin
+ese visto bueno el expediente no se declara cerrado visualmente.

@@ -35,6 +35,7 @@ test: node --test "src/data/_.test.ts" "scripts/_.test.mjs"
 test:coverage: node --experimental-test-coverage --test "src/data/_.test.ts" "scripts/_.test.mjs"
 smoke: bash scripts/smoke.sh
 visual-smoke: node scripts/visual-smoke.mjs
+aceptacion:capturas: node scripts/aceptacion-v2-capturas.mjs
 smoke-bench: node scripts/smoke-bench.mjs
 check:env: node scripts/check-env.mjs
 check:manifest: node scripts/check-manifest.mjs
