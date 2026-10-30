@@ -22,7 +22,13 @@ export const NICOKIT_EXAMPLE = {
 } as const;
 
 export function parseToolSearch(search: Record<string, unknown>): ToolSearch {
-  const text = (key: string) => (typeof search[key] === "string" ? search[key] : undefined);
+  // TanStack puede tipar `?aroma=50` como number; hay que rehidratar a string.
+  const text = (key: string): string | undefined => {
+    const value = search[key];
+    if (typeof value === "string") return value;
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    return undefined;
+  };
   const tab = search.tab === "nicokit" ? "nicokit" : search.tab === "ohm" ? "ohm" : undefined;
   return {
     tab,
