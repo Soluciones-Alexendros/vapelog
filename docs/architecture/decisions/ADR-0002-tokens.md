@@ -17,6 +17,11 @@ Aceptado
 > `border`, `ring`, `chart-*`); cambian los valores concretos de los tokens,
 > la escala de superficies/estados, los tokens de movimiento y humo, las
 > fuentes autoalojadas y el tema en tres estados (Claro/Oscuro/Sistema).
+>
+> **Nota (cierre v2, 2026-10-30):** los valores concretos de neutros (tono
+> ≈ 260), primario azul-grisáceo y `--kind-*` con croma 0,045 viven en
+> [ADR-0017](./ADR-0017-paleta-neutra.md). Este ADR conserva el contrato de
+> nombres y de clase `.dark`.
 
 ## Contexto
 

@@ -51,11 +51,14 @@ sin simular afiliación con xAI ni copiar marcas o tipografías propietarias.
    partículas de humo, capas L0 decorativas y el radiogrupo de efectos.
 5. **Preferencia FX.** Las claves `vapelog-fx` y `vapelog-fx:v2` se leen de
    forma compatible y no relanzan efectos. La UI del conmutador desaparece.
+   Enmienda: [ADR-0017](./ADR-0017-paleta-neutra.md) fija que se leen una
+   vez, se borran y no se reescriben; el código muerto se elimina en U5.
 6. **Movimiento restante.** Solo transiciones breves de `transform` /
    `opacity` (acordeón, diálogo, focus), con `prefers-reduced-motion` a ~0.
 7. **Tipografía.** Public Sans en interfaz y titulares. Space Mono solo en
    cifras y unidades (`tabular-nums`). Archivo Black se retira con el
-   brutalismo.
+   brutalismo. Enmienda: [ADR-0017](./ADR-0017-paleta-neutra.md) sustituye
+   Space Mono por JetBrains Mono Variable (U3).
 8. **Marca.** Se conservan la voluta y los SVG exigidos por
    `scripts/brand-check.mjs`. Foco visible, validación, progreso, fotos y
    «Sin dato publicado» se mantienen.
