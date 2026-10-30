@@ -5,7 +5,27 @@ export type CompareRefLike = {
   slug: string;
 };
 
+/** Search tipado de `/comparar` (validateSearch). */
+export type CompareRouteSearch = {
+  dominio?: Domain;
+  fichas?: string;
+};
+
+export type ParsedCompareSearch = {
+  items: CompareRefLike[];
+  /** Slugs únicos de la URL que no existen en el catálogo. */
+  discarded: number;
+  /** Había `dominio` + `fichas` en la query (intención de selección por URL). */
+  hasUrlIntent: boolean;
+};
+
 const DOMAINS: ReadonlySet<string> = new Set(["device", "coil", "liquid", "part"]);
+
+function asDomain(value: unknown): Domain | undefined {
+  return value === "device" || value === "coil" || value === "liquid" || value === "part"
+    ? value
+    : undefined;
+}
 
 export function slugExistsInCatalog(
   domain: Domain,
@@ -67,4 +87,60 @@ export function parseCompareJson(
   } catch {
     return [];
   }
+}
+
+/** Normaliza la search de `/comparar` sin consultar el catálogo. */
+export function validateCompareRouteSearch(search: Record<string, unknown>): CompareRouteSearch {
+  const dominio = asDomain(search.dominio);
+  const fichas =
+    typeof search.fichas === "string" && search.fichas.length > 0 ? search.fichas : undefined;
+  const out: CompareRouteSearch = {};
+  if (dominio) out.dominio = dominio;
+  if (fichas) out.fichas = fichas;
+  return out;
+}
+
+/**
+ * Parseo puro junto a `sanitizeCompare`: dominio + fichas separadas por coma.
+ * Descarta desconocidos, duplicados, dominio distinto y el quinto en adelante.
+ */
+export function parseCompareSearch(
+  search: Record<string, unknown> | CompareRouteSearch,
+  exists: (domain: Domain, slug: string) => boolean,
+): ParsedCompareSearch {
+  const validated = validateCompareRouteSearch(search as Record<string, unknown>);
+  const hasUrlIntent = Boolean(validated.dominio && validated.fichas);
+  if (!validated.dominio || !validated.fichas) {
+    return { items: [], discarded: 0, hasUrlIntent: false };
+  }
+  const domain = validated.dominio;
+  const slugs = validated.fichas
+    .split(",")
+    .map((part) => part.trim())
+    .filter((slug) => slug.length > 0);
+  const unique = [...new Set(slugs)];
+  let discarded = 0;
+  for (const slug of unique) {
+    if (!exists(domain, slug)) discarded += 1;
+  }
+  const items = sanitizeCompare(
+    slugs.map((slug) => ({ domain, slug })),
+    exists,
+  );
+  return { items, discarded, hasUrlIntent };
+}
+
+/** Search canónica solo con slugs públicos ya sanitizados. */
+export function compareSearchFromItems(items: readonly CompareRefLike[]): CompareRouteSearch {
+  if (items.length === 0) return {};
+  const domain = items[0]?.domain;
+  if (!domain) return {};
+  return {
+    dominio: domain,
+    fichas: items.map((item) => item.slug).join(","),
+  };
+}
+
+export function sameCompareSearch(a: CompareRouteSearch, b: CompareRouteSearch): boolean {
+  return (a.dominio ?? "") === (b.dominio ?? "") && (a.fichas ?? "") === (b.fichas ?? "");
 }

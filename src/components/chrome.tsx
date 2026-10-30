@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { BrandLogo } from "@/components/brand-mark";
@@ -28,7 +28,15 @@ import {
   storeGet,
   storeSet,
 } from "@/lib/browser-store";
-import { parseCompareJson, shouldPersistCompare, slugExistsInCatalog } from "@/lib/compare-store";
+import {
+  compareSearchFromItems,
+  parseCompareJson,
+  parseCompareSearch,
+  sameCompareSearch,
+  shouldPersistCompare,
+  slugExistsInCatalog,
+  type CompareRouteSearch,
+} from "@/lib/compare-store";
 import { clearFxPrefs } from "@/lib/clear-fx-prefs";
 import { kindOf } from "@/lib/kind";
 import { KindCard } from "@/components/ui/kind-card";
@@ -73,24 +81,87 @@ function domainPlural(domain: Domain, count: number): string {
   return count === 1 ? "componente" : "componentes";
 }
 
+function discardedNotice(count: number): string {
+  return count === 1
+    ? "Se descartó 1 ficha no encontrada en el archivo."
+    : `Se descartaron ${count} fichas no encontradas en el archivo.`;
+}
+
 function CompareProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CompareRef[]>([]);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const locationSearch = useRouterState({ select: (state) => state.location.search });
+  const navigate = useNavigate();
+  const onComparePage = pathname === "/comparar";
+
+  const urlParsed = useMemo(
+    () => parseCompareSearch(locationSearch as CompareRouteSearch, compareExists),
+    [locationSearch],
+  );
+
+  // En /comparar con selección válida en la URL, SSR puede pintar sin esperar
+  // a localStorage. Fuera de /comparar el estado inicial sigue siendo [].
+  const [items, setItems] = useState<CompareRef[]>(() =>
+    onComparePage && urlParsed.items.length > 0 ? urlParsed.items : [],
+  );
   const [hydrated, setHydrated] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(() =>
+    onComparePage && urlParsed.discarded > 0 ? discardedNotice(urlParsed.discarded) : null,
+  );
   const [pending, setPending] = useState<CompareRef | null>(null);
+  const appliedUrlKey = useRef<string | null>(
+    onComparePage && urlParsed.items.length > 0
+      ? JSON.stringify(compareSearchFromItems(urlParsed.items))
+      : null,
+  );
 
   useEffect(() => {
-    // Restauración post-hidratación: el estado inicial es [] en servidor y
-    // cliente para evitar divergencia; localStorage solo existe en el cliente.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (hydrated) return;
+    if (onComparePage && urlParsed.items.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setItems(urlParsed.items);
+      if (urlParsed.discarded > 0) setNotice(discardedNotice(urlParsed.discarded));
+      appliedUrlKey.current = JSON.stringify(compareSearchFromItems(urlParsed.items));
+      setHydrated(true);
+      return;
+    }
+    if (onComparePage && urlParsed.hasUrlIntent && urlParsed.discarded > 0) {
+      setItems(readStoredCompare());
+      setNotice(discardedNotice(urlParsed.discarded));
+      setHydrated(true);
+      return;
+    }
     setItems(readStoredCompare());
     setHydrated(true);
-  }, []);
+  }, [hydrated, onComparePage, urlParsed]);
+
+  // Entrada a /comparar con URL nueva (navegación cliente o enlace compartido).
+  useEffect(() => {
+    if (!hydrated || !onComparePage) return;
+    if (urlParsed.items.length === 0 && !urlParsed.hasUrlIntent) return;
+    const key = JSON.stringify(compareSearchFromItems(urlParsed.items));
+    if (key === appliedUrlKey.current) return;
+    appliedUrlKey.current = key;
+    setItems(urlParsed.items);
+    setNotice(urlParsed.discarded > 0 ? discardedNotice(urlParsed.discarded) : null);
+  }, [hydrated, onComparePage, urlParsed]);
 
   useEffect(() => {
     if (!shouldPersistCompare(hydrated)) return;
     storeSet(COMPARE_STORAGE_KEY, JSON.stringify(items), localStore());
   }, [items, hydrated]);
+
+  // En /comparar, la selección se refleja en la URL (replace).
+  useEffect(() => {
+    if (!hydrated || !onComparePage) return;
+    const next = compareSearchFromItems(items);
+    const current = locationSearch as CompareRouteSearch;
+    if (sameCompareSearch(next, current)) {
+      appliedUrlKey.current = JSON.stringify(next);
+      return;
+    }
+    appliedUrlKey.current = JSON.stringify(next);
+    void navigate({ to: "/comparar", search: next, replace: true });
+  }, [items, hydrated, onComparePage, locationSearch, navigate]);
 
   const api = useMemo(
     () => ({
