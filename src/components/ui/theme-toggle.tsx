@@ -1,8 +1,6 @@
-import { Monitor, Moon, Sparkles, Sun, Zap, ZapOff } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useSyncExternalStore, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
-import { setFxPreference, useFxPref, type FxPref } from "@/lib/fx";
-import { requestPuff } from "@/lib/smoke/emit-bus";
 
 const STORAGE_KEY = "vapelog-theme";
 
@@ -22,12 +20,6 @@ const THEME_OPTIONS: Array<{ value: ThemePreference; label: string; Icon: typeof
   { value: "light", label: "Claro", Icon: Sun },
   { value: "system", label: "Sistema", Icon: Monitor },
   { value: "dark", label: "Oscuro", Icon: Moon },
-];
-
-const FX_OPTIONS: Array<{ value: FxPref; label: string; Icon: typeof Sparkles }> = [
-  { value: "auto", label: "Auto", Icon: Sparkles },
-  { value: "on", label: "Activados", Icon: Zap },
-  { value: "off", label: "Desactivados", Icon: ZapOff },
 ];
 
 function isPreference(value: string | null): value is ThemePreference {
@@ -76,12 +68,6 @@ function effectiveOf(preference: ThemePreference, systemDark: boolean): Effectiv
 
 function syncThemeColorMeta(effective: EffectiveTheme) {
   const content = effective === "dark" ? THEME_COLOR_DARK : THEME_COLOR_LIGHT;
-  // Dos metas (media light/dark) sirven para que una siempre coincida con el
-  // media del sistema; fijando AMBAS al color efectivo, la que aplique muestra
-  // el color correcto en las cuatro combinaciones posibles. Este sync corre
-  // en el efecto post-hidratación: el script de arranque no toca las metas
-  // porque React 19 reinsertaría como duplicada cualquier <meta> hoist cuyo
-  // `content` cambiara antes de la hidratación.
   document
     .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
     .forEach((meta) => meta.setAttribute("content", content));
@@ -117,10 +103,8 @@ function radioKeyNav(
 export function ThemeToggle() {
   const preference = useSyncExternalStore(subscribePreference, readPreference, getServerPreference);
   const systemDark = useSyncExternalStore(subscribeSystem, readSystem, getServerSystem);
-  const fxPref = useFxPref();
   const effective = effectiveOf(preference, systemDark);
   const themeButtonsRef = useRef<Array<HTMLButtonElement | null>>([]);
-  const fxButtonsRef = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     applyEffectiveTheme(effective);
@@ -135,89 +119,36 @@ export function ThemeToggle() {
     themeButtonsRef.current[nextIndex]?.focus();
   };
 
-  const handleFxKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const index = FX_OPTIONS.findIndex((option) => option.value === fxPref);
-    const nextIndex = radioKeyNav(event, FX_OPTIONS.length, index);
-    if (nextIndex === null) return;
-    event.preventDefault();
-    const next = FX_OPTIONS[nextIndex].value;
-    setFxPreference(next);
-    if (next === "on" || next === "auto") {
-      const box = fxButtonsRef.current[nextIndex]?.getBoundingClientRect();
-      if (box) requestPuff(box.right - 8, box.top + 8);
-    }
-    fxButtonsRef.current[nextIndex]?.focus();
-  };
-
   return (
-    <div className="inline-flex items-center gap-1">
-      <div
-        role="radiogroup"
-        aria-label="Tema de la interfaz"
-        onKeyDown={handleThemeKeyDown}
-        className="inline-flex items-center rounded-md border border-border bg-muted p-0.5"
-      >
-        {THEME_OPTIONS.map((option, index) => {
-          const checked = preference === option.value;
-          return (
-            <button
-              key={option.value}
-              ref={(node) => {
-                themeButtonsRef.current[index] = node;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={checked}
-              tabIndex={checked ? 0 : -1}
-              aria-label={option.label}
-              onClick={() => persistPreference(option.value)}
-              className={cn(
-                "inline-flex min-h-9 items-center justify-center rounded-sm px-1.5 text-muted-foreground transition-colors duration-2 hover:text-foreground sm:px-2.5",
-                checked && "bg-card text-foreground shadow-1",
-              )}
-            >
-              <option.Icon className="size-4" aria-hidden />
-            </button>
-          );
-        })}
-      </div>
-      <div
-        role="radiogroup"
-        aria-label="Efectos visuales"
-        onKeyDown={handleFxKeyDown}
-        className="hidden items-center rounded-md border border-border bg-muted p-0.5 sm:inline-flex"
-      >
-        {FX_OPTIONS.map((option, index) => {
-          const checked = fxPref === option.value;
-          return (
-            <button
-              key={option.value}
-              ref={(node) => {
-                fxButtonsRef.current[index] = node;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={checked}
-              tabIndex={checked ? 0 : -1}
-              aria-label={option.label}
-              title={option.label}
-              onClick={(event) => {
-                setFxPreference(option.value);
-                if (option.value === "on" || option.value === "auto") {
-                  const box = event.currentTarget.getBoundingClientRect();
-                  requestPuff(box.right - 8, box.top + 8);
-                }
-              }}
-              className={cn(
-                "inline-flex min-h-9 items-center justify-center rounded-sm px-1.5 text-muted-foreground transition-colors duration-2 hover:text-foreground sm:px-2.5",
-                checked && "bg-card text-foreground shadow-1",
-              )}
-            >
-              <option.Icon className="size-4" aria-hidden />
-            </button>
-          );
-        })}
-      </div>
+    <div
+      role="radiogroup"
+      aria-label="Tema de la interfaz"
+      onKeyDown={handleThemeKeyDown}
+      className="inline-flex items-center rounded-md border border-border bg-muted p-0.5"
+    >
+      {THEME_OPTIONS.map((option, index) => {
+        const checked = preference === option.value;
+        return (
+          <button
+            key={option.value}
+            ref={(node) => {
+              themeButtonsRef.current[index] = node;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            tabIndex={checked ? 0 : -1}
+            aria-label={option.label}
+            onClick={() => persistPreference(option.value)}
+            className={cn(
+              "inline-flex min-h-9 items-center justify-center rounded-sm px-1.5 text-muted-foreground transition-colors duration-2 hover:text-foreground sm:px-2.5",
+              checked && "bg-card text-foreground shadow-1",
+            )}
+          >
+            <option.Icon className="size-4" aria-hidden />
+          </button>
+        );
+      })}
     </div>
   );
 }

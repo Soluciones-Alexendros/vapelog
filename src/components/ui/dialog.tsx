@@ -26,7 +26,7 @@ function DialogTitle(props: ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className="font-display text-4xl text-foreground"
+      className="text-4xl font-semibold text-foreground"
       {...props}
     />
   );

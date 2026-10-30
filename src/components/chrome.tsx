@@ -5,7 +5,6 @@ import { BrandLogo } from "@/components/brand-mark";
 import { CommandPalette } from "@/components/command-palette";
 import { CompareContext, useCompare, type CompareRef } from "@/components/compare-context";
 import { domainLabel } from "@/components/labels";
-import { RevealManager } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -594,7 +593,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
       <Header />
       <RouteFocus />
-      <RevealManager />
       {/* Solo se monta cuando bloquea: montarlo cerrado y abrirlo después
           dispara un race de react-remove-scroll (classList de null). */}
       {checked && !allowed ? <AgeGate open onAllow={() => setAllowed(true)} /> : null}

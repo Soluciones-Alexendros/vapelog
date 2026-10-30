@@ -33,7 +33,6 @@ import { Package, SlidersHorizontal, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { KindCard } from "@/components/ui/kind-card";
-import { useCardFx } from "@/components/ui/use-card-fx";
 
 export function CatalogBrowser({
   domain,
@@ -58,7 +57,6 @@ export function CatalogBrowser({
   const showTpd = domain === "device" || domain === "liquid";
   const [filtersOpen, setFiltersOpen] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
-  useCardFx(listRef);
 
   const set = (patch: Partial<CatalogSearch>) => {
     const next: CatalogSearch = { ...search, ...patch };
@@ -188,10 +186,20 @@ export function CatalogBrowser({
           </div>
 
           {filtered.length === 0 ? (
-            <p className="mt-8 rounded-lg border border-border bg-surface-2 p-6 text-muted-foreground shadow-1">
-              Ninguna ficha cumple esas características a la vez. Quita una y el recuento de al lado
-              dice cuántas quedan.
-            </p>
+            <div className="mt-8 rounded-lg border border-border bg-surface-2 p-6 shadow-1">
+              <p className="text-muted-foreground">
+                Ninguna ficha cumple esas características a la vez. Quita un filtro o limpia la
+                selección para recuperar resultados.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-4"
+                onClick={() => onSearch({ vista: search.vista })}
+              >
+                Limpiar filtros
+              </Button>
+            </div>
           ) : null}
 
           {vista === "tabla" && filtered.length > 0 ? (

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { coilBySlug, deviceBySlug, liquidBySlug, partBySlug } from "@/data/catalog";
-import { KineticHeading } from "@/components/kinetic-heading";
+import { PageHeading } from "@/components/page-heading";
 import { liquidVolumeMl } from "@/data/logic";
 import { compareFacts, EMPTY, relationRows } from "@/data/specs";
 import type { CatalogItem, Coil, Device, Liquid, Part } from "@/data/types";
@@ -28,13 +29,15 @@ const BEST_DIRECTION: Record<string, "max" | "min"> = {
 
 export function CompareView() {
   const compare = useCompare();
+  const [onlyDiffs, setOnlyDiffs] = useState(false);
   const domain = compare.items[0]?.domain;
   if (!domain || compare.items.length === 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <KineticHeading as="h1" text="Comparador" className="text-4xl text-foreground" />
+        <PageHeading as="h1" text="Comparador" className="text-4xl text-foreground" />
         <p className="mt-3 text-muted-foreground">
-          Todavía no hay fichas. Elige hasta cuatro del mismo tipo.
+          Todavía no hay fichas. Elige hasta cuatro del mismo tipo. La selección se guarda en este
+          navegador.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="secondary">
@@ -55,21 +58,47 @@ export function CompareView() {
   }
 
   const rows = compare.items.map(resolve).filter((item): item is Resolved => item !== null);
+  const allFields = fields(rows);
+  const visibleFields = onlyDiffs
+    ? allFields.filter((field) => {
+        const published = field.values.filter((_, i) => field.published[i]);
+        if (published.length < 2) return true;
+        return new Set(published).size > 1;
+      })
+    : allFields;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-medium tracking-widest text-primary uppercase">Hasta cuatro</p>
-          <KineticHeading as="h1" text="Comparador" className="mt-2 text-4xl text-foreground" />
+          <p className="text-xs font-medium tracking-widest text-primary uppercase">
+            Hasta cuatro · mismo tipo
+          </p>
+          <PageHeading as="h1" text="Comparador" className="mt-2 text-4xl text-foreground" />
         </div>
-        <Button type="button" variant="quiet" onClick={compare.clear}>
-          Vaciar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant={onlyDiffs ? "secondary" : "quiet"}
+            aria-pressed={onlyDiffs}
+            onClick={() => setOnlyDiffs((value) => !value)}
+          >
+            Solo diferencias
+          </Button>
+          <Button type="button" variant="quiet" onClick={compare.clear}>
+            Vaciar
+          </Button>
+        </div>
       </div>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Se resalta el valor publicado más alto o más bajo de cada fila numérica cuando procede. No
-        hay puntuaciones ni precios: solo el dato que la fuente publica.
+        Compara especificaciones entre fichas del mismo dominio. La selección vive en este navegador
+        (no en la URL). Se resalta el valor publicado más alto o más bajo de cada fila numérica
+        cuando procede. No hay puntuación global ni precios.
+      </p>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+        «Solo diferencias» oculta filas con el mismo valor publicado; las filas con datos ausentes
+        siguen visibles. En pantallas estrechas, desplaza la tabla en horizontal: la columna Campo
+        permanece fija.
       </p>
       <div className="mt-6 overflow-x-auto rounded-md border border-border bg-surface-2 shadow-1">
         <Table className="min-w-[40rem]">
@@ -114,7 +143,7 @@ export function CompareView() {
                 </TableCell>
               ))}
             </TableRow>
-            {fields(rows).map((field) => {
+            {visibleFields.map((field) => {
               const best = bestIndices(field.key, rows);
               const direction = BEST_DIRECTION[field.key];
               return (

@@ -64,6 +64,17 @@ export function compatLabel(kind: CompatKind): string {
   return "No encaja";
 }
 
+/** Etiquetas en español para EvaluationStatus (ADR-0016 / UX compatibilidad). */
+export function evaluationStatusLabel(
+  status: "match" | "mismatch" | "unknown" | "conditional" | "not_applicable",
+): string {
+  if (status === "match") return "Coincide";
+  if (status === "mismatch") return "No coincide";
+  if (status === "unknown") return "Información insuficiente";
+  if (status === "conditional") return "Condicional";
+  return "No aplica";
+}
+
 export function compatTone(kind: CompatKind): Tone {
   if (kind === "nativa") return "success";
   if (kind === "kit") return "success";

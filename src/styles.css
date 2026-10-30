@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "@fontsource-variable/public-sans/index.css";
-@import "@fontsource/archivo-black/latin-400.css";
 @import "@fontsource/space-mono/latin-400.css";
 
 :root {
@@ -20,7 +19,7 @@
   --accent-foreground: oklch(0.28 0.03 70);
   --destructive: oklch(0.48 0.18 25);
   --destructive-foreground: oklch(0.99 0.01 95);
-  --border: oklch(0.16 0.01 80);
+  --border: oklch(0.88 0.015 80);
   --border-strong: oklch(0.62 0.03 75);
   --input: oklch(0.62 0.03 75);
   --ring: oklch(0.42 0.07 210);
@@ -38,32 +37,24 @@
   --chart-3: oklch(0.5 0.08 145);
   --chart-4: oklch(0.58 0.12 25);
   --chart-5: oklch(0.5 0.06 300);
-  --radius: 0;
+  --radius: 0.375rem;
   --shadow-1: 0 1px 2px 0 oklch(0.25 0.03 60 / 0.05), 0 1px 3px 0 oklch(0.25 0.03 60 / 0.04);
   --shadow-2: 0 2px 6px 0 oklch(0.25 0.03 60 / 0.07), 0 2px 4px -2px oklch(0.25 0.03 60 / 0.05);
   --shadow-3:
     0 10px 24px -6px oklch(0.25 0.03 60 / 0.12), 0 4px 10px -2px oklch(0.25 0.03 60 / 0.06);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-vapor: cubic-bezier(0.3, 0, 0.2, 1);
   --dur-1: 120ms;
   --dur-2: 200ms;
-  --dur-3: 400ms;
-  --dur-4: 700ms;
-  --smoke-rgb: 120 108 92;
-  --smoke-alpha: 0.1;
-  --smoke-k: 0.02;
+  --dur-3: 200ms;
+  --dur-4: 200ms;
   --font-sans: "Public Sans Variable", "Segoe UI", sans-serif;
-  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-display: "Public Sans Variable", "Segoe UI", sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
-  --ink: oklch(0.16 0.01 80);
-  --brut-border: 3px;
-  --brut-offset: 6px;
   --kind-dispositivo: oklch(0.86 0.17 90);
   --kind-resistencia: oklch(0.8 0.12 215);
   --kind-liquido: oklch(0.76 0.17 350);
   --kind-componente: oklch(0.72 0.15 285);
-  --z-smoke: 0;
   --z-content: 1;
   --z-sticky: 20;
   --z-overlay: 40;
@@ -90,7 +81,7 @@
   --border: oklch(0.3 0.015 80);
   --border-strong: oklch(0.58 0.03 75);
   --input: oklch(0.58 0.03 75);
-  --ring: oklch(0.88 0.06 210);
+  --ring: oklch(0.72 0.08 210);
   --success: oklch(0.72 0.14 155);
   --success-foreground: oklch(0.2 0.03 150);
   --warning: oklch(0.78 0.13 80);
@@ -105,10 +96,6 @@
   --chart-3: oklch(0.68 0.1 145);
   --chart-4: oklch(0.68 0.14 25);
   --chart-5: oklch(0.65 0.08 300);
-  --radius: 0.25rem;
-  --smoke-rgb: 200 196 188;
-  --smoke-alpha: 0.14;
-  --smoke-k: 0.028;
   --kind-dispositivo: oklch(0.82 0.17 75);
   --kind-resistencia: oklch(0.83 0.13 205);
   --kind-liquido: oklch(0.74 0.2 350);
@@ -182,28 +169,6 @@
   }
 }
 
-/* N2 — radio brutalista: 0 en claro, 0.25rem en oscuro.
-   Se fijan --radius-sm/md/lg/xl explícitos porque
-   calc(var(--radius) - 0.125rem) daría negativo con --radius: 0.
-   Van después de @theme para ganarle en cascada. */
-:root {
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 0;
-  --radius-xl: 0;
-}
-
-.dark {
-  --radius-sm: 0.125rem;
-  --radius-md: 0.25rem;
-  --radius-lg: 0.375rem;
-  --radius-xl: 0.625rem;
-}
-
-/* Tailwind v4 trata `duration-<número>` como valor literal (número → ms) y
-   ignora las claves `--duration-<número>` del tema: el alias al token solo es
-   posible como utilidad personalizada. Así `duration-2` == `--dur-2` (200 ms)
-   y sigue el override de `prefers-reduced-motion` vía la custom property. */
 @utility duration-1 {
   transition-duration: var(--dur-1);
 }
@@ -236,35 +201,15 @@
     color-scheme: dark;
   }
 
-  /* El color de fondo vive en html para que el canvas del humo (z-smoke)
-     no quede tapado por un body opaco (F0 / Anexo A). */
-  html {
-    background: var(--background);
-  }
-
   body {
     margin: 0;
     min-height: 100vh;
-    background: transparent;
+    background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     font-size: 1rem;
     line-height: 1.5;
     position: relative;
-    isolation: isolate;
-  }
-
-  /* Fallback estático L0 (SSR, JS off, mode off, Save-Data). */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-smoke);
-    pointer-events: none;
-    background:
-      radial-gradient(70% 48% at 12% 0%, rgb(var(--smoke-rgb) / 0.09), transparent 68%),
-      radial-gradient(58% 42% at 88% 18%, rgb(var(--smoke-rgb) / 0.06), transparent 70%),
-      radial-gradient(64% 50% at 70% 100%, rgb(var(--smoke-rgb) / 0.07), transparent 72%);
   }
 
   header,
@@ -277,10 +222,11 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-display);
+    font-family: var(--font-sans);
     text-wrap: balance;
-    line-height: 1.12;
-    font-weight: 400;
+    line-height: 1.2;
+    font-weight: 650;
+    letter-spacing: -0.01em;
   }
 
   h1 {
@@ -299,7 +245,6 @@
     text-wrap: pretty;
   }
 
-  /* Datos tabulados: cifras alineadas en tablas y fichas de especificaciones. */
   table {
     font-variant-numeric: tabular-nums;
   }
@@ -351,9 +296,6 @@
   }
 }
 
-/* Los bloques de tokens de alto contraste y colores forzados viven fuera de
-   @layer base: las variables del :root plano (sin capa) tienen mayor
-   prioridad que cualquier regla en capa y estos overrides deben ganarles. */
 @media (prefers-contrast: more) {
   :root {
     --foreground: oklch(0.12 0.01 80);
@@ -429,8 +371,6 @@
   }
 }
 
-/* F4 — animaciones (append F4/F7: no tocar las líneas anteriores).
-   Reveal progresivo, esqueleto de foto y view transitions. */
 .reveal {
   opacity: 1;
   transform: none;
@@ -438,22 +378,20 @@
 
 html.js .reveal:not(.is-visible) {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(6px);
   transition:
-    opacity var(--dur-3) var(--ease-out),
-    transform var(--dur-3) var(--ease-out);
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
 }
 
 html.js .reveal.is-visible {
   opacity: 1;
   transform: none;
   transition:
-    opacity var(--dur-3) var(--ease-out),
-    transform var(--dur-3) var(--ease-out);
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
 }
 
-/* Esqueleto de foto con tokens existentes; el shimmer solo sin
-   prefers-reduced-motion. */
 .photo-skeleton {
   position: absolute;
   inset: 0;
@@ -472,7 +410,7 @@ html.js .reveal.is-visible {
     background: linear-gradient(
       100deg,
       transparent 20%,
-      color-mix(in oklch, var(--foreground) 10%, transparent) 50%,
+      color-mix(in oklch, var(--foreground) 8%, transparent) 50%,
       transparent 80%
     );
     animation: vapelog-shimmer 1400ms var(--ease-out) infinite;
@@ -488,11 +426,9 @@ html.js .reveal.is-visible {
   }
 }
 
-/* Transición listado → ficha: el nombre lo pone ProductPhoto
-   (`transitionNameForPhoto`); duraciones de los tokens. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: var(--dur-3);
+  animation-duration: var(--dur-2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -514,139 +450,6 @@ html.js .reveal.is-visible {
   }
 }
 
-/* S2 — capa suave L1 del humo (append S2: no tocar las líneas anteriores).
-   L0 = body::before (fallback SSR). L2/L3 (ASCII) lo harán S3/S4:
-   .smoke-ascii queda oculto y el tier ASCII del modelo, inactivo. */
-.smoke-layer {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-smoke);
-  pointer-events: none;
-  contain: strict;
-  opacity: 0;
-  /* Sin transición de opacidad: el ready es binario (F0); evita falsos
-     negativos en e2e y flash de layer a medias. */
-  transition: none;
-}
-.smoke-layer[data-ready="true"],
-.smoke-layer[data-fx-ready="true"] {
-  opacity: 1;
-}
-.smoke-soft {
-  position: absolute;
-  inset: calc(var(--smoke-pad) * -1);
-  width: calc(100% + var(--smoke-pad) * 2);
-  height: calc(100% + var(--smoke-pad) * 2);
-}
-.smoke-ascii {
-  display: none;
-}
-/* Save-Data / mode off: solo L0 (body::before). Reduced-motion deja el
-   canvas en modo static (fotograma único); no se oculta con display:none. */
-@media (prefers-reduced-data: reduce) {
-  .smoke-layer[data-fx-reason="save-data"] {
-    display: none;
-  }
-}
-[data-fx="off"] {
-  --dur-1: 0ms;
-  --dur-2: 0ms;
-  --dur-3: 0ms;
-  --dur-4: 0ms;
-}
-
-/* S3 — capa ASCII tramada L2 (append S3: no tocar las líneas anteriores).
-   L2 = segundo canvas a 1x CSS sin DPR, atlas pre-renderizado, 10 fps,
-   alfa ≤0.12. Visible solo ≥1024px y solo en los márgenes: el layout usa
-   mx-auto max-w-6xl (= 72rem = 1152px en Tailwind) en chrome.tsx y rutas
-   (index/buscar/catalog-browser), de ahí --content-half: 576px.
-   Sin JS / humo off: display:none por defecto + .smoke-layer opacity:0
-   sin data-ready, sin resto visible. */
-.smoke-ascii {
-  display: none;
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-@media (min-width: 1024px) {
-  .smoke-ascii {
-    display: none;
-    --content-half: 576px;
-    -webkit-mask-image: linear-gradient(
-      to right,
-      #000 0,
-      #000 calc(50% - var(--content-half) - 80px),
-      transparent calc(50% - var(--content-half) + 80px),
-      transparent calc(50% + var(--content-half) - 80px),
-      #000 calc(50% + var(--content-half) + 80px),
-      #000 100%
-    );
-    mask-image: linear-gradient(
-      to right,
-      #000 0,
-      #000 calc(50% - var(--content-half) - 80px),
-      transparent calc(50% - var(--content-half) + 80px),
-      transparent calc(50% + var(--content-half) - 80px),
-      #000 calc(50% + var(--content-half) + 80px),
-      #000 100%
-    );
-  }
-}
-
-/* S4 — atenuación vertical del humo suave L1 en la banda del hero
-   (append S4: no tocar las líneas anteriores).
-   Se enmascara el propio canvas `.smoke-soft` y no el DOM del hero: así el
-   marcado de las rutas (index.tsx y el resto) y el HTML de SSR quedan
-   intactos, el layout no cambia y las tarjetas siguen opacas (bg-card) sin
-   necesidad de reglas extra. El canvas es una capa decorativa fija; la
-   máscara solo baja la alfa en la franja superior del viewport, donde está el
-   texto suelto del hero, y recupera la alfa plena antes del pliegue.
-   El alto del canvas arranca en -(--smoke-pad) (inset negativo), de ahí que
-   cada stop sume `var(--smoke-pad)` para referirse al borde superior real del
-   viewport. `rgb(0 0 0 / x)` atenúa vía el canal alfa de la máscara. */
-.smoke-soft {
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.45) var(--smoke-pad),
-    rgb(0 0 0 / 0.72) calc(var(--smoke-pad) + 26vh),
-    #000 calc(var(--smoke-pad) + 52vh),
-    #000 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.45) var(--smoke-pad),
-    rgb(0 0 0 / 0.72) calc(var(--smoke-pad) + 26vh),
-    #000 calc(var(--smoke-pad) + 52vh),
-    #000 100%
-  );
-}
-
-/* S4 — el humo es decorativo: se oculta por completo en modo de contraste
-   alto y en colores forzados para no competir con el texto ni con las
-   paletas del sistema (append S4). */
-@media (forced-colors: active), (prefers-contrast: more) {
-  .smoke-layer {
-    display: none;
-  }
-}
-
-/* ── Tramo neo-brutalista ──────────────────────────────────────────────── */
-:root {
-  --kind-dispositivo: oklch(0.86 0.17 90);
-  --kind-resistencia: oklch(0.8 0.12 215);
-  --kind-liquido: oklch(0.76 0.17 350);
-  --kind-componente: oklch(0.72 0.15 285);
-  --brut-border: 3px;
-  --brut-offset: 6px;
-  --ink: oklch(0.16 0.01 80);
-}
-.dark {
-  --kind-dispositivo: oklch(0.82 0.17 75);
-  --kind-resistencia: oklch(0.83 0.13 205);
-  --kind-liquido: oklch(0.74 0.2 350);
-  --kind-componente: oklch(0.8 0.17 285);
-}
 [data-kind="dispositivo"] {
   --kind-color: var(--kind-dispositivo);
 }
@@ -660,164 +463,26 @@ html.js .reveal.is-visible {
   --kind-color: var(--kind-componente);
 }
 
-@keyframes led-breathe {
-  from {
-    opacity: 0.55;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes vapor-out {
-  to {
-    opacity: 0;
-    filter: blur(14px);
-    transform: translateY(-10px) scale(1.012);
-  }
-}
-@keyframes vapor-in {
-  from {
-    opacity: 0;
-    filter: blur(12px);
-    transform: translateY(12px);
-  }
-}
-@keyframes caret {
-  50% {
-    opacity: 0;
-  }
-}
-
 .kind-card {
   position: relative;
   isolation: isolate;
-  transition: transform var(--dur-2) var(--ease-out);
-}
-.kind-card::before {
-  /* sombra dura: se mueve con transform (sin repintar box-shadow) */
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--kind-color);
-  transform: translate(var(--brut-offset), var(--brut-offset));
-  transition: transform var(--dur-2) var(--ease-out);
-}
-html:not(.dark) .kind-card {
-  border: var(--brut-border) solid var(--ink);
-  border-radius: 0;
-}
-html:not(.dark) .kind-card:hover {
-  transform: translate(-2px, -2px);
-}
-html:not(.dark) .kind-card:hover::before {
-  transform: translate(8px, 8px);
-}
-html:not(.dark) .kind-card:active {
-  transform: translate(4px, 4px);
-}
-html:not(.dark) .kind-card:active::before {
-  transform: translate(2px, 2px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-2) var(--ease-out);
 }
 
-.dark .kind-card::before {
-  display: none;
+.kind-card:is(:hover, :focus-within) {
+  border-color: var(--border-strong);
 }
-.dark .kind-card {
-  border: 1px solid var(--border);
-  border-radius: 0.25rem;
-}
-.dark .kind-card:is(:hover, :focus-within) {
-  border-color: var(--kind-color);
-  box-shadow:
-    0 0 0 1px var(--kind-color),
-    0 0 16px -3px var(--kind-color);
-}
-.kind-led {
+
+.kind-mark {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
-  width: 1.75rem;
-  height: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
   background: var(--kind-color);
-  opacity: 0.35;
-}
-.dark .kind-led {
-  box-shadow: 0 0 8px 1px var(--kind-color);
-}
-.kind-card:is(:hover, :focus-within) .kind-led {
-  opacity: 1;
-  animation: led-breathe 1.4s ease-in-out infinite alternate;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .kind-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity var(--dur-2);
-    background: radial-gradient(
-      180px circle at var(--mx, 50%) var(--my, 50%),
-      color-mix(in oklch, var(--kind-color) 22%, transparent),
-      transparent 70%
-    );
-  }
-  .kind-card:hover::after {
-    opacity: 1;
-  }
-}
-::view-transition-old(root) {
-  animation: vapor-out var(--dur-3) var(--ease-vapor) both;
-}
-::view-transition-new(root) {
-  animation: vapor-in var(--dur-3) var(--ease-out) both;
-}
-.term-caret::after {
-  content: "";
-  display: inline-block;
-  width: 2px;
-  height: 0.72em;
-  margin-inline-start: 0.12em;
-  vertical-align: -0.04em;
-  background: currentColor;
-  animation: caret 1.06s steps(1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .kind-card,
-  .kind-card::before {
-    transition: none;
-  }
-  .kind-card:is(:hover, :focus-within) .kind-led {
-    animation: none;
-  }
-  .term-caret::after {
-    animation: none;
-  }
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
-  }
-}
-@media (forced-colors: active) {
-  .kind-card {
-    border: 2px solid CanvasText !important;
-  }
-  .kind-card::before,
-  .kind-card::after,
-  .kind-led {
-    display: none;
-  }
-}
-
-/* N2 — addendum (fuera del bloque verbatim §4.1): tipografía, foco y
-   controles brutalistas. No forma parte del verbatim; no tocar el bloque
-   anterior. */
-h1,
-h2,
-h3 {
-  letter-spacing: -0.01em;
 }
 
 .font-mono {
@@ -828,110 +493,22 @@ h3 {
 .kind-label {
   font-family: var(--font-mono);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   font-size: 0.75rem;
   line-height: 1.4;
 }
 
-:focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 3px;
-}
-
-.dark :focus-visible {
-  outline-color: var(--ring);
-}
-
-html:not(.dark)
-  :is(button, [role="button"], input, select, textarea, [role="tab"]):not(.border-transparent):not(
-    .bg-transparent
-  ) {
-  border-width: var(--brut-border);
-  border-color: var(--ink);
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-html:not(.dark) [data-slot="badge"] {
-  border: var(--brut-border) solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
-}
-
-html:not(.dark) :is(button, [role="button"]):not(.border-transparent):not(.bg-transparent):active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--ink);
-}
-
-.dark :is(button, input, select, textarea, [role="tab"], [data-slot="badge"]):focus-visible {
-  box-shadow:
-    0 0 0 1px var(--ring),
-    0 0 12px 0 var(--ring);
-}
-
 @media (forced-colors: active) {
+  .kind-card {
+    border: 2px solid CanvasText !important;
+  }
+
+  .kind-mark {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+
   :focus-visible {
     outline-color: Highlight;
   }
-
-  html:not(.dark)
-    :is(button, [role="button"], input, select, textarea, [role="tab"]):not(
-      .border-transparent
-    ):not(.bg-transparent),
-  html:not(.dark) [data-slot="badge"] {
-    box-shadow: none;
-  }
-}
-
-/* N5 — glitch de botón al pulsar + ::selection por tipo (append N5: no tocar lo anterior).
-   Glitch solo en :active (120 ms = --dur-1), 3 franjas vía clip-path en keyframes.
-   Gateado a prefers-reduced-motion: no-preference; además usa var(--dur-1), que el
-   override global de reduced-motion colapsa a 0.01 ms. fx=off desactiva los efectos
-   JS (kinetic/tilt/humo); el :active es feedback iniciado por el usuario ≤ 120 ms. */
-@keyframes vapelog-glitch {
-  0% {
-    clip-path: inset(0 0 66% 0);
-    transform: translate(-2px, -1px);
-  }
-  50% {
-    clip-path: inset(33% 0 33% 0);
-    transform: translate(2px, 1px);
-  }
-  100% {
-    clip-path: inset(66% 0 0 0);
-    transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  button:active {
-    position: relative;
-  }
-
-  button:active::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: var(--primary);
-    opacity: 0.28;
-    animation: vapelog-glitch var(--dur-1) steps(1) both;
-  }
-}
-
-/* N5 — ::selection con el color del tipo activo. */
-[data-kind="dispositivo"] ::selection {
-  background: var(--kind-color);
-  color: var(--ink);
-}
-[data-kind="resistencia"] ::selection {
-  background: var(--kind-color);
-  color: var(--ink);
-}
-[data-kind="liquido"] ::selection {
-  background: var(--kind-color);
-  color: var(--ink);
-}
-[data-kind="componente"] ::selection {
-  background: var(--kind-color);
-  color: var(--ink);
 }

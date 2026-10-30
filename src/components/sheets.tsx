@@ -87,7 +87,6 @@ import {
 import { cn } from "@/lib/cn";
 import { kindOf } from "@/lib/kind";
 import { KindCard } from "@/components/ui/kind-card";
-import { useCardFx } from "@/components/ui/use-card-fx";
 
 interface SheetSection {
   id: string;
@@ -344,7 +343,7 @@ export function LiquidSheet({ slug }: { slug: string }) {
     values.min === values.max
       ? formatPlain(values.min)
       : `${formatPlain(values.min)}–${formatPlain(values.max)}`;
-  const volumeText = range ? spanText(range.fillVolumeMl) : "Sin dato";
+  const volumeText = range ? spanText(range.fillVolumeMl) : "Sin dato publicado";
   const strengths = liquid.variations
     .map((variation) => variation.nicotineMgPerMl)
     .filter((mg): mg is number => mg != null && mg > 0);
@@ -1159,7 +1158,6 @@ function heroChips(item: CatalogItem) {
 
 function RelatedItems({ item }: { item: CatalogItem }) {
   const listRef = useRef<HTMLUListElement>(null);
-  useCardFx(listRef);
   const pool =
     item.domain === "device"
       ? devices

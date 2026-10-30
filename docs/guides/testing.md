@@ -48,24 +48,16 @@ prueba con `node:test` dentro de `pnpm test`:
   rejilla sin NaN ni negativos, FIFO de `emit` (≤ 3 bocanadas), cota de alfa
   con emisiones adversariales, que `emit` no altera el determinismo ambiental y
   que el ASCII solo aparece en la banda baja de densidad.
-- `src/data/contrast.test.ts`: exigido `K × densidad_máx ≤ --smoke-alpha` en
-  Q3/Q2/Q1 (11 semillas × 120 s, margen ≥ 10 %) y el peor caso de lectura con
-  solape ASCII (`--smoke-alpha + 0.12`) en claro, oscuro y
-  `prefers-contrast: more`.
+- `src/data/contrast.test.ts`: contraste de texto ≥ 4,5:1, bordes de control
+  ≥ 3:1, kinds ≥ 3:1 en oscuro y ΔE OKLab ≥ 15 (ADR-0016). Sin contrato de
+  humo ni `--brut-*`.
 
-## Modelos del rediseño neo-brutalista (ADR-0008)
+## Modelos históricos (tilt / scramble)
 
-También puros y deterministas, probados dentro de `pnpm test`:
-
-- `src/data/kinetic-scramble.test.ts` (6 tests): el último fotograma de
-  `scrambleFrames` es el texto exacto; conserva longitud (code points) y
-  espacios; determinista por semilla + paso; glifos intermedios solo de
-  `GLYPHS`; resolución izquierda → derecha; coste < 0,05 ms/fotograma.
-- `src/data/tilt.test.ts` (6 tests): centro = 0°, bordes = ±4°, clamp fuera de
-  rango, `mx`/`my` relativos y `maxDeg` configurable para `tiltFromPointer`.
-- `src/data/contrast.test.ts`: ampliado con el contrato neo-brutalista — neón
-  de cada tipo ≥ 3:1 sobre tarjeta y fondo, tinta ≥ 7:1, ΔE OKLab mínimo ≥ 15
-  entre tipos y `prefers-contrast: more`.
+Los tests de `kinetic-scramble` y `tilt` pueden permanecer mientras el código
+puro exista en el árbol; la UI ya no monta esos efectos (ADR-0016).
+`e2e/fx-smoke.spec.ts` exige la **ausencia** de canvas de humo y del
+conmutador de efectos.
 
 ## Accesibilidad y e2e
 
