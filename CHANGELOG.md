@@ -12,6 +12,14 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-30
+
+### Cambios
+
+- feat(ui): dirección visual sobria y UX de catálogo/herramientas (#30)
+- ci: cierre verificable (release-ready, seguridad, Preview, harness) (#29)
+- ci(security): jobs secrets (gitleaks) y sca (#25)
+
 ## [0.13.0] - 2026-10-24
 
 ### Cambios
