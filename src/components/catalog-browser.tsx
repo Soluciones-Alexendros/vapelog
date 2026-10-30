@@ -1,5 +1,4 @@
 import { FichaLink } from "@/components/ficha-link";
-import { puff } from "@/lib/smoke/emit-bus";
 import { transitionNameForPhoto } from "@/lib/view-transition";
 import { brandById, genreById, taxonById } from "@/data/catalog";
 import { catalogImage } from "@/data/images";
@@ -263,8 +262,7 @@ export function CatalogBrowser({
                                   ? "font-semibold underline decoration-primary underline-offset-4"
                                   : undefined
                               }
-                              onClick={(event) => {
-                                puff(event.clientX, event.clientY);
+                              onClick={() => {
                                 compare.toggle({ domain, slug: item.slug });
                               }}
                             >
@@ -291,7 +289,7 @@ export function CatalogBrowser({
                 const brand = brandById(item.brandId)?.name ?? "";
                 const showPhoto = domain === "device" || domain === "coil";
                 return (
-                  <li key={item.id} className="reveal">
+                  <li key={item.id}>
                     <KindCard
                       kind={kindOf(domain)}
                       className="flex h-full flex-col overflow-hidden"
@@ -336,8 +334,7 @@ export function CatalogBrowser({
                                     ? "font-semibold underline decoration-primary underline-offset-4"
                                     : undefined
                                 }
-                                onClick={(event) => {
-                                  puff(event.clientX, event.clientY);
+                                onClick={() => {
                                   compare.toggle({ domain, slug: item.slug });
                                 }}
                               >
@@ -383,8 +380,7 @@ export function CatalogBrowser({
                                     ? "font-semibold underline decoration-primary underline-offset-4"
                                     : undefined
                                 }
-                                onClick={(event) => {
-                                  puff(event.clientX, event.clientY);
+                                onClick={() => {
                                   compare.toggle({ domain, slug: item.slug });
                                 }}
                               >

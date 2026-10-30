@@ -88,7 +88,7 @@ function Home() {
         </form>
         <ul className="mt-6 grid gap-3 md:grid-cols-2">
           {exampleQueries.map((example) => (
-            <li key={example.id} className="reveal">
+            <li key={example.id}>
               <ExampleCard example={example} />
             </li>
           ))}
@@ -167,7 +167,7 @@ function Home() {
         {latestPosts.length > 0 ? (
           <ul className="mt-6 grid gap-3 md:grid-cols-2">
             {latestPosts.map((post) => (
-              <li key={post.slug} className="reveal">
+              <li key={post.slug}>
                 <Link
                   to="/blog/$slug"
                   params={{ slug: post.slug }}
@@ -195,7 +195,7 @@ function Home() {
             <h3 className="text-base text-muted-foreground">Explora el catálogo</h3>
             <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {highlights.map((item) => (
-                <li key={item.id} className="reveal">
+                <li key={item.id}>
                   <FichaLink
                     domain={item.domain}
                     slug={item.slug}
@@ -294,7 +294,7 @@ function DomainCard({
   text: string;
 }) {
   return (
-    <li className="reveal">
+    <li>
       <KindCard kind={kindOf(domain)} className="h-full">
         <Link to={href} preload="intent" className="flex h-full flex-col p-3 pt-2">
           <p className="text-xs tracking-widest text-primary uppercase tabular-nums">

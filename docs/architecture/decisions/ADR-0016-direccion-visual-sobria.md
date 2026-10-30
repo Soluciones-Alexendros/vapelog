@@ -116,9 +116,9 @@ Etiqueta · ayuda · unidad · error · reinicio
 - ADR-0008 queda sustituido en estilo (identidad dual, LED, cinética, vapor,
   glitch, brutalismo). La estrategia `.dark` y los nombres shadcn siguen.
 - ADR-0007 y ADR-0009 quedan sustituidos en la obligación de renderizar humo
-  y el conmutador visible. El modelo puro de humo puede permanecer en el
-  árbol como código muerto hasta la limpieza de la oleada de retirada; no se
-  monta en la UI.
+  y el conmutador visible. La limpieza de código muerto (canvas, tilt,
+  scramble, reveal, benches de humo) se completa en U5 conforme a
+  [ADR-0017](./ADR-0017-paleta-neutra.md).
 - `docs/design-system.md` describe la dirección sobria.
 - `contrast.test.ts` deja de exigir `--brut-border` / `--brut-offset` y el
   contrato nombrado «neón»; mantiene contraste de kinds y ΔE.

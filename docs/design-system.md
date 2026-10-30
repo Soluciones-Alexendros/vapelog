@@ -70,8 +70,8 @@ Fondo opaco en `html` y `body`.
 
 ## Preferencia FX (legado)
 
-- Claves `vapelog-fx` / `vapelog-fx:v2` se leen de forma compatible y no
-  relanzan efectos (ADR-0016). No hay radiogrupo de efectos en cabecera.
+- Claves `vapelog-fx` / `vapelog-fx:v2` se leen una vez al arrancar, se
+  borran y no se reescriben (ADR-0017 / U5). No hay radiogrupo ni canvas.
 
 ## KindCard
 

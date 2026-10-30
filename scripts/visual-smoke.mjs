@@ -63,10 +63,6 @@ const PORT = process.env.VISUAL_SMOKE_PORT || "4174";
 const BASE = argUrl || `http://127.0.0.1:${PORT}/`;
 // S7: permite forzar el humo on/off con VISUAL_SMOKE_FX=on|off (por defecto,
 // sin valor, se respeta la preferencia del navegador = on sin reduced-motion).
-const FX =
-  process.env.VISUAL_SMOKE_FX === "on" || process.env.VISUAL_SMOKE_FX === "off"
-    ? process.env.VISUAL_SMOKE_FX
-    : null;
 checkedUrl(BASE);
 
 let serverPid = null;
@@ -121,19 +117,9 @@ async function checkRoute(browser, route, theme, width) {
   });
   // Tema oscuro vía prefers-color-scheme (themeBootScript lee matchMedia) y
   // puerta de edad saltada, igual que la captura de línea base F0.
-  await context.addInitScript(
-    ({ fx: fxValue }) => {
-      sessionStorage.setItem("vapelog-edad", "ok");
-      if (fxValue) {
-        try {
-          localStorage.setItem("vapelog-fx:v2", fxValue === "off" ? "off" : "on");
-        } catch {
-          // almacenamiento no disponible
-        }
-      }
-    },
-    { fx: FX },
-  );
+  await context.addInitScript(() => {
+    sessionStorage.setItem("vapelog-edad", "ok");
+  });
   const page = await context.newPage();
   const consoleErrors = [];
   const pageErrors = [];
@@ -153,7 +139,6 @@ async function checkRoute(browser, route, theme, width) {
     ruta: route,
     tema: theme.name,
     ancho: width,
-    fx: FX ?? "auto",
     status,
     horizontalOverflow,
     consoleErrors,
@@ -195,7 +180,6 @@ for (const r of results) {
 const summary = {
   ok: failures.length === 0,
   base: BASE,
-  fx: FX ?? "auto",
   combinaciones: results.length,
   fallos: failures,
 };

@@ -77,17 +77,10 @@ Medición en navegador real (Chromium headless contra el build de producción):
 
 ```bash
 pnpm run build
-pnpm run smoke-bench   # coste propio del humo (lastFrameCostMs)
-pnpm run smoke-verify  # memoria, CLS/LCP y prefers-reduced-motion
+pnpm run smoke-bench   # contrato de ausencia de canvas FX (ADR-0016/U5)
 ```
 
-- `smoke-bench` (`scripts/smoke-bench.mjs`) mide el coste propio por fotograma
-  del humo con flags `--seconds/--route/--theme/--width/--dpr/--cpu/--fx/
---reduced-motion`; umbral de referencia ≤ 2 ms de media y ≤ 4 ms p95 (≤ 4 ms
-  media con CPU ×4). Es informativo en CI (job `smoke-bench`,
-  `continue-on-error: true`).
-- `smoke-verify` (`scripts/smoke-verify.mjs`) fuerza GC y comprueba retención
-  de memoria (3 muestras a 60 s), CLS ≤ 0.05 y LCP ≤ 2.5 s, y la ausencia de
-  rAF del humo con `prefers-reduced-motion`. Números y veredictos de la última
-  pasada en [humo-resultados.md](./humo-resultados.md); línea base en
-  [humo-baseline.md](./humo-baseline.md).
+- `smoke-bench` (`scripts/smoke-bench.mjs`) comprueba que no hay
+  `canvas[data-fx]` ni capas de humo, con claves FX antiguas presentes. Es
+  informativo en CI (job `smoke-bench`, `continue-on-error: true`). El coste
+  por fotograma del canvas ya no aplica: el humo se retiró de la UI.
