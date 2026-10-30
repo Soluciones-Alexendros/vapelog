@@ -1,3 +1,4 @@
+import { useId, useRef, type KeyboardEvent } from "react";
 import { coils, deviceBySlug, devices } from "@/data/catalog";
 import {
   availableOhms,
@@ -15,7 +16,7 @@ import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { ToolSearch } from "@/components/tool-search";
+import { NICOKIT_EXAMPLE, type ToolSearch } from "@/components/tool-search";
 
 function parseDecimal(value: string): number | null {
   const trimmed = value.trim();
@@ -28,9 +29,10 @@ function parseDecimal(value: string): number | null {
   return Number.isFinite(n) ? n : Number.NaN;
 }
 
-function num(value: string): number {
-  return parseDecimal(value) ?? Number.NaN;
-}
+const TABS = [
+  { id: "ohm" as const, label: "Ley de Ohm" },
+  { id: "nicokit" as const, label: "Nicokit" },
+];
 
 export function ToolsPanel({
   search,
@@ -40,6 +42,30 @@ export function ToolsPanel({
   onSearch: (next: ToolSearch) => void;
 }) {
   const tab = search.tab ?? "ohm";
+  const baseId = useId();
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const selectTab = (next: "ohm" | "nicokit") => {
+    onSearch({ ...search, tab: next });
+  };
+
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (index + 1) % TABS.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (index - 1 + TABS.length) % TABS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = TABS.length - 1;
+    }
+    if (nextIndex == null) return;
+    event.preventDefault();
+    selectTab(TABS[nextIndex]!.id);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Herramientas</p>
@@ -49,39 +75,48 @@ export function ToolsPanel({
         autorización para un mod mecánico.
       </p>
       <div className="mt-6 flex gap-2" role="tablist" aria-label="Calculadoras">
-        <Button
-          type="button"
-          role="tab"
-          aria-selected={tab === "ohm"}
-          variant={tab === "ohm" ? "secondary" : "quiet"}
-          className={
-            tab === "ohm"
-              ? "font-semibold underline decoration-primary underline-offset-4"
-              : undefined
-          }
-          onClick={() => onSearch({ ...search, tab: "ohm" })}
-        >
-          Ley de Ohm
-        </Button>
-        <Button
-          type="button"
-          role="tab"
-          aria-selected={tab === "nicokit"}
-          variant={tab === "nicokit" ? "secondary" : "quiet"}
-          className={
-            tab === "nicokit"
-              ? "font-semibold underline decoration-primary underline-offset-4"
-              : undefined
-          }
-          onClick={() => onSearch({ ...search, tab: "nicokit" })}
-        >
-          Nicokit
-        </Button>
+        {TABS.map((entry, index) => {
+          const selected = tab === entry.id;
+          const tabId = `${baseId}-tab-${entry.id}`;
+          const panelId = `${baseId}-panel-${entry.id}`;
+          return (
+            <Button
+              key={entry.id}
+              type="button"
+              role="tab"
+              id={tabId}
+              ref={(node) => {
+                tabRefs.current[index] = node;
+              }}
+              aria-selected={selected}
+              aria-controls={panelId}
+              tabIndex={selected ? 0 : -1}
+              variant={selected ? "secondary" : "quiet"}
+              className={
+                selected
+                  ? "font-semibold underline decoration-primary underline-offset-4"
+                  : undefined
+              }
+              onClick={() => selectTab(entry.id)}
+              onKeyDown={(event) => onTabKeyDown(event, index)}
+            >
+              {entry.label}
+            </Button>
+          );
+        })}
       </div>
       {tab === "ohm" ? (
-        <OhmForm search={search} onSearch={onSearch} />
+        <div role="tabpanel" id={`${baseId}-panel-ohm`} aria-labelledby={`${baseId}-tab-ohm`}>
+          <OhmForm search={search} onSearch={onSearch} />
+        </div>
       ) : (
-        <NicoForm search={search} onSearch={onSearch} />
+        <div
+          role="tabpanel"
+          id={`${baseId}-panel-nicokit`}
+          aria-labelledby={`${baseId}-tab-nicokit`}
+        >
+          <NicoForm search={search} onSearch={onSearch} />
+        </div>
       )}
     </div>
   );
@@ -100,15 +135,16 @@ function OhmForm({
   const wattsRaw = search.watts ?? "";
   const voltsRaw = search.volts ?? "";
   const deviceSlug = search.device ?? "";
+  const datalistId = useId();
 
   const ohmsParsed = ohmsRaw === "" ? null : parseDecimal(ohmsRaw);
   const wattsParsed = wattsRaw === "" ? null : parseDecimal(wattsRaw);
   const voltsParsed = voltsRaw === "" ? null : parseDecimal(voltsRaw);
 
-  const matchedOption =
+  const matchingCoils =
     ohmsParsed != null && Number.isFinite(ohmsParsed)
-      ? ohmOptions.find((option) => round(option, 2) === round(ohmsParsed, 2))
-      : undefined;
+      ? coils.filter((coil) => Math.abs(round(coil.ohms, 2) - round(ohmsParsed, 2)) < 1e-9)
+      : [];
 
   const incomplete =
     ohmsRaw === "" ||
@@ -121,11 +157,12 @@ function OhmForm({
     (mode === "watts" && wattsRaw !== "" && Number.isNaN(wattsParsed as number)) ||
     (mode === "volts" && voltsRaw !== "" && Number.isNaN(voltsParsed as number));
 
+  // La fórmula usa el valor tecleado, sin sustituirlo por un ohmio del archivo.
   const solved =
     incomplete || ambiguous
       ? null
       : solveOhm({
-          ohms: matchedOption ?? (ohmsParsed as number),
+          ohms: ohmsParsed as number,
           watts: mode === "watts" ? (wattsParsed as number) : undefined,
           volts: mode === "volts" ? (voltsParsed as number) : undefined,
         });
@@ -136,7 +173,7 @@ function OhmForm({
   const notes = powerEval?.notes ?? [];
   const recommendation =
     ohmsParsed != null && Number.isFinite(ohmsParsed)
-      ? recommendedPowerForOhms(matchedOption ?? ohmsParsed, coils)
+      ? recommendedPowerForOhms(ohmsParsed, coils)
       : null;
 
   const setMode = (next: "watts" | "volts") => {
@@ -187,39 +224,36 @@ function OhmForm({
           id="ohms"
           label="Resistencia"
           unit="Ω"
-          help="Ohmios de la coil. Puedes elegir un valor del archivo o escribir otro."
+          help="Ohmios de la coil. Puedes sugerir un valor del archivo o escribir otro."
         >
-          <select
+          <Input
             id="ohms"
+            list={datalistId}
+            inputMode="decimal"
             aria-describedby="ohms-help"
-            value={
-              matchedOption != null
-                ? String(matchedOption)
-                : ohmsRaw !== "" && ohmOptions.every((o) => round(o, 2) !== round(num(ohmsRaw), 2))
-                  ? ""
-                  : ohmsRaw
+            placeholder="p. ej. 0,8"
+            value={ohmsRaw}
+            onChange={(event) =>
+              onSearch({ ...search, tab: "ohm", ohms: event.target.value || undefined })
             }
-            onChange={(event) => {
-              onSearch({ ...search, tab: "ohm", ohms: event.target.value || undefined });
-            }}
-          >
-            <option value="">Selecciona o deja vacío</option>
+          />
+          <datalist id={datalistId}>
             {ohmOptions.map((option) => (
               <option key={String(option)} value={String(option)}>
                 {`${formatPlain(option)} Ω`}
               </option>
             ))}
-          </select>
-          <Input
-            className="mt-2"
-            inputMode="decimal"
-            placeholder="o escribe Ω"
-            aria-label="Resistencia en ohmios, entrada libre"
-            value={matchedOption != null ? String(matchedOption) : ohmsRaw}
-            onChange={(event) =>
-              onSearch({ ...search, tab: "ohm", ohms: event.target.value || undefined })
-            }
-          />
+          </datalist>
+          {matchingCoils.length === 1 ? (
+            <p className="mt-2 text-sm text-muted-foreground" role="status">
+              Coincide con «{matchingCoils[0]!.name}»
+            </p>
+          ) : matchingCoils.length > 1 ? (
+            <p className="mt-2 text-sm text-muted-foreground" role="status">
+              Coincide con {matchingCoils.length} resistencias del archivo a{" "}
+              {formatPlain(round(ohmsParsed as number, 2))} Ω
+            </p>
+          ) : null}
         </Field>
 
         {mode === "watts" ? (
@@ -392,46 +426,101 @@ function NicoForm({
   search: ToolSearch;
   onSearch: (next: ToolSearch) => void;
 }) {
-  const aroma = search.aroma ?? "50";
-  const botella = search.botella ?? "60";
-  const shotMl = search.shotMl ?? "10";
-  const shotMg = search.shotMg ?? "20";
-  const shots = search.shots ?? "1";
-  const objetivo = search.objetivo ?? "3";
-  const shotCount = (() => {
-    if (shots === "") return Number.NaN;
-    const parsed = num(shots);
-    return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)) : Number.NaN;
-  })();
-  const mixed = mixNicotine({
-    initialZeroMgMl: num(aroma),
-    bottleMl: num(botella),
-    shotMl: num(shotMl),
-    shotMg: num(shotMg),
-    shots: Number.isFinite(shotCount) ? shotCount : 0,
-  });
-  const target = shotsForTarget(num(aroma), num(shotMl), num(shotMg), num(objetivo), num(botella));
-  const alternatives = shotAlternatives(
-    num(aroma),
-    num(botella),
-    num(shotMl),
-    num(shotMg),
-    num(objetivo),
-  );
+  const aroma = search.aroma ?? "";
+  const botella = search.botella ?? "";
+  const shotMl = search.shotMl ?? "";
+  const shotMg = search.shotMg ?? "";
+  const shots = search.shots ?? "";
+  const objetivo = search.objetivo ?? "";
+
+  const aromaParsed = aroma === "" ? null : parseDecimal(aroma);
+  const botellaParsed = botella === "" ? null : parseDecimal(botella);
+  const shotMlParsed = shotMl === "" ? null : parseDecimal(shotMl);
+  const shotMgParsed = shotMg === "" ? null : parseDecimal(shotMg);
+  const shotsParsed = shots === "" ? null : parseDecimal(shots);
+  const objetivoParsed = objetivo === "" ? null : parseDecimal(objetivo);
+
+  const missing: string[] = [];
+  if (aroma === "") missing.push("líquido 0 mg");
+  if (botella === "") missing.push("capacidad de la botella");
+  if (shotMl === "") missing.push("volumen del nicokit");
+  if (shotMg === "") missing.push("graduación del nicokit");
+  if (shots === "") missing.push("número de nicokits");
+
+  const shotsNotInteger =
+    shotsParsed != null && Number.isFinite(shotsParsed) && !Number.isInteger(shotsParsed);
+
+  const requiredReady =
+    missing.length === 0 &&
+    !shotsNotInteger &&
+    aromaParsed != null &&
+    botellaParsed != null &&
+    shotMlParsed != null &&
+    shotMgParsed != null &&
+    shotsParsed != null &&
+    [aromaParsed, botellaParsed, shotMlParsed, shotMgParsed, shotsParsed].every(Number.isFinite);
+
+  const mixed = requiredReady
+    ? mixNicotine({
+        initialZeroMgMl: aromaParsed as number,
+        bottleMl: botellaParsed as number,
+        shotMl: shotMlParsed as number,
+        shotMg: shotMgParsed as number,
+        shots: shotsParsed as number,
+      })
+    : null;
+
+  const targetReady =
+    aroma !== "" &&
+    shotMl !== "" &&
+    shotMg !== "" &&
+    objetivo !== "" &&
+    aromaParsed != null &&
+    shotMlParsed != null &&
+    shotMgParsed != null &&
+    objetivoParsed != null &&
+    [aromaParsed, shotMlParsed, shotMgParsed, objetivoParsed].every(Number.isFinite);
+
+  const target = targetReady
+    ? shotsForTarget(
+        aromaParsed as number,
+        shotMlParsed as number,
+        shotMgParsed as number,
+        objetivoParsed as number,
+        botellaParsed != null && Number.isFinite(botellaParsed) ? botellaParsed : undefined,
+      )
+    : null;
+
+  const alternatives =
+    targetReady &&
+    botellaParsed != null &&
+    Number.isFinite(botellaParsed) &&
+    aromaParsed != null &&
+    shotMlParsed != null &&
+    shotMgParsed != null &&
+    objetivoParsed != null
+      ? shotAlternatives(aromaParsed, botellaParsed, shotMlParsed, shotMgParsed, objetivoParsed)
+      : [];
+
+  const exampleMix = mixNicotine({ ...NICOKIT_EXAMPLE });
+  const exampleMg = "error" in exampleMix ? null : formatPlain(round(exampleMix.mgPerMl, 2));
 
   const patch = (partial: ToolSearch) => onSearch({ ...search, tab: "nicokit", ...partial });
 
   const reset = () => {
-    onSearch({
-      tab: "nicokit",
-      aroma: "50",
-      botella: "60",
-      shotMl: "10",
-      shotMg: "20",
-      shots: "1",
-      objetivo: "3",
-    });
+    onSearch({ tab: "nicokit" });
   };
+
+  const fitCount =
+    mixed &&
+    !("error" in mixed) &&
+    shotMlParsed != null &&
+    Number.isFinite(shotMlParsed) &&
+    shotMlParsed > 0
+      ? Math.floor(mixed.freeMl / shotMlParsed)
+      : null;
+  const showFitCount =
+    fitCount != null && Number.isFinite(fitCount) && fitCount !== Number.POSITIVE_INFINITY;
 
   return (
     <form
@@ -440,7 +529,7 @@ function NicoForm({
     >
       <p className="text-sm text-muted-foreground">
         Distingue el volumen ya en la botella, el volumen añadido por cada shot, la concentración
-        del shot y el objetivo final. Unidades en mililitros y mg/ml.
+        del shot y el objetivo final. Unidades en mililitros y mg/ml. Vacío no es cero.
       </p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <Field
@@ -453,8 +542,9 @@ function NicoForm({
             id="aroma"
             inputMode="decimal"
             aria-describedby="aroma-help"
+            placeholder="50"
             value={aroma}
-            onChange={(event) => patch({ aroma: event.target.value })}
+            onChange={(event) => patch({ aroma: event.target.value || undefined })}
           />
         </Field>
         <Field
@@ -467,8 +557,9 @@ function NicoForm({
             id="botella"
             inputMode="decimal"
             aria-describedby="botella-help"
+            placeholder="60"
             value={botella}
-            onChange={(event) => patch({ botella: event.target.value })}
+            onChange={(event) => patch({ botella: event.target.value || undefined })}
           />
         </Field>
         <Field
@@ -481,8 +572,9 @@ function NicoForm({
             id="shotMl"
             inputMode="decimal"
             aria-describedby="shotMl-help"
+            placeholder="10"
             value={shotMl}
-            onChange={(event) => patch({ shotMl: event.target.value })}
+            onChange={(event) => patch({ shotMl: event.target.value || undefined })}
           />
         </Field>
         <Field
@@ -495,25 +587,24 @@ function NicoForm({
             id="shotMg"
             inputMode="decimal"
             aria-describedby="shotMg-help"
+            placeholder="20"
             value={shotMg}
-            onChange={(event) => patch({ shotMg: event.target.value })}
+            onChange={(event) => patch({ shotMg: event.target.value || undefined })}
           />
         </Field>
-        <Field id="shots" label="Número de nicokits" help="Cantidad entera de shots añadidos.">
+        <Field
+          id="shots"
+          label="Número de nicokits"
+          help="Cantidad entera de shots añadidos."
+          error={shotsNotInteger ? "Introduce un número entero" : undefined}
+        >
           <Input
             id="shots"
             inputMode="numeric"
             aria-describedby="shots-help"
+            placeholder="1"
             value={shots}
-            onChange={(event) => {
-              const value = event.target.value;
-              if (value === "") {
-                patch({ shots: "" });
-                return;
-              }
-              const parsed = num(value);
-              if (!Number.isNaN(parsed)) patch({ shots: String(Math.max(0, Math.round(parsed))) });
-            }}
+            onChange={(event) => patch({ shots: event.target.value || undefined })}
           />
         </Field>
         <Field
@@ -521,21 +612,36 @@ function NicoForm({
           label="Objetivo para calcular cuántos hacen falta (mg/ml)"
           unit="mg/ml"
           help="Concentración final deseada; se usa para estimar shots."
+          optional
         >
           <Input
             id="objetivo"
             inputMode="decimal"
             aria-describedby="objetivo-help"
+            placeholder="3"
             value={objetivo}
-            onChange={(event) => patch({ objetivo: event.target.value })}
+            onChange={(event) => patch({ objetivo: event.target.value || undefined })}
           />
         </Field>
       </div>
-      {"error" in mixed ? (
+
+      {!requiredReady ? (
+        <p className="mt-6 text-sm text-muted-foreground" role="status">
+          {shotsNotInteger
+            ? "Introduce un número entero"
+            : missing.length > 0
+              ? `Faltan datos: ${missing.join(", ")}.`
+              : "Corrige los valores numéricos para ver el balance."}
+        </p>
+      ) : null}
+
+      {mixed && "error" in mixed ? (
         <p className="mt-6 text-sm text-destructive" role="alert">
           {mixed.error}
         </p>
-      ) : (
+      ) : null}
+
+      {mixed && !("error" in mixed) ? (
         <div className="mt-6">
           <h2 className="text-sm font-medium text-foreground">Balance de la mezcla</h2>
           <dl className="mt-3 grid grid-cols-2 gap-3">
@@ -546,10 +652,9 @@ function NicoForm({
               label="Espacio tras la mezcla"
               value={`${formatPlain(round(mixed.remainingMl, 2))} ml`}
             />
-            <Result
-              label="Nicokits que caben enteros"
-              value={String(Math.floor(mixed.freeMl / num(shotMl)))}
-            />
+            {showFitCount ? (
+              <Result label="Nicokits que caben enteros" value={String(fitCount)} />
+            ) : null}
           </dl>
           {mixed.overflow ? (
             <p className="mt-4 text-sm text-destructive" role="alert">
@@ -562,18 +667,23 @@ function NicoForm({
             </p>
           ) : null}
         </div>
-      )}
+      ) : null}
+
       <div className="mt-6 border-t border-border pt-4">
-        {"error" in target ? (
+        {!targetReady ? (
+          <p className="text-sm text-muted-foreground" role="status">
+            Completa aroma, nicokit, graduación y objetivo para estimar cuántos shots hacen falta.
+          </p>
+        ) : target && "error" in target ? (
           <p className="text-sm text-destructive" role="alert">
             {target.error}
           </p>
-        ) : (
+        ) : target && !("error" in target) ? (
           <>
             <p className="text-sm text-foreground">
-              {num(objetivo) === 0
+              {objetivoParsed === 0
                 ? `Objetivo 0 mg/ml: no hace falta añadir nicokits. Quedan ${formatPlain(round(target.finalMl, 2))} ml a 0 mg.`
-                : `Para acercarse a ${formatPlain(num(objetivo))} mg/ml harían falta ${formatPlain(round(target.shots, 1))} nicokits de ${shotMl} ml a ${shotMg} mg/ml, partiendo de ${aroma} ml a 0 mg. Redondea al entero y vuelve a leer el resultado: un nicokit no se parte con precisión de laboratorio.`}
+                : `Para acercarse a ${formatPlain(objetivoParsed as number)} mg/ml harían falta ${formatPlain(round(target.shots, 1))} nicokits de ${shotMl} ml a ${shotMg} mg/ml, partiendo de ${aroma} ml a 0 mg. Redondea al entero y vuelve a leer el resultado: un nicokit no se parte con precisión de laboratorio.`}
             </p>
             {target.overflow ? (
               <p className="mt-2 text-sm text-destructive" role="alert">
@@ -587,11 +697,13 @@ function NicoForm({
               </p>
             ))}
           </>
-        )}
+        ) : null}
       </div>
       <p className="mt-4 text-sm text-muted-foreground">
         Fórmula: mg/ml = (nicokits × ml del shot × mg/ml del shot) / (ml de aroma + ml añadidos). Un
-        shortfill de 50 ml en botella de 60 ml con un shot de 10 ml a 20 mg/ml queda en 3,33 mg/ml.
+        shortfill de {NICOKIT_EXAMPLE.initialZeroMgMl} ml en botella de {NICOKIT_EXAMPLE.bottleMl}{" "}
+        ml con un shot de {NICOKIT_EXAMPLE.shotMl} ml a {NICOKIT_EXAMPLE.shotMg} mg/ml queda en{" "}
+        {exampleMg ?? "—"} mg/ml.
       </p>
       <div className="mt-6">
         <Button type="button" variant="quiet" onClick={reset}>
