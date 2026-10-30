@@ -105,10 +105,13 @@ por defecto `system`. No se impone oscuro.
 
 ## Consecuencias
 
-- Los valores concretos se aplican en la unidad U2. La tipografía mono en U3.
-- La limpieza de efectos (U5), el blog (U6), la cabecera (U4), la URL de
-  `/comparar` (U7) y las calculadoras (U8) siguen este contrato.
+- **Entregado (2026-10-30):** U2 tokens en `src/styles.css`; U3 JetBrains
+  Mono Variable; U5 efectos retirados; U6 blog → `/archivo`; U4 cabecera;
+  U7 URL de `/comparar`; U8 Ohm/Nicokit. Expediente de aceptación:
+  [aceptacion-v2-visual.md](../../cierre/aceptacion-v2-visual.md).
 - ADR-0016 §5 y §7 quedan enmendados por los puntos 6 y 7 de este ADR; el
   resto de ADR-0016 permanece.
 - No se inventan datos técnicos de fichas ni se rebajan gates de cobertura,
   smoke, a11y, secretos, SCA o SQL.
+- Los `--kind-*` viven con croma 0,152 (no 0,045) para ΔE OKLab ≥ 15; ver
+  nota en D2.

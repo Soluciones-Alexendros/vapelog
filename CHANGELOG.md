@@ -12,6 +12,18 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambios
+
+- docs(cierre): aceptación migración visual v2 (U9); Preview/prod = SHA candidato
+- fix(herramientas): Ohm sin sustitución silenciosa y Nicokit sin defaults (#40)
+- feat(comparar): selección en la URL con precedencia sobre localStorage (#39)
+- feat(ui): cabecera principal unificada y `/buscar` sin ornamento (#38)
+- feat(ui): JetBrains Mono Variable en lugar de Space Mono (#36)
+- feat(ui): paleta neutra tono 260 y theme-color (#35)
+- chore(blog): retirar ejemplos y redirigir `/blog` a `/archivo` (#34)
+- chore(fx): retirar efectos muertos y migrar claves `vapelog-fx` (#33)
+- docs(adr): paleta neutra y D1–D5 (ADR-0017) (#32)
+
 ## [0.14.0] - 2026-10-30
 
 ### Cambios
