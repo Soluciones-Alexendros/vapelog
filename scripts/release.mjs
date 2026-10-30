@@ -11,9 +11,12 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const dryRun = process.argv.includes("--dry-run");
 const CHANGELOG = "CHANGELOG.md";
 const UNRELEASED = "## [Unreleased]";
+
+function isDryRun() {
+  return process.argv.includes("--dry-run");
+}
 
 /**
  * @param {string} cmd
@@ -272,7 +275,7 @@ export function main(deps = {}) {
       : ["### Cambios", "", ...subjects.map((subject) => `- ${subject}`)].join("\n");
     const { section, updated } = buildChangelog(changelog, version, date, notes);
 
-    if (dryRun) {
+    if (isDryRun()) {
       console.log("--- dry-run: vista previa de la sección del CHANGELOG ---");
       console.log(section);
       process.exitCode = 0;
@@ -309,7 +312,7 @@ export function main(deps = {}) {
     notes = ["### Cambios", "", ...subjects.map((subject) => `- ${subject}`)].join("\n");
   }
 
-  if (dryRun) {
+  if (isDryRun()) {
     console.log("--- dry-run: notas de GitHub Release ---");
     console.log(notes);
     process.exitCode = 0;
