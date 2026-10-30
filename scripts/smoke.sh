@@ -87,6 +87,26 @@ for path in / /dispositivos /resistencias /liquidos /buscar /herramientas /compa
   rm -f "$body"
 done
 
+# Identidad del artefacto servido (no solo public/ en disco).
+manifest_body="$(mktemp)"
+manifest_code="$(curl -sS -o "$manifest_body" -w "%{http_code}" "$BASE/build-manifest.json")"
+echo "smoke: GET /build-manifest.json -> $manifest_code"
+if [ "$manifest_code" != "200" ]; then
+  echo "smoke: FAIL /build-manifest.json (esperado 200, recibido $manifest_code)" >&2
+  rm -f "$manifest_body"
+  exit 1
+fi
+if [ -n "${GITHUB_SHA:-}" ]; then
+  served="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; const m=JSON.parse(readFileSync(process.argv[1],"utf8")); process.stdout.write(m.commit||"");' "$manifest_body")"
+  if [ "$served" != "$GITHUB_SHA" ]; then
+    echo "smoke: FAIL manifiesto commit=$served ≠ GITHUB_SHA=$GITHUB_SHA" >&2
+    rm -f "$manifest_body"
+    exit 1
+  fi
+  echo "smoke: manifiesto commit=$served OK"
+fi
+rm -f "$manifest_body"
+
 notfound="$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/dispositivos/no-existo-404")"
 echo "smoke: GET /dispositivos/no-existo-404 -> $notfound"
 if [ "$notfound" != "404" ]; then

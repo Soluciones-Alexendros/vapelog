@@ -15,7 +15,13 @@ pnpm test
 pnpm run test:coverage
 ```
 
-Umbral CI: **≥ 70 %** de líneas en el total reportado.
+Umbral CI: **≥ 70 %** de líneas en la fila `all files` que parsea el job
+`test` de `.github/workflows/ci.yml` (primera cifra = líneas). El comando
+`pnpm run test:coverage` no filtra con `--test-coverage-include`: el
+denominador son los módulos cargados por los globs
+`src/data/*.test.ts` y `scripts/*.test.mjs` (incluye `src/lib/` importado).
+`AGENTS.md` habla de `src/data/` + `scripts/` como ámbito contractual; no
+se cambia el runner ni se sube el porcentaje en este cierre.
 
 ## Smoke
 
