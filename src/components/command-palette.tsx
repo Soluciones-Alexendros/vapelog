@@ -44,7 +44,6 @@ const COMMANDS = [
   },
   { id: "calculo", label: "Calculadoras", hint: "Ohm y nicokit", to: "/herramientas" },
   { id: "tabla", label: "Catálogo completo", hint: "Todas las fichas", to: "/archivo" },
-  { id: "blog", label: "Blog", hint: "Guías recientes", to: "/blog" },
   { id: "modelo", label: "Modelo de datos", hint: "Cómo se organiza el archivo", to: "/modelo" },
   { id: "comparar", label: "Comparador", hint: "Hasta cuatro fichas", to: "/comparar" },
 ] as const;
