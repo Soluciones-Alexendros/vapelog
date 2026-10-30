@@ -67,12 +67,8 @@ function SearchPage() {
         marca deja solo las cápsulas de esa marca. Si la marca no está en el archivo, el resultado
         es cero: no se inventa la ficha.
       </p>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        La comparativa de precios por tienda es el paso siguiente. La comercialización, cuando esta
-        estructura ya no se mueva.
-      </p>
 
-      <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label="Sección">
+      <nav className="mt-6 flex flex-wrap gap-2" aria-label="Sección">
         <Button
           asChild
           variant={!dominio ? "secondary" : "quiet"}
@@ -80,7 +76,7 @@ function SearchPage() {
             !dominio ? "font-semibold underline decoration-primary underline-offset-4" : undefined
           }
         >
-          <Link to="/buscar" search={shared(catalog)} role="tab" aria-selected={!dominio}>
+          <Link to="/buscar" search={shared(catalog)} aria-current={!dominio ? "page" : undefined}>
             Consultas
           </Link>
         </Button>
@@ -100,15 +96,14 @@ function SearchPage() {
               <Link
                 to="/buscar"
                 search={{ ...shared(catalog), dominio: entry.id }}
-                role="tab"
-                aria-selected={selected}
+                aria-current={selected ? "page" : undefined}
               >
                 {entry.label}
               </Link>
             </Button>
           );
         })}
-      </div>
+      </nav>
 
       {dominio ? (
         <div className="mt-6">
@@ -152,18 +147,13 @@ function FinderHome({ q }: { q: string }) {
         <label className="sr-only" htmlFor="finder-q">
           Buscar por nombre en todo el archivo
         </label>
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-md">
-          <span aria-hidden="true" className="font-mono text-lg text-primary">
-            &gt;
-          </span>
-          <input
-            id="finder-q"
-            name="q"
-            defaultValue={q}
-            placeholder="Nombre, marca o cifra"
-            className="font-mono sm:max-w-md"
-          />
-        </div>
+        <input
+          id="finder-q"
+          name="q"
+          defaultValue={q}
+          placeholder="Nombre, marca o cifra"
+          className="min-w-0 flex-1 sm:max-w-md"
+        />
         <button
           type="submit"
           className="inline-flex min-h-11 items-center justify-center rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground"
@@ -239,7 +229,9 @@ function TextHits({ q }: { q: string }) {
     <section className="mt-10">
       <h2 className="text-2xl text-foreground">Nombre «{q}»</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        {hits.length} fichas en todo el archivo. Para cruzar características, entra en una sección.
+        {hits.length > 20
+          ? `Mostrando 20 de ${hits.length}`
+          : `${hits.length} fichas en todo el archivo. Para cruzar características, entra en una sección.`}
       </p>
       <ul className="mt-4 flex flex-col gap-3">
         {hits.slice(0, 20).map((item) => (
