@@ -29,6 +29,7 @@ import {
   storeSet,
 } from "@/lib/browser-store";
 import { parseCompareJson, shouldPersistCompare, slugExistsInCatalog } from "@/lib/compare-store";
+import { clearFxPrefs } from "@/lib/clear-fx-prefs";
 import { kindOf } from "@/lib/kind";
 import { KindCard } from "@/components/ui/kind-card";
 
@@ -581,6 +582,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (storeGet(AGE_STORAGE_KEY, sessionStore()) !== AGE_STORAGE_OK) setAllowed(false);
     setChecked(true);
+    clearFxPrefs();
   }, []);
 
   return (

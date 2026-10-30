@@ -48,7 +48,6 @@ import {
 import type { CatalogItem, Coil, CompatKind, Device, Domain } from "@/data/types";
 import { catalogImage } from "@/data/images";
 import { transitionNameForPhoto } from "@/lib/view-transition";
-import { puff } from "@/lib/smoke/emit-bus";
 import { useCompare } from "@/components/compare-context";
 import {
   compatLabel,
@@ -504,8 +503,7 @@ function Sheet({
           className={
             compare.has(item.slug) ? "font-semibold underline underline-offset-4" : undefined
           }
-          onClick={(event) => {
-            puff(event.clientX, event.clientY);
+          onClick={() => {
             compare.toggle({ domain: item.domain, slug: item.slug });
           }}
         >

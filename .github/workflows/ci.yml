@@ -342,31 +342,23 @@ jobs:
       - name: Install Chromium for bench
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Smoke bench (umbral de aviso, no bloqueante)
+      - name: Smoke bench (ausencia de canvas FX)
         run: |
           set -uo pipefail
-          node scripts/smoke-bench.mjs --seconds 8 --theme light --cpu 1 > bench.jsonl
-          node scripts/smoke-bench.mjs --seconds 8 --theme dark  --cpu 1 >> bench.jsonl
-          node scripts/smoke-bench.mjs --seconds 8 --theme light --cpu 4 >> bench.jsonl
+          node scripts/smoke-bench.mjs --theme light > bench.jsonl
+          node scripts/smoke-bench.mjs --theme dark >> bench.jsonl
           cat bench.jsonl
           node --input-type=module -e '
             import fs from "node:fs";
             const rows = fs.readFileSync("bench.jsonl", "utf8").split("\n")
               .filter((l) => l.trim().startsWith("{"))
-              .map((l) => JSON.parse(l))
-              .filter((r) => r.smokeMeanMs != null);
-            const over = [];
-            for (const r of rows) {
-              const meanMax = r.cpu > 1 ? 4 : 2;
-              if (r.smokeMeanMs > meanMax || r.smokeP95Ms > 4) {
-                over.push(r.theme + "/cpu" + r.cpu + ": mean=" + r.smokeMeanMs + "ms p95=" + r.smokeP95Ms + "ms");
-              }
+              .map((l) => JSON.parse(l));
+            const bad = rows.filter((r) => !r.ok);
+            if (bad.length) {
+              console.error("Canvas o capa de humo detectados:", bad);
+              process.exit(1);
             }
-            if (over.length) {
-              console.log("::warning title=Umbral de humo superado::" + over.join("; "));
-            } else {
-              console.log("Humo dentro de umbrales (≤2 ms/frame desktop, ≤4 ms con CPU ×4).");
-            }
+            console.log("Contrato de ausencia OK (ADR-0016/U5).");
           '
 
   supply-chain:

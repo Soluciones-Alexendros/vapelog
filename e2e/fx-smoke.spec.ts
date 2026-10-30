@@ -30,16 +30,25 @@ test.describe("efectos ornamentales retirados (ADR-0016)", () => {
     });
   }
 
-  test("claves FX antiguas no relanzan efectos", async ({ page }) => {
+  test("claves FX antiguas no relanzan efectos y se borran", async ({ page }) => {
     await skipAgeGate(page);
     await page.addInitScript(() => {
       localStorage.setItem("vapelog-fx:v2", "on");
+      localStorage.setItem("vapelog-fx", "on");
       localStorage.setItem("vapelog-theme", "dark");
     });
     await page.goto("/");
     await expect(page.locator("html")).toHaveClass(/dark/);
     await expect(page.locator("canvas[data-fx]")).toHaveCount(0);
     await expect(page.locator(".kind-led")).toHaveCount(0);
+    const leftovers = await page.evaluate(() => ({
+      v2: localStorage.getItem("vapelog-fx:v2"),
+      legacy: localStorage.getItem("vapelog-fx"),
+      theme: localStorage.getItem("vapelog-theme"),
+    }));
+    expect(leftovers.v2).toBeNull();
+    expect(leftovers.legacy).toBeNull();
+    expect(leftovers.theme).toBe("dark");
   });
 
   test("reduced-motion no deja capas de humo", async ({ page }) => {

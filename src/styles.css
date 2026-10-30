@@ -371,27 +371,6 @@
   }
 }
 
-.reveal {
-  opacity: 1;
-  transform: none;
-}
-
-html.js .reveal:not(.is-visible) {
-  opacity: 0;
-  transform: translateY(6px);
-  transition:
-    opacity var(--dur-2) var(--ease-out),
-    transform var(--dur-2) var(--ease-out);
-}
-
-html.js .reveal.is-visible {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity var(--dur-2) var(--ease-out),
-    transform var(--dur-2) var(--ease-out);
-}
-
 .photo-skeleton {
   position: absolute;
   inset: 0;
@@ -432,13 +411,6 @@ html.js .reveal.is-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.js .reveal:not(.is-visible),
-  html.js .reveal.is-visible {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-  }
-
   .photo-skeleton::after {
     content: none;
   }

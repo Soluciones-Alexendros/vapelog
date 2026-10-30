@@ -36,7 +36,6 @@ test:coverage: node --experimental-test-coverage --test "src/data/_.test.ts" "sc
 smoke: bash scripts/smoke.sh
 visual-smoke: node scripts/visual-smoke.mjs
 smoke-bench: node scripts/smoke-bench.mjs
-smoke-verify: node scripts/smoke-verify.mjs
 check:env: node scripts/check-env.mjs
 check:manifest: node scripts/check-manifest.mjs
 check:supply-chain: node scripts/supply-chain-audit.mjs
