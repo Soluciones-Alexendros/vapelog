@@ -50,11 +50,26 @@ Ejecutados en el cierre (Node 22):
 
 No se regeneró sitemap/images en masa (U6 ya ajustó el sitemap en su PR).
 
+## Capturas Playwright
+
+Índice y PNGs: [aceptacion-v2/capturas/indice.md](./aceptacion-v2/capturas/indice.md).
+Las casillas ☐ de la matriz siguen siendo **visto bueno humano** tras revisar
+esas imágenes; el script no declara cumplimiento WCAG ni cierra el expediente.
+
+```bash
+pnpm run build
+pnpm run aceptacion:capturas
+# opcional contra prod del SHA candidato:
+# ACEPTACION_URL=https://vapelog-alexendros.vercel.app \
+#   BROWSER_ALLOW_EXTERNAL_HOST=1 pnpm run aceptacion:capturas
+```
+
 ## Matriz mínima (manual)
 
 Recorridos: inicio, catálogo, ficha, comparador, buscar/resultados,
 herramientas. Temas claro y oscuro. Móvil y escritorio. Estados normal,
 vacío, error e incompleto. Teclado (Tab, foco visible, atajo Buscar).
+Evidencia automática: `pnpm run aceptacion:capturas` (ver índice arriba).
 
 | Superficie        | Claro | Oscuro | Móvil | Escritorio | Teclado | Notas                               |
 | ----------------- | ----- | ------ | ----- | ---------- | ------- | ----------------------------------- |
