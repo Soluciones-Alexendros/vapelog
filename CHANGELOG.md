@@ -16,7 +16,8 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambios
 
-- docs(cierre): aceptación migración visual v2 (U9); Preview/prod = SHA candidato
+- feat(cierre): harness Playwright de capturas para la matriz de aceptación v2 (#42)
+- docs(cierre): expediente U9, SHA candidato y gates locales (#41)
 - fix(herramientas): Ohm sin sustitución silenciosa y Nicokit sin defaults (#40)
 - feat(comparar): selección en la URL con precedencia sobre localStorage (#39)
 - feat(ui): cabecera principal unificada y `/buscar` sin ornamento (#38)

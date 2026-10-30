@@ -62,14 +62,17 @@ conmutador de efectos.
 ## Accesibilidad y e2e
 
 ```bash
-pnpm run a11y          # axe serious+critical sobre el build (scripts/a11y-pass.mjs)
-pnpm run visual-smoke  # desbordamiento horizontal por viewport/tema
-pnpm run e2e           # build + Nitro loopback + a11y-pass + browser-smoke
+pnpm run a11y                 # axe serious+critical sobre el build (scripts/a11y-pass.mjs)
+pnpm run visual-smoke         # desbordamiento horizontal por viewport/tema
+pnpm run aceptacion:capturas  # PNGs de la matriz de aceptación visual v2
+pnpm run e2e                  # build + Nitro loopback + a11y-pass + browser-smoke
 ```
 
 - `scripts/a11y-pass.mjs` recorre ≥ 5 rutas × 2 temas y sale 0 solo con 0
   violaciones serious/critical.
 - `scripts/visual-smoke.mjs` detecta desbordamiento horizontal (p. ej. 360 px).
+- `scripts/aceptacion-v2-capturas.mjs` genera evidencias PNG + índice bajo
+  `docs/cierre/aceptacion-v2/capturas/` (no marca casillas del expediente).
 - `scripts/e2e.sh` es el espejo local del job `browser` de CI y corre en el
   hook `pre-commit` (verificación e2e de husky).
 

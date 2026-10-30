@@ -26,5 +26,9 @@
 ## Cierre / aceptación
 
 - [cierre/](cierre/) — plan maestro, matriz, expediente y evidencias.
-  El informe baseline F00 (2026-10-17, app 0.12.0) está **obsoleto** como
-  fotografía actual; usar HEAD de `main` y runs de Actions del candidato.
+- [cierre/aceptacion-v2-visual.md](cierre/aceptacion-v2-visual.md) —
+  expediente de la migración visual v2 (ADR-0017 / U1–U9).
+- [cierre/aceptacion-v2/capturas/](cierre/aceptacion-v2/capturas/) — PNGs e
+  índice (`pnpm run aceptacion:capturas`).
+- El informe baseline F00 (2026-10-17, app 0.12.0) está **obsoleto** como
+  fotografía actual; usar HEAD de `main` y el expediente v2.
