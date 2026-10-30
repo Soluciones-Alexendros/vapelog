@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/cn";
+import { compareSearchFromItems } from "@/lib/compare-store";
 
 const BEST_DIRECTION: Record<string, "max" | "min"> = {
   power_max_w: "max",
@@ -27,18 +28,46 @@ const BEST_DIRECTION: Record<string, "max" | "min"> = {
   volume_ml: "max",
 };
 
+function canonicalCompareUrl(items: CompareRef[]): string {
+  const search = compareSearchFromItems(items);
+  const params = new URLSearchParams();
+  if (search.dominio) params.set("dominio", search.dominio);
+  if (search.fichas) params.set("fichas", search.fichas);
+  const query = params.toString();
+  const path = query ? `/comparar?${query}` : "/comparar";
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
+}
+
 export function CompareView() {
   const compare = useCompare();
   const [onlyDiffs, setOnlyDiffs] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const domain = compare.items[0]?.domain;
+
+  const copyLink = async () => {
+    const url = canonicalCompareUrl(compare.items);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyStatus("Enlace copiado.");
+    } catch {
+      setCopyStatus("No se pudo copiar el enlace.");
+    }
+  };
+
   if (!domain || compare.items.length === 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <PageHeading as="h1" text="Comparador" className="text-4xl text-foreground" />
         <p className="mt-3 text-muted-foreground">
-          Todavía no hay fichas. Elige hasta cuatro del mismo tipo. La selección se guarda en este
-          navegador.
+          Todavía no hay fichas. Elige hasta cuatro del mismo tipo. En esta página la selección va
+          en la URL; en el resto del sitio se guarda en este navegador.
         </p>
+        {compare.notice ? (
+          <p className="mt-3 text-sm text-primary" role="status">
+            {compare.notice}
+          </p>
+        ) : null}
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="secondary">
             <Link to="/dispositivos">Dispositivos</Link>
@@ -85,15 +114,28 @@ export function CompareView() {
           >
             Solo diferencias
           </Button>
+          <Button type="button" variant="quiet" onClick={() => void copyLink()}>
+            Copiar enlace de esta comparación
+          </Button>
           <Button type="button" variant="quiet" onClick={compare.clear}>
             Vaciar
           </Button>
         </div>
       </div>
+      {compare.notice ? (
+        <p className="mt-3 text-sm text-primary" role="status">
+          {compare.notice}
+        </p>
+      ) : null}
+      {copyStatus ? (
+        <p className="mt-2 text-sm text-muted-foreground" role="status">
+          {copyStatus}
+        </p>
+      ) : null}
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Compara especificaciones entre fichas del mismo dominio. La selección vive en este navegador
-        (no en la URL). Se resalta el valor publicado más alto o más bajo de cada fila numérica
-        cuando procede. No hay puntuación global ni precios.
+        Compara especificaciones entre fichas del mismo dominio. Aquí la selección vive en la URL
+        (compartible) y también se guarda en este navegador. Se resalta el valor publicado más alto
+        o más bajo de cada fila numérica cuando procede. No hay puntuación global ni precios.
       </p>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         «Solo diferencias» oculta filas con el mismo valor publicado; las filas con datos ausentes
