@@ -27,11 +27,13 @@ contenido publicado. Fuera: auth, pagos, BD runtime, comunidad (ADR-0012).
 
 ## Excepciones abiertas
 
-| Ítem                     | Riesgo                  | Mitigación                                                                      | Vencimiento                       |
-| ------------------------ | ----------------------- | ------------------------------------------------------------------------------- | --------------------------------- |
-| CSP en Report-Only       | Política aún no enforce | Observar violaciones en staging                                                 | Tras 1 semana en enforce          |
-| E2E Firefox/WebKit en CI | Tiempo de runner        | Chromium sigue siendo el gate fx-e2e; multibrowser en config local/CI ampliable | F08 seguimiento                   |
-| SHA prod / VAL-001-03    | Identidad despliegue    | `test:postdeploy` + manifiesto público                                          | Tras primer deploy con manifiesto |
+| Ítem                     | Riesgo                  | Mitigación                                                          | Responsable | Vencimiento / cierre                                      |
+| ------------------------ | ----------------------- | ------------------------------------------------------------------- | ----------- | --------------------------------------------------------- |
+| CSP en Report-Only       | Política aún no enforce | Observar violaciones; **no** enforce a ciegas                       | Operador    | Fecha que fije el operador tras evidencia en Preview/prod |
+| E2E Firefox/WebKit en CI | Tiempo de runner        | Chromium es el gate (`fx-e2e` + suite preview en Nitro)             | Operador    | Hasta ampliar `E2E_ALL_BROWSERS=1` con ADR                |
+| Preview rate limit       | Sin Preview Ready       | `preview-e2e` fuera de `release-ready`; re-run cuando Vercel acepte | Operador    | Cuando el límite caduque                                  |
+| SHA prod / VAL-001-03    | Identidad despliegue    | `pnpm run test:postdeploy` / `pnpm run harness deployed`            | Operador    | Tras deploy del candidato con manifiesto                  |
+| Método de merge          | Solo squash en el repo  | Conservar squash (flota) o habilitar merge commits conscientemente  | Operador    | Antes del merge del PR de cierre                          |
 
 ## Presupuestos no funcionales (propuestos)
 

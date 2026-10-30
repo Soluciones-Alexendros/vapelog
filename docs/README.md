@@ -22,3 +22,9 @@
 - [deploy.md](runbooks/deploy.md)
 - [rollback.md](runbooks/rollback.md)
 - [rotate-secrets.md](runbooks/rotate-secrets.md)
+
+## Cierre / aceptación
+
+- [cierre/](cierre/) — plan maestro, matriz, expediente y evidencias.
+  El informe baseline F00 (2026-10-17, app 0.12.0) está **obsoleto** como
+  fotografía actual; usar HEAD de `main` y runs de Actions del candidato.

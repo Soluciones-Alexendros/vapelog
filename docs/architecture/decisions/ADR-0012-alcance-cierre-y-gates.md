@@ -30,15 +30,17 @@ instala en CI; meterlo ahora como check verde sería evidencia falsa
    compatibilidad, calculadoras y contenido publicado. **Fuera de alcance**
    salvo ADR posterior: autenticación de usuarios, pagos, tienda, base de
    datos en runtime y comunidad.
-2. **SQL.** Las pruebas de instalación/restricciones Postgres quedan fuera
-   del agregador `release-ready` hasta F06 (OBJ-018). El test actual
-   `scripts/sql-schema-install.test.mjs` no cuenta como gate de esquema.
+2. **SQL.** El unitario `scripts/sql-schema-install.test.mjs` no ejecuta
+   Postgres y **no** es el gate. **Actualización (ADR-0014, 2026-10-17):**
+   el job `sql-integration` (Postgres 16 efímero) **sí** entra en
+   `release-ready`. El alcance «SQL no es runtime» se mantiene.
 3. **Grafo de publicación.** `release` depende únicamente de
-   `release-ready`. Ese job (`if: always()`) exige `success` en
-   `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e` y
-   `supply-chain`. `skipped`, `cancelled` y `failure` fallan el gate.
-   `smoke-bench` sigue informativo (`continue-on-error`) y **no** entra en
-   el agregador.
+   `release-ready`. Ese job (`if: always()`) exige `success` en el
+   conjunto cerrado `REQUIRED_JOBS` de `scripts/release-ready.mjs`
+   (paridad con `ci.yml`): incluye `quality`, `test`, `build`, `smoke`,
+   `browser`, `fx-e2e`, `supply-chain`, `sql-integration`, `secrets` y
+   `sca`. `skipped`, `cancelled` y `failure` fallan el gate.
+   `smoke-bench` y `preview-e2e` **no** entran en el agregador.
 4. **Manifiesto.** Cada build escribe `public/build-manifest.json`
    (gitignorado) con commit, versión, `schemaVersion`, `catalogRevision`,
    hash del lockfile y `buildId`. El commit `chore(release)` no se
