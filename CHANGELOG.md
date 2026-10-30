@@ -12,6 +12,8 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-30
+
 ### Cambios
 
 - docs(cierre): aceptación migración visual v2 (U9); Preview/prod = SHA candidato
