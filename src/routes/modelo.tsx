@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { JSX } from "react";
-import { KineticHeading } from "@/components/kinetic-heading";
+import { PageHeading } from "@/components/page-heading";
 import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/modelo")({
@@ -20,7 +20,7 @@ function ModelPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Arquitectura</p>
-      <KineticHeading
+      <PageHeading
         as="h1"
         text="Qué se ha cambiado del encargo"
         className="mt-2 text-4xl text-foreground"

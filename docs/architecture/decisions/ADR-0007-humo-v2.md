@@ -17,7 +17,11 @@
 
 ## Estado
 
-Aceptado (2026-09-30)
+Sustituido en la obligación de renderizar humo por
+[ADR-0016](./ADR-0016-direccion-visual-sobria.md) (2026-10-30). Aceptado
+originalmente el 2026-09-30. El modelo puro y los topes documentados aquí
+quedan como referencia histórica; la UI ya no monta el canvas ni el fallback
+ambiental.
 
 ## Contexto
 

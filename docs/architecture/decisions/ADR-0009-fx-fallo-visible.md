@@ -13,7 +13,10 @@
 
 ## Estado
 
-Aceptado (2026-09-30)
+Sustituido en la obligación del conmutador y del fallback de humo por
+[ADR-0016](./ADR-0016-direccion-visual-sobria.md) (2026-10-30). Aceptado
+originalmente el 2026-09-30. Las claves `vapelog-fx` / `vapelog-fx:v2` se
+leen de forma compatible y no relanzan efectos.
 
 ## Contexto
 

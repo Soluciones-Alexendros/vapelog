@@ -19,62 +19,25 @@ runtime ni autenticación.
 
 ## Mapa
 
-| Área          | Ubicación                          |
-| ------------- | ---------------------------------- |
-| Rutas         | `src/routes/`                      |
-| Fichas / UI   | `src/components/`                  |
-| Catálogo      | `src/data/catalog.ts` + specs      |
-| Humo          | `src/lib/smoke/`                   |
-| Cinética / FX | `src/lib/kinetic/` + `src/lib/fx/` |
-| Tokens / tema | `src/styles.css`                   |
-| Smoke / env   | `scripts/`                         |
+| Área          | Ubicación                     |
+| ------------- | ----------------------------- |
+| Rutas         | `src/routes/`                 |
+| Fichas / UI   | `src/components/`             |
+| Catálogo      | `src/data/catalog.ts` + specs |
+| Tokens / tema | `src/styles.css` (ADR-0016)   |
+| Smoke / env   | `scripts/`                    |
 
 ## Detalle
 
 - Overview: [docs/architecture/overview.md](docs/architecture/overview.md)
 - ADRs: [docs/architecture/decisions/](docs/architecture/decisions/)
 
-### Humo v2 ([ADR-0007](docs/architecture/decisions/ADR-0007-humo-v2.md))
+### Dirección visual sobria ([ADR-0016](docs/architecture/decisions/ADR-0016-direccion-visual-sobria.md))
 
-- **Modelo puro determinista sin DOM** en `src/lib/smoke/model.ts`
-  (`mulberry32`, `vnoise`, `createSmoke`/`stepSmoke` con curl 2D,
-  `softAlphaBound`, `glyphFor`, `emit`); el render vive en
-  `src/components/smoke-canvas.tsx` y el bus en
-  `src/lib/smoke/emit-bus.ts`.
-- **Capas L0–L4:** L0 `body::before` estático (fallback SSR/JS off/reduced),
-  L1 humo suave (sprite radial, sin `filter: blur`), L2 ASCII tramado (matriz
-  de Bayer), L3 zonificación y L4 coreografía por scroll.
-- **Tiers adaptativos** Q3/Q2/Q1 (`count`/`cell`/`ascii`/`fps`/`res`) con
-  nivel inicial por ancho, `hardwareConcurrency ≤ 4` como techo Q1 (nunca Q0)
-  y degradación con recuperación tras 10 s estables (ADR-0009); ahorro de
-  datos (`Save-Data`) → Q0 (solo L0).
-- Cotas de contraste verificadas en `src/data/contrast.test.ts`; guías de
-  medición en `docs/guides/humo-baseline.md` (S0) y
-  `docs/guides/humo-resultados.md` (S7).
-
-### Rediseño neo-brutalista ([ADR-0008](docs/architecture/decisions/ADR-0008.md))
-
-- **Identidad dual:** claro brutalista (borde tinta `--brut-border: 3px`, sombra
-  dura desplazada, `border-radius: 0`) y oscuro neón (borde fino + halo en el
-  color del tipo, `border-radius: 0.25rem`). Tipografías Archivo Black
-  (titulares `h1–h3`), Space Mono (datos/glifos/etiquetas) y Public Sans
-  (cuerpo), autoalojadas vía `@fontsource`.
-- **Color por tipo:** 4 tipos (`dispositivo`/`resistencia`/`liquido`/
-  `componente`) con tokens `--kind-*` y `--kind-color` por `data-kind`; el tipo
-  se lee por color + icono + etiqueta (WCAG 1.4.1). Mapeo de `Domain` interno a
-  `Kind` en `src/lib/kind.ts`.
-- **Tarjetas `KindCard`** (`src/components/ui/kind-card.tsx`): LED tenue en
-  espera, encendido con hover/foco; spotlight y tilt (≤ 4°) solo con
-  `(hover:hover) and (pointer:fine)`. Modelo puro del tilt en
-  `src/lib/fx/tilt.ts` (`tiltFromPointer`) y hook `useCardFx` en
-  `src/components/ui/use-card-fx.ts`.
-- **Tipografía cinética:** modelo puro `src/lib/kinetic/scramble.ts`
-  (`scrambleFrame`/`scrambleFrames`, glifos `.·:~=+*#`); el componente
-  `KineticHeading` superpone una capa `aria-hidden` solo en navegación cliente.
-- **Transiciones vapor:** `defaultViewTransition` en `src/router.tsx` +
-  `vapor-out`/`vapor-in` y puff de humo vía `emit-bus`.
-- **Salvaguardas:** todo efecto se gobierna con el conmutador
-  Auto/On/Off (`vapelog-fx:v2`, `src/lib/fx.ts` + `src/lib/fx/controller.ts`);
-  reduced-motion deja un fotograma estático (ADR-0009); `forced-colors` y
-  `prefers-contrast: more` con estilo propio. Diagnóstico: `?fx=debug` y
-  `window.__vapelogFx`. Plan vigente: [docs/plan-vapelog.md](docs/plan-vapelog.md).
+- Superficies neutras y opacas, radio único, tipografía Public Sans + Space Mono
+  para cifras. Sin neón, glow, brutalismo decorativo, humo canvas ni conmutador
+  de efectos. Tema `vapelog-theme` (claro / oscuro / sistema) se conserva.
+- Color por tipo (`--kind-*`) como marcador con icono y etiqueta
+  (`KindCard` en `src/components/ui/kind-card.tsx`).
+- Inventario histórico de humo y neo-brutalismo: ADR-0007 / ADR-0008 /
+  ADR-0009 (sustituidos en estilo). Plan vigente: [docs/plan-vapelog.md](docs/plan-vapelog.md).

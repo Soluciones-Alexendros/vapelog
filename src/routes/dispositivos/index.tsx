@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { CatalogBrowser } from "@/components/catalog-browser";
-import { KineticHeading } from "@/components/kinetic-heading";
+import { PageHeading } from "@/components/page-heading";
 import { parseCatalogSearch } from "@/data/search";
 import { buildHead } from "@/lib/seo";
 
@@ -27,7 +27,7 @@ function DevicesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Catálogo</p>
-      <KineticHeading as="h1" text="Dispositivos" className="mt-2 text-4xl text-foreground" />
+      <PageHeading as="h1" text="Dispositivos" className="mt-2 text-4xl text-foreground" />
       <p className="mt-3 max-w-2xl text-muted-foreground">{lede}</p>
       <CatalogBrowser
         domain="device"

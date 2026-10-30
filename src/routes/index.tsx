@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { JSX } from "react";
 import { buildHead } from "@/lib/seo";
 import { blogPosts, categoryLabel, formatPostDate } from "@/data/blog";
@@ -7,15 +7,13 @@ import { exampleCount, exampleQueries } from "@/data/search";
 import { brandById, coils, devices, liquids, parts } from "@/data/catalog";
 import type { CatalogItem, Domain } from "@/data/types";
 import { domainLabel } from "@/components/labels";
-import { CountUp } from "@/components/count-up";
-import { KineticHeading } from "@/components/kinetic-heading";
+import { PageHeading } from "@/components/page-heading";
 import { FichaLink } from "@/components/ficha-link";
 import { transitionNameForPhoto } from "@/lib/view-transition";
 import { ProductPhoto } from "@/components/photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { KindCard } from "@/components/ui/kind-card";
-import { useCardFx } from "@/components/ui/use-card-fx";
 import { kindOf } from "@/lib/kind";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -42,20 +40,16 @@ const highlights: CatalogItem[] = [devices[0], coils[0], liquids[0], parts[0]].f
 function Home() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const domainsRef = useRef<HTMLUListElement>(null);
-  useCardFx(domainsRef);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
-      <KineticHeading
-        as="p"
-        text="Mercado UE · fichas con fuente"
-        className="text-xs font-medium tracking-widest text-primary uppercase"
-      />
-      <KineticHeading
+      <p className="text-xs font-medium tracking-widest text-primary uppercase">
+        Mercado UE · fichas con fuente
+      </p>
+      <PageHeading
         as="h1"
         text="Catálogo técnico de vapeo"
-        className="mt-3 max-w-3xl text-4xl text-foreground sm:text-5xl term-caret"
+        className="mt-3 max-w-3xl text-4xl font-semibold text-foreground sm:text-5xl"
       />
       <p className="mt-3 max-w-2xl text-muted-foreground">
         Consulta especificaciones, compara productos y revisa compatibilidades con fuentes y límites
@@ -101,7 +95,7 @@ function Home() {
         </ul>
       </section>
 
-      <ul ref={domainsRef} className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <DomainCard
           href="/dispositivos"
           domain="device"
@@ -259,7 +253,7 @@ function ExampleCard({ example }: { example: (typeof exampleQueries)[number] }) 
   const inner = (
     <>
       <p className="text-xs tracking-widest text-muted-foreground uppercase tabular-nums">
-        <CountUp value={count} /> fichas
+        {count} fichas
       </p>
       <h3 className="mt-2 text-lg text-muted-foreground">{example.title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{example.text}</p>
@@ -304,7 +298,7 @@ function DomainCard({
       <KindCard kind={kindOf(domain)} className="h-full">
         <Link to={href} preload="intent" className="flex h-full flex-col p-3 pt-2">
           <p className="text-xs tracking-widest text-primary uppercase tabular-nums">
-            <CountUp value={count} /> fichas
+            {count} fichas
           </p>
           <h2 className="mt-2 text-3xl text-foreground">{title}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{text}</p>

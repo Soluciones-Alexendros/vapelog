@@ -1,7 +1,5 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AppShell } from "@/components/chrome";
-import { FxDebugOverlay } from "@/components/fx-debug";
-import { SmokeCanvas } from "@/components/smoke-canvas";
 import { themeBootScript, THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/components/ui/theme-toggle";
 import { SITE_URL } from "@/lib/site";
 import appCss from "../styles.css?url";
@@ -60,11 +58,9 @@ function Root() {
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content={THEME_COLOR_DARK} />
       </head>
       <body>
-        <SmokeCanvas />
         <AppShell>
           <Outlet />
         </AppShell>
-        <FxDebugOverlay />
         <Scripts />
       </body>
     </html>

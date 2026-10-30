@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { buildHead } from "@/lib/seo";
-import { KineticHeading } from "@/components/kinetic-heading";
+import { PageHeading } from "@/components/page-heading";
 import { CatalogBrowser } from "@/components/catalog-browser";
 import { FichaLink } from "@/components/ficha-link";
 import { transitionNameForPhoto } from "@/lib/view-transition";
@@ -57,7 +57,7 @@ function SearchPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Buscador</p>
-      <KineticHeading
+      <PageHeading
         as="h1"
         text="Por característica, no por eslogan"
         className="mt-2 text-4xl text-foreground"

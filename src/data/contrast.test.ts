@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
-import { createSmoke, stepSmoke } from "../lib/smoke/model.ts";
 
 type Oklch = { l: number; c: number; h: number };
 type TokenMap = Map<string, Oklch>;
@@ -88,7 +87,6 @@ function srgbToHex(o: Oklch): string {
     .join("");
 }
 
-// Pares de tinta sobre superficie: texto pequeño, WCAG AA exige 4,5:1.
 const TEXT_PAIRS: Array<[string, string]> = [
   ["--foreground", "--background"],
   ["--foreground", "--card"],
@@ -104,16 +102,11 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ["--destructive-foreground", "--destructive"],
 ];
 
-// Acentos como tinta sobre fondo: uso no textual, WCAG exige 3:1.
 const ACCENT_PAIRS: Array<[string, string]> = [
   ["--destructive", "--background"],
   ["--destructive", "--card"],
 ];
 
-// Bordes de control medidos sobre el fondo de la aplicación. Desde F1
-// (ADR-0005) `--border` es un hairline decorativo, sin requisito de contraste
-// WCAG 1.4.11; el borde accesible de controles es `--border-strong`, al que
-// `--input` referencia su valor.
 const BORDER_TOKENS = ["--border-strong", "--input", "--ring"];
 
 function assertTheme(label: string, tokens: TokenMap) {
@@ -129,9 +122,6 @@ function assertTheme(label: string, tokens: TokenMap) {
   });
 
   it(`${label}: acentos y controles superan 3:1`, () => {
-    // destructive como tinta sobre fondo es uso gráfico (iconos, acentos):
-    // con fondo oscuro no puede cumplir 4,5:1 a la vez que
-    // destructive-foreground/destructive; WCAG exige 3:1 para no texto.
     for (const [inkName, surfaceName] of ACCENT_PAIRS) {
       const ink = requireToken(tokens, inkName);
       const surface = requireToken(tokens, surfaceName);
@@ -150,18 +140,6 @@ function assertTheme(label: string, tokens: TokenMap) {
   return { background: requireToken(tokens, "--background") };
 }
 
-// --- Tokens previstos en F1 (ADR-0005): superficies, estados, borde fuerte ---
-
-/**
- * Contrato de tokens nuevo del design system v2. F0 no define estos tokens:
- * cada categoría se ACTIVA automáticamente en cuanto aparece al menos uno de
- * sus tokens (`triggers`) en `src/styles.css`, y al activarse exige el
- * contrato COMPLETO (F1 no puede añadir `--surface-1` sin `--surface-2/3` ni
- * `--success` sin `--success-foreground`). Los `triggers` solo listan tokens
- * nuevos: las superficies existentes (`--background`, `--card`) no activan
- * nada por sí solas. Mientras ningún trigger exista, el chequeo se omite y la
- * línea base F0 permanece verde.
- */
 type F1Category = {
   name: string;
   min: number;
@@ -222,7 +200,7 @@ const F1_CATEGORIES: F1Category[] = [
 
 function assertF1Category(label: string, tokens: TokenMap, category: F1Category): void {
   const active = category.triggers.some((name) => tokens.has(name));
-  if (!active) return; // F1 aún no define estos tokens: chequeo omitido.
+  if (!active) return;
   for (const [inkName, surfaceName] of category.pairs) {
     const ink = requireToken(tokens, inkName);
     const surface = requireToken(tokens, surfaceName);
@@ -232,48 +210,6 @@ function assertF1Category(label: string, tokens: TokenMap, category: F1Category)
     );
   }
 }
-
-// --- Humo: --smoke-rgb (triplete sRGB) + --smoke-alpha + --smoke-k ----------
-
-type Smoke = { rgb: [number, number, number]; alpha: number; k: number };
-
-function smokeIn(block: string): Smoke | null {
-  const rgb = block.match(/--smoke-rgb:\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})/);
-  const alpha = block.match(/--smoke-alpha:\s*([\d.]+)/);
-  const k = block.match(/--smoke-k:\s*([\d.]+)/);
-  if (!rgb || !alpha || !k) return null;
-  return {
-    rgb: [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])],
-    alpha: Number(alpha[1]),
-    k: Number(k[1]),
-  };
-}
-
-function luminanceSrgb(rgb: [number, number, number]): number {
-  const [r, g, b] = rgb.map((v) => linearize(v / 255));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function blendOver(
-  fg: [number, number, number],
-  bg: [number, number, number],
-  alpha: number,
-): [number, number, number] {
-  return [
-    alpha * fg[0] + (1 - alpha) * bg[0],
-    alpha * fg[1] + (1 - alpha) * bg[1],
-    alpha * fg[2] + (1 - alpha) * bg[2],
-  ];
-}
-
-function contrastSrgb(a: [number, number, number], b: [number, number, number]): number {
-  const la = luminanceSrgb(a);
-  const lb = luminanceSrgb(b);
-  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-// --- N2 neo-brutalista: kinds por tipo, tinta y ΔE OKLab --------------------
 
 const KIND_TOKENS = [
   "--kind-dispositivo",
@@ -308,13 +244,12 @@ function minDeltaE(colors: Oklch[]): { min: number; pair: string } {
   return { min, pair };
 }
 
-function assertBrutTokens(source: string): void {
-  assert.ok(source.includes("--brut-border: 3px"), "--brut-border 3px");
-  assert.ok(source.includes("--brut-offset: 6px"), "--brut-offset 6px");
-}
-
 describe("contraste de los tokens", () => {
   const source = css();
+  assert.equal(source.includes("--brut-border"), false, "sin --brut-border (ADR-0016)");
+  assert.equal(source.includes("--smoke-rgb"), false, "sin --smoke-rgb (ADR-0016)");
+  assert.equal(source.includes("led-breathe"), false, "sin led-breathe (ADR-0016)");
+
   const light = blockBetween(source, ":root {", ".dark {");
   const dark = blockBetween(source, ".dark {", "@theme inline");
   const pcMedia = blockBetween(
@@ -327,7 +262,6 @@ describe("contraste de los tokens", () => {
 
   const lightTokens = collectTokens(light);
   const darkTokens = collectTokens(dark);
-  // prefers-contrast: more hereda los tokens base y aplica sus overrides.
   const pcLightTokens = new Map([...lightTokens, ...collectTokens(pcLightBlock)]);
   const pcDarkTokens = new Map([...darkTokens, ...collectTokens(pcDarkBlock)]);
 
@@ -348,133 +282,32 @@ describe("contraste de los tokens", () => {
     );
   });
 
-  describe("tokens previstos F1 (se activan al existir el token)", () => {
+  describe("tokens de superficie y estado", () => {
     const variants = [
-      { label: "claro", tokens: lightTokens, smokeBlock: light },
-      { label: "oscuro", tokens: darkTokens, smokeBlock: dark },
-      // Si el bloque prefers-contrast no redefine humo, se lee el del tema base.
-      { label: "prefers-contrast claro", tokens: pcLightTokens, smokeBlock: pcLightBlock + light },
-      { label: "prefers-contrast oscuro", tokens: pcDarkTokens, smokeBlock: pcDarkBlock + dark },
+      { label: "claro", tokens: lightTokens },
+      { label: "oscuro", tokens: darkTokens },
+      { label: "prefers-contrast claro", tokens: pcLightTokens },
+      { label: "prefers-contrast oscuro", tokens: pcDarkTokens },
     ];
 
     for (const variant of variants) {
       for (const category of F1_CATEGORIES) {
-        it(`${variant.label}: ${category.name} F1 supera ${category.min}:1`, () => {
+        it(`${variant.label}: ${category.name} supera ${category.min}:1`, () => {
           assertF1Category(variant.label, variant.tokens, category);
         });
       }
-
-      it(`${variant.label}: humo no degrada el texto (peor caso)`, () => {
-        const smoke = smokeIn(variant.smokeBlock);
-        if (!smoke) return; // F1/F5 aún no definen humo: chequeo omitido.
-        // Peor caso de lectura: --foreground sobre fondo teñido con cobertura
-        // total del humo (mezcla sRGB directa, sin espacio de composición).
-        const background = requireToken(variant.tokens, "--background");
-        const foreground = requireToken(variant.tokens, "--foreground");
-        const blended = blendOver(smoke.rgb, srgbChannels(background), smoke.alpha);
-        const ratio = contrastSrgb(srgbChannels(foreground), blended);
-        assert.ok(ratio >= 4.5, `${variant.label} foreground/humo ${ratio}`);
-      });
     }
   });
 
-  describe("humo S4: peor caso de cobertura (--smoke-alpha)", () => {
-    const variants = [
-      { label: "claro", tokens: lightTokens, smokeBlock: light },
-      { label: "oscuro", tokens: darkTokens, smokeBlock: dark },
-      { label: "prefers-contrast claro", tokens: pcLightTokens, smokeBlock: pcLightBlock + light },
-      { label: "prefers-contrast oscuro", tokens: pcDarkTokens, smokeBlock: pcDarkBlock + dark },
-    ];
-    for (const variant of variants) {
-      it(`${variant.label}: foreground y muted-foreground superan 4,5:1 sobre humo`, () => {
-        const smoke = smokeIn(variant.smokeBlock);
-        assert.ok(smoke, `${variant.label} define --smoke-rgb/--smoke-alpha/--smoke-k`);
-        const surface = blendOver(
-          smoke.rgb,
-          srgbChannels(requireToken(variant.tokens, "--background")),
-          smoke.alpha,
-        );
-        for (const ink of ["--foreground", "--muted-foreground"]) {
-          const ratio = contrastSrgb(srgbChannels(requireToken(variant.tokens, ink)), surface);
-          assert.ok(ratio >= 4.5, `${variant.label} ${ink}/humo ${ratio}`);
-        }
-      });
-    }
-  });
-
-  describe("humo S1: K·densidad_max ≤ alpha por bloque (11 semillas × 120 s)", () => {
-    const smokeBlocks = [
-      { label: "claro", smokeBlock: light },
-      { label: "oscuro", smokeBlock: dark },
-      { label: "prefers-contrast claro", smokeBlock: pcLightBlock + light },
-      { label: "prefers-contrast oscuro", smokeBlock: pcDarkBlock + dark },
-    ];
-    // 11 semillas desplegadas (ADR-0007): cubren el peor caso conocido
-    // (Q3 semilla 8 = 6.374 con el modelo anterior) más la unión de
-    // smoke-model.test.ts (3,11,29,57 cota; 5 determinismo; 9 rejilla).
-    const SEEDS = [2, 3, 4, 5, 8, 9, 10, 11, 20, 29, 57];
-    const STEPS = 120 * 30;
-    const DT = 1 / 30;
-    type Grid = {
-      label: string;
-      cfg: { width: number; height: number; pad: number; count: number; cell: number };
-    };
-    // Configs DESPLEGADAS (ADR-0007): Q3 escritorio, Q2 medio, Q1 móvil
-    // (Q1 sin ASCII). Márgenes finales con el modelo r 26..56 / growth 1.4 /
-    // life 11..17 (K=0.02/alpha=0.1 claro, K=0.028/alpha=0.14 oscuro):
-    // - Q3 worst 4.293 (semilla 20): K·d = 0.0859 claro / 0.1202 oscuro → margen 14.1 %.
-    // - Q2 worst 3.498 (semilla 20): K·d = 0.0700 claro / 0.0980 oscuro → margen 30.0 %.
-    // - Q1 worst 3.212 (semilla 20): K·d = 0.0642 claro / 0.0899 oscuro → margen 35.8 %.
-    // Cota exigida con margen ≥10 %: densidad_max ≤ 4.5.
-    const GRIDS: Grid[] = [
-      { label: "Q3 escritorio", cfg: { width: 1280, height: 720, pad: 120, count: 87, cell: 16 } },
-      { label: "Q2 medio", cfg: { width: 1000, height: 800, pad: 120, count: 54, cell: 20 } },
-      { label: "Q1 móvil", cfg: { width: 390, height: 844, pad: 120, count: 32, cell: 24 } },
-    ];
-    function maxDensity(grid: Grid): number {
-      let worst = 0;
-      for (const seed of SEEDS) {
-        const s = createSmoke({ ...grid.cfg, seed });
-        for (let i = 0; i < STEPS; i++) {
-          stepSmoke(s, DT);
-          for (const v of s.density) if (v > worst) worst = v;
-        }
-      }
-      return worst;
-    }
-    for (const grid of GRIDS) {
-      it(
-        `${grid.label}: K_bloque × densidad_max ≤ alpha_bloque en los 4 bloques`,
-        { timeout: 180_000 },
-        () => {
-          const density = maxDensity(grid);
-          for (const b of smokeBlocks) {
-            const smoke = smokeIn(b.smokeBlock);
-            assert.ok(smoke, `${b.label} define --smoke-rgb/--smoke-alpha/--smoke-k`);
-            const bound = smoke.k * density;
-            assert.ok(
-              bound <= smoke.alpha,
-              `${grid.label} ${b.label}: K=${smoke.k} × densidad=${density.toFixed(3)} = ${bound.toFixed(4)} > alpha=${smoke.alpha}`,
-            );
-          }
-        },
-      );
-    }
-  });
-
-  describe("N2 neo-brutalista: kinds, tinta y ΔE", () => {
-    it("tokens brut existen con 3px/6px", () => {
-      assertBrutTokens(source);
+  describe("kinds por tipo y ΔE (ADR-0016)", () => {
+    it("define los cuatro --kind-* en claro y oscuro", () => {
       for (const name of KIND_TOKENS) {
         assert.ok(lightTokens.has(name), `claro define ${name}`);
         assert.ok(darkTokens.has(name), `oscuro define ${name}`);
       }
-      assert.ok(lightTokens.has("--ink"), "claro define --ink");
-      // --ink vive en :root y se hereda en oscuro (sin override en .dark).
-      assert.ok(darkTokens.has("--ink") || lightTokens.has("--ink"), "oscuro hereda --ink");
     });
 
-    it("oscuro: kinds neón ≥3:1 sobre card y background", () => {
+    it("oscuro: kinds ≥3:1 sobre card y background", () => {
       const card = requireToken(darkTokens, "--card");
       const background = requireToken(darkTokens, "--background");
       for (const name of KIND_TOKENS) {
@@ -489,13 +322,6 @@ describe("contraste de los tokens", () => {
           );
         }
       }
-    });
-
-    it("claro: tinta sobre hueso ≥7:1", () => {
-      const ink = requireToken(lightTokens, "--ink");
-      const background = requireToken(lightTokens, "--background");
-      const ratio = contrast(ink, background);
-      assert.ok(ratio >= 7, `claro --ink/--background ${ratio}`);
     });
 
     it("ΔE OKLab mínimo entre los 4 kinds ≥15 (claro y oscuro)", () => {

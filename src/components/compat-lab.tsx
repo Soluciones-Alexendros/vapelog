@@ -5,6 +5,7 @@ import { recommendLiquids, type LiquidFit, type LiquidFitKind } from "@/data/log
 import {
   compatLabel,
   compatTone,
+  evaluationStatusLabel,
   fitLabel,
   fitTone,
   formatPlain,
@@ -53,8 +54,12 @@ export function CompatLab({
       <p className="text-xs font-medium tracking-widest text-primary uppercase">Laboratorio</p>
       <h1 className="mt-2 text-4xl text-foreground">Compatibilidad</h1>
       <p className="mt-3 text-muted-foreground">
-        Un mod con rosca 510 no “acepta una coil”. Acepta un atomizador, y la coil tiene que ser de
-        ese atomizador. Aquí se separan las tres cosas.
+        Evalúa si un dispositivo y una resistencia encajan según datos publicados. Es distinto del
+        comparador de especificaciones. Un hilo 510 compartido no implica compatibilidad global.
+      </p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Se miran por separado el encaje físico, la ventana eléctrica y el régimen de calada. Si
+        falta un dato, el estado es «información insuficiente», no un rechazo.
       </p>
       <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={(event) => event.preventDefault()}>
         <div>
@@ -133,15 +138,21 @@ export function CompatLab({
             <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
               <div>
                 <dt className="text-muted-foreground">Físico</dt>
-                <dd className="font-medium text-foreground">{evaluation.physical.status}</dd>
+                <dd className="font-medium text-foreground">
+                  {evaluationStatusLabel(evaluation.physical.status)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Eléctrico</dt>
-                <dd className="font-medium text-foreground">{evaluation.electrical.status}</dd>
+                <dd className="font-medium text-foreground">
+                  {evaluationStatusLabel(evaluation.electrical.status)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Régimen</dt>
-                <dd className="font-medium text-foreground">{evaluation.operating.status}</dd>
+                <dd className="font-medium text-foreground">
+                  {evaluationStatusLabel(evaluation.operating.status)}
+                </dd>
               </div>
             </dl>
           ) : null}
