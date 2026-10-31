@@ -154,8 +154,7 @@ public/catalog/   variantes webp/avif generadas (regenerar con `pnpm run images`
 
 ## 5. Orquestación y gates
 
-- **Tarea 0 (bloqueante):** retirar `plan-unificacion-alignux.md` (archivo ajeno
-  al proyecto), verificar F1 (build + smoke + visual-smoke) y publicar este
+- **Tarea 0 (bloqueante):** retirar un archivo ajeno al proyecto, verificar F1 (build + smoke + visual-smoke) y publicar este
   plan. ✅
 - **Ola 1 (paralela, artefactos, sin solape):** ejecutada — F2 (logos +
   `build-icons.mjs` + webmanifest), F4 (`build-sitemap.mjs` + `robots.txt` +
