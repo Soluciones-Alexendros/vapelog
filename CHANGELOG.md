@@ -12,6 +12,16 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-11-10
+
+### Cambios
+
+- chore: limpieza post-consolidación (a11y Buscar + docs) (#50)
+- docs(runbook): cookie de bypass y detección de deriva (#49)
+- refactor(e2e): cookie de bypass scopeada y guardia de deriva en main (#48)
+- fix(ci): desbloquear preview-e2e con bypass de Vercel en environment (#46)
+- fix(audit): consolidar contratos Vapelog U0–U13 (sin U12C) (#45)
+
 ## [0.15.0] - 2026-10-30
 
 ### Cambios
