@@ -66,6 +66,32 @@ puro exista en el árbol; la UI ya no monta esos efectos (ADR-0016).
 `e2e/fx-smoke.spec.ts` exige la **ausencia** de canvas de humo y del
 conmutador de efectos.
 
+## E2E contra Preview protegido
+
+El job `preview-e2e` valida el deployment real de Vercel, no el build local. Si
+el proyecto tiene Deployment Protection (SSO) sobre Preview, hace falta el
+Automation Bypass:
+
+```bash
+# Comprobar la configuración sin tocar Vercel
+pnpm run check:preview-bypass
+
+# Suite contra un Preview concreto (la cookie se siembra sola)
+export VERCEL_AUTOMATION_BYPASS_SECRET=...   # environment Preview en GitHub
+export E2E_BASE_URL=https://<preview>.vercel.app
+pnpm exec playwright test -c playwright.preview.config.ts
+```
+
+- `e2e/preview/global-setup.ts` siembra la cookie de bypass en un contexto de
+  API limitado al origen del Preview. El secreto **no** se envía como cabecera
+  global: no viaja a terceros del contexto (toolbar `vercel.live`).
+- La cookie se guarda en `os.tmpdir()` con permisos `0600` y se borra en
+  `global-teardown.ts`.
+- Contra Nitro local (`pnpm run e2e`, job `fx-e2e`) no hay bypass: el setup deja
+  un estado vacío y no se pide ninguna credencial.
+- Alta, verificación y rotación del secreto:
+  [runbook VAP-22](../runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md).
+
 ## Accesibilidad y e2e
 
 ```bash
