@@ -20,3 +20,6 @@ pnpm-debug*
 .vscode/*
 !.vscode/extensions.json
 public/build-manifest.json
+.pnpm-store/
+.tmp-cov-u8/
+.tools/

@@ -27,4 +27,9 @@ node scripts/brand-check.mjs  # exige logo.svg sin <text>, voluta y bloque dark 
 
 ## Licencia tipográfica
 
-El wordmark deriva de Archivo Black y la futura N2 usa Space Mono; ambas son SIL Open Font License (OFL) y se autoalojan vía `@fontsource`. Los SVG distribuidos solo contienen trazados, sin fuentes incrustadas.
+El wordmark deriva de Archivo Black en `scripts/build-logo.mjs` (solo
+trazados en los SVG publicados). La interfaz usa Public Sans y **JetBrains
+Mono Variable** en datos y unidades
+([ADR-0017](../architecture/decisions/ADR-0017-paleta-neutra.md)). Fuentes UI:
+SIL OFL vía `@fontsource` / `@fontsource-variable`.
+Los SVG distribuidos no incrustan fuentes.

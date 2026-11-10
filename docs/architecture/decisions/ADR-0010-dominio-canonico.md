@@ -27,7 +27,9 @@ contenido duplicado indexable.
   `https://vapelog-alexendros.vercel.app/:path*` mediante
   `vercel.json` → `redirects` con condición `has: [{ type: "host", value:
 "vapelog-beryl.vercel.app" }]`.
-- Caché: `/catalog/(.*)` y `/assets/(.*)` con `immutable` a largo plazo;
+- Caché (`vercel.json`): `/catalog/(.*)` → `public, max-age=0, must-revalidate`
+  (URLs de catálogo mutables sin hash de contenido); `/assets/(.*)` →
+  `public, max-age=31536000, immutable` (assets versionados por build);
   HTML y resto con `must-revalidate`.
 
 ## Consecuencias

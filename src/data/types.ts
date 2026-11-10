@@ -8,7 +8,7 @@ export type Domain = "device" | "coil" | "liquid" | "part";
 
 export type Confidence = "fabricante" | "ficha" | "distribuidor";
 
-export type TpdStatus = "si" | "parcial" | "no" | "no-aplica";
+export type TpdStatus = "si" | "parcial" | "no" | "no-aplica" | "desconocido" | "incompleto";
 
 export type Draw = "MTL" | "RDL" | "DL";
 

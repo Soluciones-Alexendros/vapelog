@@ -27,6 +27,12 @@ export interface ListDto {
   summary: string;
 }
 
+/**
+ * Respuesta de `listPage`: prefijo truncado del catálogo filtrado y ordenado (VAP-13).
+ * `items` son los primeros `limit` elementos; `hasMore` solo indica que `total` supera ese
+ * límite. No hay cursor ni offset: pedir un `limit` mayor devuelve un prefijo más largo del
+ * mismo orden. La paginación por páginas sucesivas no forma parte de este contrato hoy.
+ */
 export interface ListPageDto {
   items: ListDto[];
   total: number;
@@ -173,21 +179,33 @@ export const fileCatalogRepository: CatalogRepository = {
   },
   indexes() {
     cachedIndexes ??= buildIndexes();
-    // Copias superficiales de Maps para no exponer el caché mutable (VAL-016-03).
-    const byId = new Map(cachedIndexes.byId);
-    const bySlug = new Map(cachedIndexes.bySlug);
+    // Copias de Maps y valores clonados; no exponer referencias del catálogo (VAL-016-03).
+    const byId = new Map(
+      [...cachedIndexes.byId.entries()].map(([key, value]) => [key, cloneItem(value)]),
+    );
+    const bySlug = new Map(
+      [...cachedIndexes.bySlug.entries()].map(([key, value]) => [key, cloneItem(value)]),
+    );
     const byPlatform = new Map(
-      [...cachedIndexes.byPlatform.entries()].map(([key, value]) => [key, [...value]]),
+      [...cachedIndexes.byPlatform.entries()].map(([key, value]) => [
+        key,
+        value.map((item) => cloneItem(item)),
+      ]),
     );
     return { byId, bySlug, byPlatform };
   },
 };
 
 export function projectForPhysicalBrowse(domain: Domain): unknown[] {
-  if (domain === "device") return devices.map(projectDevice);
+  if (domain === "device") {
+    return devices.map((device) => {
+      const projected = projectDevice(device);
+      return { ...projected, device: cloneItem(device) };
+    });
+  }
   if (domain === "coil") return coils.map(projectCoil);
   if (domain === "part") return parts.map(projectPart);
-  return liquids.map((liquid) => structuredClone(liquid));
+  return liquids.map((liquid) => cloneItem(liquid));
 }
 
 export function platformLabel(id: string): string {

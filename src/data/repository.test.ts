@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { fileCatalogRepository, normalizeListLimit } from "./repository.ts";
+import {
+  fileCatalogRepository,
+  normalizeListLimit,
+  projectForPhysicalBrowse,
+} from "./repository.ts";
 
 describe("fileCatalogRepository", () => {
   it("lista líquidos con límite", () => {
@@ -32,6 +36,72 @@ describe("fileCatalogRepository", () => {
     const second = fileCatalogRepository.indexes();
     assert.ok(second.byId.size > 0);
     assert.ok(second.byPlatform.size > 0);
+  });
+
+  it("VAL-016-03: mutar campos anidados en índices no altera catálogo ni otro índice", () => {
+    const liquidKey = "liquid:herrera-abarra-freebase";
+    const { byId, bySlug, byPlatform } = fileCatalogRepository.indexes();
+    const fromId = byId.get("herrera-abarra-freebase");
+    const fromSlug = bySlug.get(liquidKey);
+    assert.ok(fromId && fromSlug);
+    assert.notEqual(fromId, fromSlug);
+    if (fromId.domain !== "liquid" || fromSlug.domain !== "liquid") return;
+    const sourceLenBefore = fromSlug.sources.length;
+    fromSlug.name = "ÍNDICE-MUTADO";
+    fromSlug.sources.push({ label: "fantasma", url: "https://example.test" });
+    fromId.name = "OTRO-ÍNDICE";
+    assert.equal(bySlug.get(liquidKey)!.name, "ÍNDICE-MUTADO");
+    assert.equal(byId.get("herrera-abarra-freebase")!.name, "OTRO-ÍNDICE");
+    const sheet = fileCatalogRepository.getBySlug("liquid", "herrera-abarra-freebase");
+    assert.ok(sheet);
+    assert.notEqual(sheet!.item.name, "ÍNDICE-MUTADO");
+    if (sheet!.item.domain === "liquid") {
+      assert.equal(sheet!.item.sources.length, sourceLenBefore);
+    }
+  });
+
+  it("VAL-016-03: mutar bucket de plataforma no altera otro bucket ni la siguiente llamada", () => {
+    const first = fileCatalogRepository.indexes();
+    const keys = [...first.byPlatform.keys()];
+    assert.ok(keys.length >= 2);
+    const [k0, k1] = keys;
+    const bucket0 = first.byPlatform.get(k0)!;
+    const head0Name = bucket0[0]?.name;
+    bucket0[0]!.name = "PLATAFORMA-MUTADA";
+    bucket0.push(structuredClone(bucket0[0]!));
+    const peer = first.byPlatform.get(k1)!;
+    const peerNamesBefore = peer.map((item) => item.name);
+    const second = fileCatalogRepository.indexes();
+    const fresh0 = second.byPlatform.get(k0)!;
+    assert.ok(fresh0.some((item) => item.name === head0Name));
+    assert.equal(fresh0.length, second.byPlatform.get(k0)!.length);
+    const freshPeer = second.byPlatform.get(k1)!;
+    assert.deepEqual(
+      freshPeer.map((item) => item.name),
+      peerNamesBefore,
+    );
+  });
+
+  it("VAL-016-04: listPage es prefijo truncado sin cursor (VAP-13)", () => {
+    const small = fileCatalogRepository.listPage("liquid", {}, 5);
+    const large = fileCatalogRepository.listPage("liquid", {}, 12);
+    assert.equal(small.items.length, 5);
+    assert.ok(small.total >= 12);
+    assert.equal(small.hasMore, small.total > small.limit);
+    assert.equal(large.items.length, 12);
+    const smallIds = small.items.map((row) => row.id);
+    const largePrefix = large.items.slice(0, 5).map((row) => row.id);
+    assert.deepEqual(largePrefix, smallIds);
+    assert.ok(!("cursor" in small) && !("offset" in small));
+  });
+
+  it("VAL-016-03: projectForPhysicalBrowse aísla el device proyectado", () => {
+    const rows = projectForPhysicalBrowse("device") as Array<{ device: { name: string } }>;
+    assert.ok(rows.length > 0);
+    const original = rows[0]!.device.name;
+    rows[0]!.device.name = "BROWSE-MUTADO";
+    const again = projectForPhysicalBrowse("device") as Array<{ device: { name: string } }>;
+    assert.equal(again[0]!.device.name, original);
   });
 
   it("ficha por slug incluye marca y copia aislada", () => {

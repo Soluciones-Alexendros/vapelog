@@ -12,6 +12,7 @@ import {
   partsForDevice,
   powerNotes,
   recommendedPowerForOhms,
+  isUnknownRatio,
   recommendLiquids,
   round,
   shotAlternatives,
@@ -153,6 +154,19 @@ describe("ley de Ohm", () => {
     const result = solveOhm({ ohms: 0, watts: 10 });
     assert.equal("error" in result, true);
   });
+
+  it("VAL-008-ohm: rechaza derivados no finitos (Infinity)", () => {
+    const byWatts = solveOhm({ ohms: Number.MIN_VALUE, watts: Number.MAX_VALUE });
+    assert.equal("error" in byWatts, true);
+    if ("error" in byWatts) {
+      assert.match(byWatts.error, /no produjo un resultado válido/i);
+    }
+    const byVolts = solveOhm({ ohms: Number.MIN_VALUE, volts: Number.MAX_VALUE });
+    assert.equal("error" in byVolts, true);
+    if ("error" in byVolts) {
+      assert.match(byVolts.error, /no produjo un resultado válido/i);
+    }
+  });
 });
 
 describe("nicokit", () => {
@@ -241,6 +255,107 @@ describe("nicokit", () => {
       if ("error" in result) {
         assert.ok(typeof result.error === "string" && result.error.length > 0);
       }
+    }
+  });
+
+  it("VAL-008-03: éxito sin campos derivados no finitos", () => {
+    const ok = mixNicotine({
+      initialZeroMgMl: 50,
+      bottleMl: 60,
+      shotMl: 10,
+      shotMg: 20,
+      shots: 1,
+    });
+    assert.equal("error" in ok, false);
+    if ("error" in ok) return;
+    for (const v of [ok.finalMl, ok.mgPerMl, ok.freeMl, ok.remainingMl]) {
+      assert.ok(Number.isFinite(v));
+    }
+  });
+
+  it("cero shots conserva volumen y concentración", () => {
+    const result = mixNicotine({
+      initialZeroMgMl: 50,
+      bottleMl: 60,
+      shotMl: 10,
+      shotMg: 20,
+      shots: 0,
+    });
+    assert.equal("error" in result, false);
+    if ("error" in result) return;
+    assert.equal(result.finalMl, 50);
+    assert.equal(result.mgPerMl, 0);
+  });
+
+  it("conserva la masa de nicotina en la mezcla", () => {
+    const input = {
+      initialZeroMgMl: 50,
+      bottleMl: 60,
+      shotMl: 10,
+      shotMg: 20,
+      shots: 1,
+    };
+    const result = mixNicotine(input);
+    assert.equal("error" in result, false);
+    if ("error" in result) return;
+    const added = input.shots * input.shotMl * input.shotMg;
+    assert.ok(Math.abs(result.finalMl * result.mgPerMl - added) < 1e-9);
+  });
+
+  it("shotsForTarget rechaza capacidad no finita o no positiva si se indica", () => {
+    for (const bottle of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const result = shotsForTarget(50, 10, 20, 3, bottle);
+      assert.equal("error" in result, true);
+    }
+  });
+
+  it("objetivo cero con botella inválida es error de capacidad", () => {
+    const result = shotsForTarget(50, 10, 20, 0, 0);
+    assert.equal("error" in result, true);
+    if ("error" in result) {
+      assert.match(result.error, /capacidad/);
+    }
+  });
+
+  it("objetivo cero con volumen inicial mayor que botella", () => {
+    const result = shotsForTarget(70, 10, 20, 0, 60);
+    assert.equal("error" in result, true);
+  });
+
+  it("objetivo próximo a graduación del shot mantiene denominador inválido", () => {
+    const result = shotsForTarget(50, 10, 20, 20);
+    assert.equal("error" in result, true);
+  });
+
+  it("resolver por W y por V coincide en Ohm", () => {
+    const ohms = 0.8;
+    const watts = 14;
+    const byW = solveOhm({ ohms, watts });
+    assert.equal("error" in byW, false);
+    if ("error" in byW) return;
+    const byV = solveOhm({ ohms, volts: byW.volts });
+    assert.equal("error" in byV, false);
+    if ("error" in byV) return;
+    assert.ok(Math.abs(byW.watts - byV.watts) < 1e-9);
+    assert.ok(Math.abs(byW.amps - byV.amps) < 1e-9);
+    assert.ok(Math.abs(byW.volts - byV.volts) < 1e-9);
+  });
+
+  it("alternativas enteras coinciden con mixNicotine", () => {
+    const alts = shotAlternatives(50, 60, 10, 20, 20 / 6);
+    for (const alt of alts) {
+      const mixed = mixNicotine({
+        initialZeroMgMl: 50,
+        bottleMl: 60,
+        shotMl: 10,
+        shotMg: 20,
+        shots: alt.shots,
+      });
+      assert.equal("error" in mixed, false);
+      if ("error" in mixed) return;
+      assert.ok(Math.abs(mixed.mgPerMl - alt.mgPerMl) < 1e-9);
+      assert.equal(mixed.overflow, alt.overflow);
+      assert.equal(mixed.finalMl, alt.finalMl);
     }
   });
 });
@@ -531,6 +646,103 @@ describe("líquidos por coil", () => {
     assert.equal(knownNicotineMgPerMl(variation), null);
   });
 
+  it("VAL-007-03b: ratio desconocido con calada coincidente no es encaje directo", () => {
+    const coil = syntheticCoil({
+      slug: "coil-mtl-ratio-unk",
+      ohms: 0.8,
+      draws: ["MTL"],
+      refillable: true,
+    });
+    const liquid = syntheticLiquid({
+      slug: "liq-ratio-unk",
+      draws: ["MTL"],
+      variations: [
+        {
+          id: "ratio-unk",
+          label: "10 ml · ratio sin publicar",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 6,
+          ratioVgPct: null,
+          ratioPgPct: null,
+          tpd: "si",
+        },
+      ],
+    });
+    assert.ok(isUnknownRatio(liquid.variations[0]!));
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "posible");
+    assert.match(fit?.reason ?? "", /VG\/PG|ratio/i);
+  });
+
+  it("VAL-007-03c: nicotina y ratio desconocidos se citan los dos", () => {
+    const coil = syntheticCoil({
+      slug: "coil-mtl-both-unk",
+      ohms: 1.0,
+      draws: ["MTL"],
+      refillable: true,
+    });
+    const liquid = syntheticLiquid({
+      slug: "liq-both-unk",
+      draws: ["MTL"],
+      variations: [
+        {
+          id: "both-unk",
+          label: "sin nicotina ni ratio",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: null,
+          ratioVgPct: null,
+          ratioPgPct: null,
+          tpd: "si",
+        },
+      ],
+    });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "posible");
+    const reason = fit?.reason ?? "";
+    assert.match(reason, /nicotina/i);
+    assert.match(reason, /VG\/PG|ratio/i);
+  });
+
+  it("VAL-007-03d: a igual encaje gana la primera variación del array", () => {
+    const coil = syntheticCoil({
+      slug: "coil-mtl-tie",
+      ohms: 0.8,
+      draws: ["MTL"],
+      refillable: true,
+    });
+    const liquid = syntheticLiquid({
+      slug: "empate-variantes",
+      draws: ["MTL"],
+      variations: [
+        {
+          id: "primera",
+          label: "6 mg/ml · 50/50",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 6,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
+          tpd: "si",
+        },
+        {
+          id: "segunda",
+          label: "3 mg/ml · 50/50",
+          fillVolumeMl: 10,
+          containerCapacityMl: 10,
+          nicotineMgPerMl: 3,
+          ratioVgPct: 50,
+          ratioPgPct: 50,
+          tpd: "si",
+        },
+      ],
+    });
+    const [fit] = recommendLiquids(coil, [liquid]);
+    assert.equal(fit?.fit, "directo");
+    assert.equal(fit?.variation.id, "primera");
+  });
+
   it("VAL-007-03: nicotina desconocida no se recomienda como directo/cero", () => {
     const coil = syntheticCoil({
       slug: "coil-mtl-unk",
@@ -626,8 +838,45 @@ describe("ventana eléctrica estructurada", () => {
     const result = powerNotes(device, 20, 0.5);
     assert.equal(result.power, "unknown");
     assert.equal(result.ohms, "unknown");
-    assert.ok(result.notes.some((note) => /no se puede afirmar/i.test(note)));
+    assert.ok(result.notes.some((note) => /no hay ventana/i.test(note)));
     assert.ok(!result.notes.some((note) => /^Dentro de la ventana/.test(note)));
+  });
+
+  it("solo máximo de potencia respetado: unknown y sin «dentro de la ventana»", () => {
+    const device = syntheticDevice({
+      slug: "solo-max-w",
+      powerMinW: null,
+      powerMaxW: 40,
+      ohmMin: null,
+      ohmMax: null,
+    });
+    const result = powerNotes(device, 20, 0.8);
+    assert.equal(result.power, "unknown");
+    assert.ok(result.notes.some((note) => /otro extremo/i.test(note)));
+    assert.ok(!result.notes.some((note) => /^Dentro de la ventana de potencia/.test(note)));
+  });
+
+  it("powerNotes y evaluateCompatibility coinciden en un solo extremo", () => {
+    const device = syntheticDevice({
+      slug: "solo-min-w",
+      powerMinW: 5,
+      powerMaxW: null,
+      ohmMin: null,
+      ohmMax: null,
+    });
+    const result = powerNotes(device, 20, 0.8);
+    assert.equal(result.power, "unknown");
+    const coil = syntheticCoil({
+      slug: "c",
+      platformIds: ["x"],
+      connector: "propietario",
+      ohms: 0.8,
+      wattMin: null,
+      wattMax: null,
+    });
+    const dev = { ...device, platformIds: ["x"], connector: "propietario" as const };
+    const evalResult = evaluateCompatibility(dev, coil);
+    assert.equal(evalResult.electrical.status, "unknown");
   });
 });
 

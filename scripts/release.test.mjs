@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildChangelog, detectBump, nextVersion, planRelease } from "./release.mjs";
+import {
+  buildChangelog,
+  detectBump,
+  nextVersion,
+  planRelease,
+  reconcilePublishedVersion,
+} from "./release.mjs";
 
 test("nextVersion aplica major/minor/patch", () => {
   assert.equal(nextVersion("1.2.3", "major"), "2.0.0");
@@ -52,16 +58,88 @@ test("planRelease: publish cuando package.json ya es la versión y el tag no exi
   assert.doesNotMatch(plan.reason, /HEAD:main|refs\/heads\/main/);
 });
 
-test("planRelease: skip idempotente si el tag ya existe y package.json coincide", () => {
+test("planRelease: skip idempotente si tag, release y package.json coinciden", () => {
   const plan = planRelease({
     bump: "minor",
     latestTag: "v0.12.0",
     packageVersion: "0.13.0",
     tagExists: true,
     version: "0.13.0",
+    releaseCoherent: true,
   });
   assert.equal(plan.action, "skip");
   assert.match(plan.reason, /ya está publicada/);
+});
+
+test("planRelease: publish si hay tag pero falta GitHub Release", () => {
+  const plan = planRelease({
+    bump: "minor",
+    latestTag: "v0.12.0",
+    packageVersion: "0.13.0",
+    tagExists: true,
+    version: "0.13.0",
+    releaseCoherent: false,
+  });
+  assert.equal(plan.action, "publish");
+});
+
+test("reconcilePublishedVersion: sin tag → none", () => {
+  const r = reconcilePublishedVersion({
+    packageVersion: "0.14.0",
+    tagExists: false,
+    tagCommitSha: null,
+    githubRelease: { status: "absent" },
+    testedSha: "abc",
+  });
+  assert.equal(r.action, "none");
+});
+
+test("reconcilePublishedVersion: tag sin release → create-release", () => {
+  const r = reconcilePublishedVersion({
+    packageVersion: "0.14.0",
+    tagExists: true,
+    tagCommitSha: "deadbeef",
+    githubRelease: { status: "absent" },
+    testedSha: "cafebabe",
+  });
+  assert.equal(r.action, "create-release");
+  assert.match(r.reason, /sin mover/);
+});
+
+test("reconcilePublishedVersion: coherentes → noop", () => {
+  const r = reconcilePublishedVersion({
+    packageVersion: "0.14.0",
+    tagExists: true,
+    tagCommitSha: "deadbeef",
+    githubRelease: { status: "present" },
+    testedSha: "cafebabe",
+  });
+  assert.equal(r.action, "noop");
+});
+
+test("reconcilePublishedVersion: tag en otro commit al publicar → error", () => {
+  const r = reconcilePublishedVersion({
+    packageVersion: "0.14.0",
+    tagExists: true,
+    tagCommitSha: "deadbeef",
+    githubRelease: { status: "absent" },
+    testedSha: "cafebabe",
+    publishCandidate: true,
+  });
+  assert.equal(r.action, "error");
+  assert.match(r.reason, /no se mueve/);
+});
+
+test("reconcilePublishedVersion: fallo GitHub → retryable-error", () => {
+  const r = reconcilePublishedVersion({
+    packageVersion: "0.14.0",
+    tagExists: true,
+    tagCommitSha: "deadbeef",
+    githubRelease: { status: "error", message: "connection reset" },
+    testedSha: "abc",
+  });
+  assert.equal(r.action, "retryable-error");
+  assert.doesNotMatch(r.reason, /ausente/);
 });
 
 test("planRelease nunca describe push a main", () => {

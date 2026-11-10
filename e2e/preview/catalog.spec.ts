@@ -1,12 +1,6 @@
 import { test, expect, type Page, type ConsoleMessage } from "playwright/test";
 
-/** Toolbar de Vercel Preview Comments: CSP report-only, no es fallo de la app. */
-function isPreviewHostNoise(text: string): boolean {
-  return (
-    /vercel\.live/i.test(text) &&
-    (/Content Security Policy/i.test(text) || /report-only/i.test(text) || /Framing '/i.test(text))
-  );
-}
+import { isPreviewHostNoise } from "../fixtures";
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];

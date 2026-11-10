@@ -13,9 +13,11 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   timeout: 60_000,
   expect: { timeout: 15_000 },
+  outputDir: "artifacts/playwright",
   use: {
     baseURL,
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
     colorScheme: "dark",
   },
   projects: [

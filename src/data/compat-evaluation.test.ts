@@ -216,6 +216,44 @@ describe("evaluateCompatibility VAL-006", () => {
     assert.ok(result.physical.reasons.length > 0);
   });
 
+  it("VAL-006-05: ventanas de potencia solapadas → eléctrico match con tramo", () => {
+    const device = syntheticDevice({
+      slug: "mod-overlap",
+      platformIds: ["plat-a"],
+      connector: "propietario",
+      powerMinW: 5,
+      powerMaxW: 40,
+      ohmMin: 0.5,
+      ohmMax: 1.2,
+    });
+    const coil = syntheticCoil({
+      slug: "coil-overlap",
+      platformIds: ["plat-a"],
+      connector: "propietario",
+      wattMin: 10,
+      wattMax: 20,
+      ohms: 0.8,
+    });
+    const result = evaluateCompatibility(device, coil);
+    assert.equal(result.electrical.status, "match");
+    assert.match(result.electrical.reasons.join(" "), /solapan/i);
+    assert.ok(result.electrical.reasons.length > 0);
+  });
+
+  it("VAL-006-06: evaluación eléctrica publicada siempre incluye razones", () => {
+    for (const device of [deviceBySlug("vaporesso-xros-4"), deviceBySlug("vaporesso-luxe-x")]) {
+      if (!device) continue;
+      for (const coil of [coilBySlug("xros-corex-0-8"), coilBySlug("vaporesso-gtx-0-15")]) {
+        if (!coil) continue;
+        const result = evaluateCompatibility(device, coil);
+        assert.ok(result.electrical.reasons.length > 0, `${device.slug} x ${coil.slug}`);
+        if (result.physical.status === "mismatch") {
+          assert.equal(result.electrical.status, "not_applicable");
+        }
+      }
+    }
+  });
+
   it("toCompatResult preserva legacyKind del evaluador", () => {
     const device = deviceBySlug("vaporesso-luxe-x");
     const coil = coilBySlug("vaporesso-gtx-0-15");

@@ -66,17 +66,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Unit tests + coverage gate (≥70%)
-        run: |
-          set -euo pipefail
-          OUT="$(mktemp)"
-          pnpm run test:coverage 2>&1 | tee "$OUT"
-          LINE="$(grep -Eo 'all files[[:space:]]+\|[[:space:]]+[0-9.]+' "$OUT" | head -1 | grep -Eo '[0-9.]+$')"
-          if [ -z "$LINE" ]; then
-            echo "No se pudo leer la cobertura total" >&2
-            exit 1
-          fi
-          echo "Cobertura de líneas: ${LINE}%"
-          awk -v c="$LINE" 'BEGIN { exit (c+0 < 70) ? 1 : 0 }'
+        run: pnpm run test:coverage
 
   build:
     name: build

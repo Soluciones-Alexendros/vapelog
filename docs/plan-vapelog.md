@@ -137,7 +137,7 @@ rutas ni modelo de datos.
 ### F8 — SEO e infra
 
 - [x] `vercel.json` 308 beryl → alexendros
-- [x] Cache immutable `/catalog/*` y `/assets/*`
+- [x] Cache `/catalog/*` must-revalidate; `/assets/*` immutable
 - [x] ADR-0010
 - [x] Titles `— Vapelog` en rutas de contenido
 

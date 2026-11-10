@@ -1,10 +1,20 @@
-import { brands, coils, devices, liquids, parts, platforms, taxa } from "./catalog.ts";
+import {
+  brands,
+  coils,
+  devices,
+  liquidGenres,
+  liquids,
+  parts,
+  platforms,
+  taxa,
+} from "./catalog.ts";
 import type {
   Brand,
   CatalogItem,
   Coil,
   Device,
   Domain,
+  Genre,
   Liquid,
   Part,
   Platform,
@@ -28,10 +38,13 @@ export interface CatalogSnapshot {
   brands: readonly Brand[];
   platforms: readonly Platform[];
   taxa: readonly Taxon[];
+  liquidGenres: readonly Genre[];
 }
 
+const RATIO_SUM_TOLERANCE = 0.01;
+
 function defaultSnapshot(): CatalogSnapshot {
-  return { devices, coils, liquids, parts, brands, platforms, taxa };
+  return { devices, coils, liquids, parts, brands, platforms, taxa, liquidGenres };
 }
 
 function taxonAncestors(id: string, byId: Map<string, Taxon>): string[] {
@@ -50,13 +63,158 @@ function taxonAncestors(id: string, byId: Map<string, Taxon>): string[] {
   return chain;
 }
 
+function taxonDescendsFrom(
+  descendantId: string,
+  ancestorId: string,
+  byId: Map<string, Taxon>,
+): boolean {
+  if (descendantId === ancestorId) return true;
+  let current: string | null = descendantId;
+  const seen = new Set<string>();
+  while (current) {
+    if (current === ancestorId) return true;
+    if (seen.has(current)) return false;
+    seen.add(current);
+    current = byId.get(current)?.parentId ?? null;
+  }
+  return false;
+}
+
 function allItems(snapshot: CatalogSnapshot): CatalogItem[] {
   return [...snapshot.devices, ...snapshot.coils, ...snapshot.liquids, ...snapshot.parts];
 }
 
-/** Validación pura; acepta snapshot inyectable (OBJ-013). */
+function pushDuplicateDictionaryIssues(
+  issues: CatalogIssue[],
+  rows: readonly { id: string }[],
+  code: string,
+  pathPrefix: string,
+  label: string,
+): void {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    if (seen.has(row.id)) {
+      issues.push({
+        severity: "error",
+        code,
+        message: `${label} duplicado: ${row.id}`,
+        path: `${pathPrefix}/${row.id}`,
+      });
+    } else {
+      seen.add(row.id);
+    }
+  }
+}
+
+function validateVariationRatio(
+  issues: CatalogIssue[],
+  variation: Liquid["variations"][number],
+  path: string,
+): void {
+  const vg = variation.ratioVgPct;
+  const pg = variation.ratioPgPct;
+  const hasVg = vg != null;
+  const hasPg = pg != null;
+  if (hasVg !== hasPg) {
+    issues.push({
+      severity: "error",
+      code: "incomplete_ratio",
+      message: "ratioVgPct y ratioPgPct deben estar ambos presentes o ambos ausentes",
+      path,
+    });
+    return;
+  }
+  if (!hasVg || !hasPg) return;
+  if (!Number.isFinite(vg) || vg < 0 || vg > 100 || !Number.isFinite(pg) || pg < 0 || pg > 100) {
+    issues.push({
+      severity: "error",
+      code: "invalid_ratio_bound",
+      message: "Cada porcentaje del ratio VG/PG debe ser finito y estar entre 0 y 100",
+      path,
+    });
+    return;
+  }
+  if (Math.abs(vg + pg - 100) > RATIO_SUM_TOLERANCE) {
+    issues.push({
+      severity: "error",
+      code: "invalid_ratio_sum",
+      message: `La suma del ratio VG/PG debe ser 100 ±${RATIO_SUM_TOLERANCE}`,
+      path,
+    });
+  }
+}
+
+function validateVariationVolumes(
+  issues: CatalogIssue[],
+  variation: Liquid["variations"][number],
+  path: string,
+): void {
+  const { fillVolumeMl: fill, containerCapacityMl: cap } = variation;
+  if (!Number.isFinite(fill) || fill <= 0 || !Number.isFinite(cap) || cap <= 0) {
+    issues.push({
+      severity: "error",
+      code: "invalid_volume",
+      message: "Volúmenes deben ser finitos y positivos",
+      path,
+    });
+    return;
+  }
+  if (fill > cap) {
+    issues.push({
+      severity: "error",
+      code: "volume_exceeds_capacity",
+      message: `fillVolumeMl (${fill}) no puede superar containerCapacityMl (${cap})`,
+      path,
+    });
+  }
+}
+
+/**
+ * Validación pura; acepta snapshot inyectable (OBJ-013).
+ *
+ * Contrato de invariantes (VAP-06 / VAP-07):
+ * - Ratio VG/PG normalizado (`ratioVgPct` / `ratioPgPct`): ambos ausentes es válido; si uno
+ *   está presente, el otro también. Cada uno finito en [0, 100]. Suma 100 ±0,01. No se exige
+ *   VG+PG=100 en `composition` con aroma u otros componentes.
+ * - Volúmenes: finitos, positivos; contenido ≤ capacidad. Avisos de `preparedVolumeMl`/`recipe`
+ *   conservan su semántica actual.
+ * - Integridad: unicidad de ids en diccionarios (marcas, plataformas, taxones, géneros) antes
+ *   de indexar; `genreId` en géneros de líquido; `flavorIds` en taxones `flavor`; plataformas
+ *   de piezas y referencias FK; familia/sub con dominio del ítem y subtaxón descendiente.
+ */
 export function validateCatalog(snapshot: CatalogSnapshot = defaultSnapshot()): CatalogIssue[] {
   const issues: CatalogIssue[] = [];
+
+  pushDuplicateDictionaryIssues(
+    issues,
+    snapshot.brands,
+    "duplicate_brand_id",
+    "brand",
+    "ID de marca",
+  );
+  pushDuplicateDictionaryIssues(
+    issues,
+    snapshot.platforms,
+    "duplicate_platform_id",
+    "platform",
+    "ID de plataforma",
+  );
+  pushDuplicateDictionaryIssues(
+    issues,
+    snapshot.taxa,
+    "duplicate_taxon_id",
+    "taxon",
+    "ID de taxón",
+  );
+  pushDuplicateDictionaryIssues(
+    issues,
+    snapshot.liquidGenres,
+    "duplicate_genre_id",
+    "genre",
+    "ID de género",
+  );
+
+  const genreIds = new Set(snapshot.liquidGenres.map((genre) => genre.id));
   const items = allItems(snapshot);
   const ids = new Map<string, Domain>();
   const archiveIds = new Map<string, string>();
@@ -112,6 +270,16 @@ export function validateCatalog(snapshot: CatalogSnapshot = defaultSnapshot()): 
         message: `Taxón familia inexistente: ${item.familyId}`,
         path: `${item.domain}/${item.slug}`,
       });
+    } else if (item.familyId) {
+      const family = taxonById.get(item.familyId)!;
+      if (family.domain !== item.domain) {
+        issues.push({
+          severity: "error",
+          code: "taxon_family_domain_mismatch",
+          message: `Familia ${item.familyId} (${family.domain}) incompatible con dominio ${item.domain}`,
+          path: `${item.domain}/${item.slug}`,
+        });
+      }
     }
     if (item.subId && !taxonById.has(item.subId)) {
       issues.push({
@@ -120,6 +288,69 @@ export function validateCatalog(snapshot: CatalogSnapshot = defaultSnapshot()): 
         message: `Taxón sub inexistente: ${item.subId}`,
         path: `${item.domain}/${item.slug}`,
       });
+    } else if (item.subId) {
+      const sub = taxonById.get(item.subId)!;
+      if (sub.domain !== item.domain) {
+        issues.push({
+          severity: "error",
+          code: "taxon_sub_domain_mismatch",
+          message: `Subtaxón ${item.subId} (${sub.domain}) incompatible con dominio ${item.domain}`,
+          path: `${item.domain}/${item.slug}`,
+        });
+      }
+    }
+    if (item.familyId && item.subId && taxonById.has(item.familyId) && taxonById.has(item.subId)) {
+      if (!taxonDescendsFrom(item.subId, item.familyId, taxonById)) {
+        issues.push({
+          severity: "error",
+          code: "taxon_sub_not_descendant",
+          message: `Subtaxón ${item.subId} no desciende de familia ${item.familyId}`,
+          path: `${item.domain}/${item.slug}`,
+        });
+      }
+    }
+
+    if (item.domain === "liquid") {
+      if (!genreIds.has(item.genreId)) {
+        issues.push({
+          severity: "error",
+          code: "broken_genre",
+          message: `Género de líquido inexistente: ${item.genreId}`,
+          path: `liquid/${item.slug}`,
+        });
+      }
+      for (const flavorId of item.flavorIds) {
+        const flavor = taxonById.get(flavorId);
+        if (!flavor) {
+          issues.push({
+            severity: "error",
+            code: "broken_flavor",
+            message: `Taxón de sabor inexistente: ${flavorId}`,
+            path: `liquid/${item.slug}`,
+          });
+        } else if (flavor.domain !== "flavor") {
+          issues.push({
+            severity: "error",
+            code: "broken_flavor",
+            message: `Taxón ${flavorId} no pertenece al dominio flavor`,
+            path: `liquid/${item.slug}`,
+          });
+        }
+      }
+    }
+
+    if (item.domain === "part") {
+      const path = `part/${item.slug}`;
+      for (const id of item.fitsPlatformIds) {
+        if (!platformIds.has(id)) {
+          issues.push({
+            severity: "error",
+            code: "broken_part_platform",
+            message: `Plataforma inexistente en fitsPlatformIds: ${id}`,
+            path,
+          });
+        }
+      }
     }
   }
 
@@ -178,19 +409,8 @@ export function validateCatalog(snapshot: CatalogSnapshot = defaultSnapshot()): 
           path,
         });
       }
-      if (
-        !Number.isFinite(variation.fillVolumeMl) ||
-        variation.fillVolumeMl <= 0 ||
-        !Number.isFinite(variation.containerCapacityMl) ||
-        variation.containerCapacityMl <= 0
-      ) {
-        issues.push({
-          severity: "error",
-          code: "invalid_volume",
-          message: "Volúmenes deben ser finitos y positivos",
-          path,
-        });
-      }
+      validateVariationVolumes(issues, variation, path);
+      validateVariationRatio(issues, variation, path);
       if (
         variation.fillVolumeMl === variation.containerCapacityMl &&
         variation.preparedVolumeMl != null &&
