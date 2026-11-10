@@ -134,7 +134,10 @@ Estados de `scripts/check-preview-bypass.mjs` (primer paso del job):
 
 `wait-preview-url.mjs` distingue además el motivo del rechazo:
 `NO_BYPASS_SECRET` (falta configuración) frente a `BYPASS_INVALID` (secreto
-rotado o incorrecto).
+rotado o incorrecto). El probe envía solo `x-vercel-protection-bypass`;
+`x-vercel-set-bypass-cookie` provoca un `307` de set-cookie y se reserva para
+Playwright, que sí navega con cookies. Un `3xx` al mismo host se sigue una vez
+(normalización) y un bucle equivalente es error fatal.
 
 **Alta y rotación (operador):**
 

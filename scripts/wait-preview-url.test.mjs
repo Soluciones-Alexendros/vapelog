@@ -191,3 +191,71 @@ test("isTransientGithubError reconoce 5xx y red", () => {
   assert.equal(isTransientGithubError(new Error("GitHub 404 /repos/x/status: ")), false);
   assert.equal(isTransientGithubError(new Error("fetch failed")), true);
 });
+
+test("protectionBypassHeaders puede omitir la cookie de bypass (probe)", () => {
+  assert.deepEqual(
+    protectionBypassHeaders({ VERCEL_AUTOMATION_BYPASS_SECRET: "tok" }, { setCookie: false }),
+    { "x-vercel-protection-bypass": "tok" },
+  );
+});
+
+test("probePreviewReady sigue un 3xx al mismo host una sola vez", async () => {
+  const calls = [];
+  /** @type {typeof fetch} */
+  const fetchImpl = async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (calls.length === 1) {
+      return /** @type {Response} */ ({
+        ok: false,
+        status: 307,
+        headers: {
+          get: (n) => (n.toLowerCase() === "location" ? "https://preview.example.test/" : null),
+        },
+        json: async () => ({}),
+      });
+    }
+    if (url.endsWith("/build-manifest.json")) {
+      return /** @type {Response} */ ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({ commit: "sha-ok" }),
+      });
+    }
+    return /** @type {Response} */ ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({}),
+    });
+  };
+  const url = await probePreviewReady("https://preview.example.test", "sha-ok", {
+    fetchImpl,
+    bypassHeaders: {},
+  });
+  assert.equal(url, "https://preview.example.test");
+  assert.deepEqual(calls, [
+    "https://preview.example.test",
+    "https://preview.example.test/",
+    "https://preview.example.test/build-manifest.json",
+  ]);
+});
+
+test("probePreviewReady falla si el 3xx al mismo host se repite", async () => {
+  /** @type {typeof fetch} */
+  const fetchImpl = async () =>
+    /** @type {Response} */ ({
+      ok: false,
+      status: 307,
+      headers: {
+        get: (n) => (n.toLowerCase() === "location" ? "https://preview.example.test/" : null),
+      },
+      json: async () => ({}),
+    });
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", { fetchImpl, bypassHeaders: {} }),
+    /bucle al mismo host/,
+  );
+});
