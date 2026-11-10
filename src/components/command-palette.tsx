@@ -171,7 +171,7 @@ export function CommandPalette() {
           setQ("");
           setOpen(true);
         }}
-        aria-label="Abrir búsqueda (barra / o Ctrl/Cmd+K)"
+        aria-label="Buscar (barra / o Ctrl/Cmd+K)"
         className="inline-flex min-h-11 items-center gap-1.5 rounded-sm px-2 text-sm text-muted-foreground hover:text-foreground focus-visible:text-foreground"
       >
         <Search className="size-4" aria-hidden />
