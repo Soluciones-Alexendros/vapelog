@@ -7,9 +7,11 @@
 - **Estructura:** Temas → color por tipo → tipografía → movimiento → capas →
   KindCard → fuentes.
 - **Contenido a integrar según contexto:** Valores vivos en
-  [`src/styles.css`](../src/styles.css). Decisión vigente:
+  [`src/styles.css`](../src/styles.css). Decisiones vigentes:
   [ADR-0016](architecture/decisions/ADR-0016-direccion-visual-sobria.md)
-  (dirección sobria). ADR-0008 / ADR-0007 / ADR-0009 quedan sustituidos en
+  (dirección sobria),
+  [ADR-0017](architecture/decisions/ADR-0017-paleta-neutra.md) (paleta y
+  JetBrains Mono). ADR-0008 / ADR-0007 / ADR-0009 quedan sustituidos en
   estilo y humo. No inventar tokens ausentes del CSS.
 
 ## Temas
@@ -37,11 +39,11 @@ no halo.
 
 ## Tipografía
 
-| Rol               | Familia              | Token / clase                 |
-| ----------------- | -------------------- | ----------------------------- |
-| Titulares `h1–h3` | Public Sans Variable | `--font-sans`, peso semibold+ |
-| Datos / cifras    | Space Mono           | `--font-mono`, `tabular-nums` |
-| Cuerpo            | Public Sans Variable | `--font-sans`                 |
+| Rol               | Familia                 | Token / clase                 |
+| ----------------- | ----------------------- | ----------------------------- |
+| Titulares `h1–h3` | Public Sans Variable    | `--font-sans`, peso semibold+ |
+| Datos / cifras    | JetBrains Mono Variable | `--font-mono`, `tabular-nums` |
+| Cuerpo            | Public Sans Variable    | `--font-sans`                 |
 
 Autoalojadas vía `@fontsource` / `@fontsource-variable` (OFL). Archivo Black
 queda fuera del contrato (ADR-0016).
@@ -84,4 +86,5 @@ Fondo opaco en `html` y `body`.
 
 1. [`src/styles.css`](../src/styles.css)
 2. [ADR-0016](architecture/decisions/ADR-0016-direccion-visual-sobria.md)
-3. Este archivo (inventario; no sustituye al ADR)
+3. [ADR-0017](architecture/decisions/ADR-0017-paleta-neutra.md) (mono y paleta)
+4. Este archivo (inventario; no sustituye al ADR)

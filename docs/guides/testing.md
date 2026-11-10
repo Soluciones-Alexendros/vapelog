@@ -8,20 +8,27 @@
 
 ## Unitarios
 
-`node:test` sobre `src/data/*.test.ts` y `scripts/*.test.mjs`:
+`node:test` con descubrimiento recursivo (`scripts/run-unit-tests.mjs`):
+
+- `src/data/**/*.test.ts`
+- `scripts/**/*.test.mjs`
+
+Los tests de componentes con DOM no entran en ese contrato; viven en el runner
+de navegador. E2E en `e2e/` (Playwright).
 
 ```bash
 pnpm test
 pnpm run test:coverage
 ```
 
-Umbral CI: **≥ 70 %** de líneas en la fila `all files` que parsea el job
-`test` de `.github/workflows/ci.yml` (primera cifra = líneas). El comando
-`pnpm run test:coverage` no filtra con `--test-coverage-include`: el
-denominador son los módulos cargados por los globs
-`src/data/*.test.ts` y `scripts/*.test.mjs` (incluye `src/lib/` importado).
-`AGENTS.md` habla de `src/data/` + `scripts/` como ámbito contractual; no
-se cambia el runner ni se sube el porcentaje en este cierre.
+Gate CI (Node 22, `scripts/coverage-gate.mjs`): ejecuta los unitarios con
+`--experimental-test-coverage`, umbral nativo `--test-coverage-lines=70`,
+artefacto **LCOV** en `coverage/lcov.info` y sale distinto de cero si fallan
+pruebas, si falta el informe o si el informe está vacío. El universo medible
+son `src/data/**/*.ts` y `scripts/**/*.mjs`, con exclusiones de tests y
+`*.gen.ts`. Ramas y funciones se registran desde el LCOV del gate. `src/lib/`
+importado por tests puede cargarse en ejecución pero el umbral contractual
+aplica al universo anterior.
 
 ## Smoke
 
@@ -63,6 +70,8 @@ conmutador de efectos.
 
 ```bash
 pnpm run a11y                 # axe serious+critical sobre el build (scripts/a11y-pass.mjs)
+pnpm run browser:matrix       # matriz U9 Chromium claro/oscuro × escritorio/móvil (recorridos críticos)
+pnpm run firefox:smoke        # humo Firefox en rutas críticas (exit 2 = BLOQUEADO sin motor)
 pnpm run visual-smoke         # desbordamiento horizontal por viewport/tema
 pnpm run aceptacion:capturas  # PNGs de la matriz de aceptación visual v2
 pnpm run e2e                  # build + Nitro loopback + a11y-pass + browser-smoke

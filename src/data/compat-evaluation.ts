@@ -3,6 +3,7 @@
  * tipados; CompatKind legado se deriva del resultado, no al revés.
  */
 import { exclusionReason } from "./compat-rules.ts";
+import { evaluateElectricalSubdimensions, type WindowVerdict } from "./dimension-window.ts";
 import type { Coil, CompatKind, CompatResult, Device } from "./types.ts";
 import { CATALOG_REVISION, SCHEMA_VERSION } from "./types.ts";
 
@@ -119,45 +120,18 @@ function evaluateElectrical(
     ]);
   }
 
-  const devicePowerKnown = device.powerMinW != null || device.powerMaxW != null;
-  const deviceOhmKnown = device.ohmMin != null || device.ohmMax != null;
-  const coilWattKnown = coil.wattMin != null || coil.wattMax != null;
-  const hasAnyWindow = devicePowerKnown || deviceOhmKnown || coilWattKnown;
-
-  if (!hasAnyWindow) {
-    return dim("unknown", RULE.electricalWindow, [
-      "No hay ventana eléctrica publicada en dispositivo ni resistencia.",
-    ]);
-  }
-
-  const watt = wattClash(device, coil);
-  const ohm = ohmClash(device, coil);
-  if (watt || ohm) {
-    const reasons: string[] = [];
-    if (watt) reasons.push(watt);
-    if (ohm) reasons.push(ohm);
-    return dim("mismatch", RULE.electricalWindow, reasons);
-  }
-
-  // Un solo extremo conocido: no elevar a match global.
-  const wattComparable =
-    (device.powerMaxW != null && coil.wattMin != null) ||
-    (device.powerMinW != null && coil.wattMax != null);
-  const ohmComparable =
-    (device.ohmMin != null || device.ohmMax != null) && Number.isFinite(coil.ohms);
-  if (!wattComparable && !ohmComparable) {
-    return dim("unknown", RULE.electricalWindow, [
-      "Solo hay extremos eléctricos parciales publicados; no se afirma encaje ni rechazo.",
-    ]);
-  }
-
-  const reasons: string[] = [];
-  if (device.ohmMin != null && device.ohmMax != null) {
-    reasons.push(`La resistencia entra en la ventana ${device.ohmMin}–${device.ohmMax} Ω.`);
-  } else if (wattComparable) {
-    reasons.push("Las ventanas de potencia publicadas no chocan.");
-  }
-  return dim("match", RULE.electricalWindow, reasons);
+  const subs = evaluateElectricalSubdimensions(
+    coil.ohms,
+    device.ohmMin,
+    device.ohmMax,
+    device.powerMinW,
+    device.powerMaxW,
+    coil.wattMin,
+    coil.wattMax,
+  );
+  const status = verdictToEvaluationStatus(subs.sufficiency.verdict);
+  const reasons = dedupeReasons(subs.sufficiency.reasons);
+  return dim(status, RULE.electricalWindow, reasons);
 }
 
 function evaluateOperating(device: Device, coil: Coil): DimensionEvaluation {
@@ -216,24 +190,14 @@ function legacyReasons(evaluation: CompatEvaluation): string[] {
   return reasons.length > 0 ? reasons : ["Sin detalle de compatibilidad."];
 }
 
-function wattClash(device: Device, coil: Coil): string | null {
-  if (device.powerMaxW != null && coil.wattMin != null && coil.wattMin > device.powerMaxW) {
-    return `La coil está recomendada desde ${coil.wattMin} W y el dispositivo publica un máximo de ${device.powerMaxW} W.`;
-  }
-  if (device.powerMinW != null && coil.wattMax != null && coil.wattMax < device.powerMinW) {
-    return `La coil se recomienda hasta ${coil.wattMax} W y el dispositivo publica un mínimo de ${device.powerMinW} W.`;
-  }
-  return null;
+function verdictToEvaluationStatus(verdict: WindowVerdict): EvaluationStatus {
+  if (verdict === "match") return "match";
+  if (verdict === "mismatch") return "mismatch";
+  return "unknown";
 }
 
-function ohmClash(device: Device, coil: Coil): string | null {
-  if (device.ohmMin != null && coil.ohms < device.ohmMin) {
-    return `${coil.ohms} Ω queda por debajo del mínimo publicado (${device.ohmMin} Ω).`;
-  }
-  if (device.ohmMax != null && coil.ohms > device.ohmMax) {
-    return `${coil.ohms} Ω supera el máximo publicado (${device.ohmMax} Ω).`;
-  }
-  return null;
+function dedupeReasons(reasons: string[]): string[] {
+  return reasons.filter((reason, index) => reasons.indexOf(reason) === index);
 }
 
 function dim(
@@ -241,10 +205,18 @@ function dim(
   rule: { id: string; version: number },
   reasons: string[],
 ): DimensionEvaluation {
+  const published =
+    reasons.length > 0
+      ? reasons
+      : [
+          status === "unknown"
+            ? "No hay datos eléctricos suficientes para esta evaluación."
+            : "Evaluación eléctrica sin detalle publicado.",
+        ];
   return {
     status,
     ruleId: rule.id,
     ruleVersion: rule.version,
-    reasons,
+    reasons: published,
   };
 }

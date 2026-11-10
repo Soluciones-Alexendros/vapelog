@@ -24,6 +24,7 @@ import { drifterLiquids } from "./liquids-drifter.ts";
 import { herreraLiquids } from "./liquids-herrera.ts";
 import { kingsCrestLiquids } from "./liquids-kings-crest.ts";
 import { oxvaLiquids } from "./liquids-oxva.ts";
+import { aggregateVariationTpd } from "./tpd.ts";
 
 export const brands: Brand[] = [
   { id: "vaporesso", name: "Vaporesso", country: "China" },
@@ -999,12 +1000,7 @@ export function variationRange(liquid: Liquid): VariationRange | null {
 }
 
 export function liquidTpd(liquid: Liquid): TpdStatus {
-  const statuses = liquid.variations
-    .map((variation) => variation.tpd)
-    .filter((status): status is TpdStatus => status != null);
-  if (statuses.length === 0) return "no-aplica";
-  if (statuses.every((status) => status === statuses[0])) return statuses[0]!;
-  return "parcial";
+  return aggregateVariationTpd(liquid);
 }
 
 export function brandById(id: string): Brand | undefined {

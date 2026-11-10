@@ -4,14 +4,16 @@ import { evaluateCompatibility } from "@/data/compat-evaluation";
 import { recommendLiquids, type LiquidFit, type LiquidFitKind } from "@/data/logic";
 import {
   compatLabel,
-  compatTone,
+  compatLabTone,
   evaluationStatusLabel,
   fitLabel,
   fitTone,
   formatPlain,
+  liquidFitVariationMeta,
   toneBorderClass,
   toneTextClass,
 } from "@/components/labels";
+import { liquidVariationDomId } from "@/data/logic";
 import { ProductPhoto } from "@/components/photo";
 import {
   Accordion,
@@ -47,7 +49,15 @@ export function CompatLab({
   const fits = coil ? recommendLiquids(coil, liquids) : [];
   const byKind = groupFits(fits);
   const total = fits.length;
-  const tone = result ? compatTone(result.kind) : "muted";
+  const tone =
+    result && evaluation
+      ? compatLabTone({
+          kind: evaluation.legacyKind,
+          physical: evaluation.physical.status,
+          electrical: evaluation.electrical.status,
+          operating: evaluation.operating.status,
+        })
+      : "muted";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -156,6 +166,15 @@ export function CompatLab({
               </div>
             </dl>
           ) : null}
+          {evaluation &&
+          evaluation.electrical.status === "unknown" &&
+          evaluation.physical.status !== "mismatch" ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {compatLabel(evaluation.legacyKind)} según datos físicos; la ventana eléctrica
+              publicada no basta para afirmar encaje completo (
+              {evaluationStatusLabel(evaluation.electrical.status).toLowerCase()}).
+            </p>
+          ) : null}
           <ul className="mt-2 flex flex-col gap-2">
             {result.reasons.map((reason, index) => (
               <li
@@ -223,7 +242,7 @@ export function CompatLab({
               calada publicada. Se agrupan por tipo de encaje.
             </p>
             <Accordion type="multiple" className="mt-4">
-              {(["directo", "posible", "preparacion", "evitar"] as const).map((kind) => {
+              {COMPAT_LAB_FIT_KINDS.map((kind) => {
                 const rows = byKind[kind];
                 if (rows.length === 0) return null;
                 return (
@@ -240,31 +259,66 @@ export function CompatLab({
                     </AccordionTrigger>
                     <AccordionContent>
                       <ul className="flex flex-col gap-2">
-                        {rows.map((fit) => (
-                          <li
-                            key={fit.liquid.id}
-                            className="rounded-md border border-border bg-surface-2 p-3"
-                          >
-                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                              <Link
-                                to="/liquidos/$slug"
-                                params={{ slug: fit.liquid.slug }}
-                                className="text-foreground underline decoration-border underline-offset-4"
-                              >
-                                {fit.liquid.name}
-                              </Link>
-                              <span
-                                className={cn(
-                                  "text-xs tracking-widest uppercase",
-                                  toneTextClass(fitTone(fit.fit)),
-                                )}
-                              >
-                                {fitLabel(fit.fit)}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground">{fit.reason}</p>
-                          </li>
-                        ))}
+                        {rows.map((fit) => {
+                          const meta = liquidFitVariationMeta(
+                            fit.variation,
+                            fit.requiresPreparation,
+                          );
+                          return (
+                            <li
+                              key={`${fit.liquid.id}:${fit.variation.id}`}
+                              className="rounded-md border border-border bg-surface-2 p-3"
+                            >
+                              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                <Link
+                                  to="/liquidos/$slug"
+                                  params={{ slug: fit.liquid.slug }}
+                                  hash={liquidVariationDomId(fit.variation.id)}
+                                  className="text-foreground underline decoration-border underline-offset-4"
+                                >
+                                  {fit.liquid.name}
+                                  <span className="font-normal text-muted-foreground">
+                                    {" "}
+                                    · {meta.variantLabel}
+                                  </span>
+                                </Link>
+                                <span
+                                  className={cn(
+                                    "text-xs tracking-widest uppercase",
+                                    toneTextClass(fitTone(fit.fit)),
+                                  )}
+                                >
+                                  {fitLabel(fit.fit)}
+                                </span>
+                              </div>
+                              <dl className="mt-2 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+                                <div>
+                                  <dt className="text-muted-foreground">Volumen</dt>
+                                  <dd className="text-foreground tabular-nums">
+                                    {meta.volumeText}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt className="text-muted-foreground">Nicotina</dt>
+                                  <dd className="text-foreground tabular-nums">
+                                    {meta.nicotineText}
+                                  </dd>
+                                </div>
+                                <div>
+                                  <dt className="text-muted-foreground">VG/PG</dt>
+                                  <dd className="text-foreground tabular-nums">{meta.ratioText}</dd>
+                                </div>
+                                {meta.preparationNote ? (
+                                  <div>
+                                    <dt className="text-muted-foreground">Uso</dt>
+                                    <dd className="text-foreground">{meta.preparationNote}</dd>
+                                  </div>
+                                ) : null}
+                              </dl>
+                              <p className="mt-2 text-sm text-muted-foreground">{fit.reason}</p>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </AccordionContent>
                   </AccordionItem>
@@ -277,6 +331,13 @@ export function CompatLab({
     </div>
   );
 }
+
+/** Kinds con filas en UI; `evitar` queda reservado en el tipo sin acordeón vacío. */
+const COMPAT_LAB_FIT_KINDS = [
+  "directo",
+  "posible",
+  "preparacion",
+] as const satisfies readonly LiquidFitKind[];
 
 function groupFits(fits: LiquidFit[]): Record<LiquidFitKind, LiquidFit[]> {
   const groups: Record<LiquidFitKind, LiquidFit[]> = {

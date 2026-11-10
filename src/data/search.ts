@@ -130,7 +130,7 @@ function platformIds(item: CatalogItem): string[] {
 }
 
 function itemTpd(item: CatalogItem) {
-  if (item.domain === "coil") return item.tpd ?? ("no-aplica" as const);
+  if (item.domain === "coil") return item.tpd ?? ("desconocido" as const);
   if (item.domain === "part") return "no-aplica" as const;
   if (item.domain === "liquid") return liquidTpd(item);
   return item.tpd;

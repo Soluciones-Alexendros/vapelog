@@ -29,3 +29,5 @@ canónicos, Node 22, pnpm).
 - CI usa `ubuntu-latest` + pnpm frozen-lockfile.
 - Smoke sirve el preview de Vite sobre `dist/`.
 - No se reintroduce Nitro/Vercel preset salvo ADR futuro si el adapter cambia.
+- Matriz explícita CI 22.x / producción Vercel 24.x y tipos diferidos:
+  [ADR-0018](./ADR-0018-matriz-runtime-node.md).

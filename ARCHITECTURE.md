@@ -10,8 +10,9 @@
 
 ## Resumen
 
-Vapelog es una aplicación SSR con **TanStack Start** (Vite + React Router)
-que sirve un catálogo tipado en TypeScript (`src/data/`). Las fichas se
+Vapelog es una aplicación SSR con **TanStack Start** (Vite + **TanStack
+Router** en `src/routes/`) que sirve un catálogo tipado en TypeScript
+(`src/data/`). Las fichas se
 renderizan en el cliente/SSR desde datos en memoria; las imágenes fuente viven
 en `assets/catalog/` (tracked, no se sirven) y sus variantes webp/avif generadas
 en `public/catalog/` (regenerar con `pnpm run images`). No hay base de datos en
@@ -30,13 +31,15 @@ runtime ni autenticación.
 ## Detalle
 
 - Overview: [docs/architecture/overview.md](docs/architecture/overview.md)
+  (contratos de dominio, gates, release, caché y runtime).
 - ADRs: [docs/architecture/decisions/](docs/architecture/decisions/)
 
 ### Dirección visual sobria ([ADR-0016](docs/architecture/decisions/ADR-0016-direccion-visual-sobria.md))
 
-- Superficies neutras y opacas, radio único, tipografía Public Sans + Space Mono
-  para cifras. Sin neón, glow, brutalismo decorativo, humo canvas ni conmutador
-  de efectos. Tema `vapelog-theme` (claro / oscuro / sistema) se conserva.
+- Superficies neutras y opacas, radio único; tipografía Public Sans +
+  **JetBrains Mono Variable** en cifras ([ADR-0017](docs/architecture/decisions/ADR-0017-paleta-neutra.md)).
+  Sin neón, glow, brutalismo decorativo, humo canvas ni conmutador de
+  efectos. Tema `vapelog-theme` (claro / oscuro / sistema) se conserva.
 - Color por tipo (`--kind-*`) como marcador con icono y etiqueta
   (`KindCard` en `src/components/ui/kind-card.tsx`).
 - Inventario histórico de humo y neo-brutalismo: ADR-0007 / ADR-0008 /

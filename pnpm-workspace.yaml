@@ -20,3 +20,4 @@ overrides:
   zod: ">=4.6.6"
   seroval: ">=1.6.8"
   seroval-plugins: ">=1.6.8"
+  minimatch: ">=11.0.1"

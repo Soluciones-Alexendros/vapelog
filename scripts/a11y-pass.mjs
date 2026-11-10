@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { AxeBuilder } from "@axe-core/playwright";
+import { isBenignConsoleNoise } from "./e2e-console-noise.mjs";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
@@ -208,6 +209,57 @@ async function behaviorChecks(browser, consoleErrors, pageErrors) {
   return { count: after.trim(), sheet: name };
 }
 
+async function toolStateChecks(browser, consoleErrors, pageErrors) {
+  const context = await browser.newContext({ viewport: VIEWPORT, colorScheme: "light" });
+  await context.addInitScript(
+    ({ gateKey, themeKey }) => {
+      sessionStorage.setItem(gateKey, "ok");
+      localStorage.setItem(themeKey, "light");
+      document.documentElement?.classList.remove("dark");
+    },
+    { gateKey: AGE_GATE_STORAGE_KEY, themeKey: THEME_STORAGE_KEY },
+  );
+  const page = await context.newPage();
+  page.on("console", (msg) => {
+    if (msg.type() === "error") consoleErrors.push(msg.text());
+  });
+  page.on("pageerror", (err) => pageErrors.push(String(err)));
+
+  const checks = [];
+
+  await page.goto(new URL("/herramientas?tab=nicokit", BASE).href, {
+    waitUntil: "domcontentloaded",
+    timeout: TIMEOUT_MS,
+  });
+  await page.waitForTimeout(300);
+  const nicokitMissing = await page.getByText(/Faltan datos:/).isVisible();
+  checks.push({ id: "nicokit-vacio", ok: nicokitMissing });
+
+  await page.goto(new URL("/herramientas?modo=watts&ohms=0&watts=14", BASE).href, {
+    waitUntil: "domcontentloaded",
+    timeout: TIMEOUT_MS,
+  });
+  await page.waitForTimeout(300);
+  const ohmAlert = await page
+    .getByRole("alert")
+    .filter({ hasText: /mayor que 0 Ω/i })
+    .isVisible();
+  checks.push({ id: "ohm-error", ok: ohmAlert });
+
+  await page.goto(new URL("/herramientas", BASE).href, {
+    waitUntil: "domcontentloaded",
+    timeout: TIMEOUT_MS,
+  });
+  await page.getByRole("button", { name: "Resistencia y voltaje" }).focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  const voltsFocused = await page.locator("#volts").evaluate((el) => el === document.activeElement);
+  checks.push({ id: "ohm-teclado-foco", ok: voltsFocused });
+
+  await context.close();
+  return checks;
+}
+
 const consoleErrors = [];
 const pageErrors = [];
 const fallos = [];
@@ -220,6 +272,7 @@ const browser = await chromium.launch({
 
 let axeResults = [];
 let behavior = { count: "", sheet: "" };
+let toolStates = [];
 try {
   axeResults = await scanTheme(browser, "light", ROUTES, consoleErrors, pageErrors);
   axeResults = axeResults.concat(
@@ -232,6 +285,7 @@ try {
     ),
   );
   behavior = await behaviorChecks(browser, consoleErrors, pageErrors);
+  toolStates = await toolStateChecks(browser, consoleErrors, pageErrors);
 } catch (err) {
   fallos.push(String(err?.message || err));
 } finally {
@@ -252,12 +306,15 @@ for (const result of axeResults) {
   }
 }
 
-const noise = /favicon|Failed to load resource/i;
 for (const line of consoleErrors) {
-  if (!noise.test(line)) fallos.push(`console: ${line}`);
+  if (!isBenignConsoleNoise(line)) fallos.push(`console: ${line}`);
 }
 for (const line of pageErrors) {
-  if (!noise.test(line)) fallos.push(`pageerror: ${line}`);
+  if (!isBenignConsoleNoise(line)) fallos.push(`pageerror: ${line}`);
+}
+
+for (const check of toolStates) {
+  if (!check.ok) fallos.push(`herramientas/${check.id}: estado esperado no visible`);
 }
 
 const seriousCritical = axeResults.flatMap((result) => result.violations);
@@ -271,6 +328,7 @@ const summary = {
   reglasIgnoradas: [...AXE_RULE_IDS_NOT_APPLICABLE_PAGE_FRAGMENTS],
   ficha: behavior.sheet,
   recuento: behavior.count,
+  herramientas: toolStates,
   fallos,
 };
 console.log(JSON.stringify(summary, null, 2));

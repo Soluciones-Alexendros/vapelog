@@ -1069,7 +1069,7 @@ function SpecTable({
           </TableHeader>
           <TableBody>
             {visible.map((row) => (
-              <TableRow key={row.key}>
+              <TableRow key={row.key} id={row.key}>
                 <TableHead scope="row" className="w-[12rem] text-muted-foreground">
                   {row.label}
                 </TableHead>

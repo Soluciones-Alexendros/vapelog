@@ -1,4 +1,4 @@
-import { useId, useRef, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, type KeyboardEvent } from "react";
 import { coils, deviceBySlug, devices } from "@/data/catalog";
 import {
   availableOhms,
@@ -16,7 +16,12 @@ import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NICOKIT_EXAMPLE, type ToolSearch } from "@/components/tool-search";
+import {
+  NICOKIT_EXAMPLE,
+  ohmModeForSearch,
+  resolveOhmMode,
+  type ToolSearch,
+} from "@/components/tool-search";
 
 function parseDecimal(value: string): number | null {
   const trimmed = value.trim();
@@ -34,12 +39,14 @@ const TABS = [
   { id: "nicokit" as const, label: "Nicokit" },
 ];
 
+export type ToolSearchNavigateOptions = { replace?: boolean };
+
 export function ToolsPanel({
   search,
   onSearch,
 }: {
   search: ToolSearch;
-  onSearch: (next: ToolSearch) => void;
+  onSearch: (next: ToolSearch, options?: ToolSearchNavigateOptions) => void;
 }) {
   const tab = search.tab ?? "ohm";
   const baseId = useId();
@@ -127,9 +134,9 @@ function OhmForm({
   onSearch,
 }: {
   search: ToolSearch;
-  onSearch: (next: ToolSearch) => void;
+  onSearch: (next: ToolSearch, options?: ToolSearchNavigateOptions) => void;
 }) {
-  const mode: "watts" | "volts" = search.volts != null && search.volts !== "" ? "volts" : "watts";
+  const mode = resolveOhmMode(search);
   const ohmOptions = availableOhms(coils);
   const ohmsRaw = search.ohms ?? "";
   const wattsRaw = search.watts ?? "";
@@ -177,15 +184,23 @@ function OhmForm({
       : null;
 
   const setMode = (next: "watts" | "volts") => {
-    if (next === "watts") {
-      onSearch({ ...search, tab: "ohm", volts: undefined });
-    } else {
-      onSearch({ ...search, tab: "ohm", watts: undefined });
-    }
+    if (next === mode) return;
+    onSearch(ohmModeForSearch(next, search), { replace: false });
   };
+
+  const prevOhmMode = useRef(mode);
+  useEffect(() => {
+    if (prevOhmMode.current === mode) return;
+    prevOhmMode.current = mode;
+    document.getElementById(mode === "watts" ? "watts" : "volts")?.focus();
+  }, [mode]);
 
   const reset = () => {
     onSearch({ tab: "ohm" });
+  };
+
+  const patchOhm = (partial: ToolSearch, options?: ToolSearchNavigateOptions) => {
+    onSearch({ ...search, tab: "ohm", ...partial }, options);
   };
 
   return (
@@ -233,9 +248,7 @@ function OhmForm({
             aria-describedby="ohms-help"
             placeholder="p. ej. 0,8"
             value={ohmsRaw}
-            onChange={(event) =>
-              onSearch({ ...search, tab: "ohm", ohms: event.target.value || undefined })
-            }
+            onChange={(event) => patchOhm({ ohms: event.target.value || undefined })}
           />
           <datalist id={datalistId}>
             {ohmOptions.map((option) => (
@@ -274,9 +287,8 @@ function OhmForm({
               aria-describedby="watts-help"
               value={wattsRaw}
               onChange={(event) =>
-                onSearch({
-                  ...search,
-                  tab: "ohm",
+                patchOhm({
+                  modo: "watts",
                   watts: event.target.value || undefined,
                   volts: undefined,
                 })
@@ -301,9 +313,8 @@ function OhmForm({
               aria-describedby="volts-help"
               value={voltsRaw}
               onChange={(event) =>
-                onSearch({
-                  ...search,
-                  tab: "ohm",
+                patchOhm({
+                  modo: "volts",
                   volts: event.target.value || undefined,
                   watts: undefined,
                 })
@@ -346,9 +357,7 @@ function OhmForm({
           id="device-fit"
           aria-describedby="device-fit-help"
           value={deviceSlug}
-          onChange={(event) =>
-            onSearch({ ...search, tab: "ohm", device: event.target.value || undefined })
-          }
+          onChange={(event) => patchOhm({ device: event.target.value || undefined })}
         >
           <option value="">Ninguno</option>
           {devices.map((item) => (
@@ -450,9 +459,14 @@ function NicoForm({
   const shotsNotInteger =
     shotsParsed != null && Number.isFinite(shotsParsed) && !Number.isInteger(shotsParsed);
 
+  const botellaInvalid =
+    botella !== "" &&
+    (botellaParsed == null || !Number.isFinite(botellaParsed) || botellaParsed <= 0);
+
   const requiredReady =
     missing.length === 0 &&
     !shotsNotInteger &&
+    !botellaInvalid &&
     aromaParsed != null &&
     botellaParsed != null &&
     shotMlParsed != null &&
@@ -552,6 +566,9 @@ function NicoForm({
           label="Capacidad de la botella (ml)"
           unit="ml"
           help="Volumen máximo de la botella (objetivo de llenado)."
+          error={
+            botellaInvalid ? "La capacidad de la botella tiene que ser mayor que 0." : undefined
+          }
         >
           <Input
             id="botella"
@@ -626,12 +643,17 @@ function NicoForm({
       </div>
 
       {!requiredReady ? (
-        <p className="mt-6 text-sm text-muted-foreground" role="status">
-          {shotsNotInteger
-            ? "Introduce un número entero"
-            : missing.length > 0
-              ? `Faltan datos: ${missing.join(", ")}.`
-              : "Corrige los valores numéricos para ver el balance."}
+        <p
+          className={`mt-6 text-sm ${botellaInvalid || shotsNotInteger ? "text-destructive" : "text-muted-foreground"}`}
+          role={botellaInvalid || shotsNotInteger ? "alert" : "status"}
+        >
+          {botellaInvalid
+            ? "La capacidad de la botella tiene que ser mayor que 0."
+            : shotsNotInteger
+              ? "Introduce un número entero"
+              : missing.length > 0
+                ? `Faltan datos: ${missing.join(", ")}.`
+                : "Corrige los valores numéricos para ver el balance."}
         </p>
       ) : null}
 

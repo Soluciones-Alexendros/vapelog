@@ -3,6 +3,9 @@
  * device/coil/liquid/part siguen siendo proyecciones sobre este modelo.
  */
 import type { Coil, Device, Draw, Liquid, Part, TpdStatus } from "./types.ts";
+import { aggregateVariationTpd } from "./tpd.ts";
+
+export { aggregateVariationTpd };
 
 export type PhysicalKind =
   "device" | "atomizer" | "cartridge" | "coil_head" | "accessory" | "liquid";
@@ -201,18 +204,6 @@ export function projectPart(part: Part): Accessory {
     fitsConnector: part.fitsConnector,
     fitsBattery: part.fitsBattery,
   };
-}
-
-/** Agrega TPD de variantes sin elegir silenciosamente la primera. */
-export function aggregateVariationTpd(liquid: Liquid): TpdStatus {
-  const values = liquid.variations.map((variation) => variation.tpd);
-  if (values.length === 0) return "no-aplica";
-  const unique = new Set(values);
-  if (unique.size === 1) return values[0]!;
-  // Conflictos entre variantes: parcial, no «si» por orden de array.
-  if (unique.has("si") || unique.has("parcial")) return "parcial";
-  if (unique.has("no")) return "no";
-  return "no-aplica";
 }
 
 export function projectLiquid(

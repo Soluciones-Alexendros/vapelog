@@ -24,7 +24,9 @@ function Page() {
   return (
     <ToolsPanel
       search={search}
-      onSearch={(next) => void navigate({ search: next, replace: true })}
+      onSearch={(next, options) =>
+        void navigate({ search: next, replace: options?.replace !== false })
+      }
     />
   );
 }
