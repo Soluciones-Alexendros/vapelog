@@ -22,11 +22,12 @@
 
 ## Runbooks
 
-| Escenario            | Runbook                                                            |
-| -------------------- | ------------------------------------------------------------------ |
-| Desplegar en Vercel  | [docs/runbooks/deploy.md](docs/runbooks/deploy.md)                 |
-| Revertir un deploy   | [docs/runbooks/rollback.md](docs/runbooks/rollback.md)             |
-| Rotación de secretos | [docs/runbooks/rotate-secrets.md](docs/runbooks/rotate-secrets.md) |
+| Escenario                           | Runbook                                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Desplegar en Vercel                 | [docs/runbooks/deploy.md](docs/runbooks/deploy.md)                                                                   |
+| Revertir un deploy                  | [docs/runbooks/rollback.md](docs/runbooks/rollback.md)                                                               |
+| Rotación de secretos                | [docs/runbooks/rotate-secrets.md](docs/runbooks/rotate-secrets.md)                                                   |
+| Preview SSO / `preview-e2e` / merge | [docs/runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md](docs/runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md) |
 
 ## Stack y entorno
 

@@ -19,11 +19,12 @@ Contratos: [AGENTS.md](AGENTS.md) · [ARCHITECTURE.md](ARCHITECTURE.md) ·
 
 |                |                                                                                                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Estado**     | Catálogo puro (sin auth / multiplayer / broker Grok)                                                                                                               |
+| **Estado**     | Catálogo puro (sin auth / multiplayer / broker Grok). Consolidación U0–U13 en `main` (salvo U12C).                                                                 |
 | **Producción** | [vapelog-alexendros.vercel.app](https://vapelog-alexendros.vercel.app)                                                                                             |
 | **Visual**     | Paleta neutra tono 260 · JetBrains Mono · [ADR-0017](docs/architecture/decisions/ADR-0017-paleta-neutra.md) · [aceptación v2](docs/cierre/aceptacion-v2-visual.md) |
 | **Stack**      | TanStack Start · React 19 · TypeScript · Tailwind v4 · OKLCH · Nitro                                                                                               |
 | **Gestor**     | pnpm · Node 22                                                                                                                                                     |
+| **CI Preview** | `preview-e2e` en PRs usa el environment GitHub `Preview` + Automation Bypass (Vercel SSO).                                                                         |
 
 [![CI](https://github.com/Soluciones-Alexendros/vapelog/actions/workflows/ci.yml/badge.svg)](https://github.com/Soluciones-Alexendros/vapelog/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Soluciones-Alexendros/vapelog)](https://github.com/Soluciones-Alexendros/vapelog/releases)
@@ -60,6 +61,11 @@ pnpm dev
 
 La app **no requiere** variables obligatorias. Ver [.env.example](.env.example).
 
+Para el job CI `preview-e2e` (solo pull requests), el secreto
+`VERCEL_AUTOMATION_BYPASS_SECRET` vive en el **environment** `Preview` de
+GitHub, no en los secrets del repositorio. Política y rotación:
+[docs/runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md](docs/runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md).
+
 ## Arquitectura
 
 Visión en [ARCHITECTURE.md](ARCHITECTURE.md) y
@@ -70,8 +76,12 @@ Visión en [ARCHITECTURE.md](ARCHITECTURE.md) y
 
 Índice: [docs/README.md](docs/README.md).
 
-Cierre visual v2 (U1–U9): expediente
-[docs/cierre/aceptacion-v2-visual.md](docs/cierre/aceptacion-v2-visual.md) y
-capturas en [docs/cierre/aceptacion-v2/capturas/](docs/cierre/aceptacion-v2/capturas/).
-Las casillas de la matriz las marca un humano tras revisar los PNG; regenerar
-con `pnpm run build && pnpm run aceptacion:capturas`.
+| Tema                      | Documento                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Cierre visual v2 (U1–U9)  | [docs/cierre/aceptacion-v2-visual.md](docs/cierre/aceptacion-v2-visual.md)                                           |
+| Capturas de aceptación    | [docs/cierre/aceptacion-v2/capturas/](docs/cierre/aceptacion-v2/capturas/)                                           |
+| Preview protegido / merge | [docs/runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md](docs/runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md) |
+| Tests y E2E Preview       | [docs/guides/testing.md](docs/guides/testing.md)                                                                     |
+
+Las casillas de la matriz visual las marca un humano tras revisar los PNG;
+regenerar con `pnpm run build && pnpm run aceptacion:capturas`.

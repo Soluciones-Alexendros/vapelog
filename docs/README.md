@@ -22,6 +22,8 @@
 - [deploy.md](runbooks/deploy.md)
 - [rollback.md](runbooks/rollback.md)
 - [rotate-secrets.md](runbooks/rotate-secrets.md)
+- [vap-22-preview-merge-y-aceptacion-u-ops.md](runbooks/vap-22-preview-merge-y-aceptacion-u-ops.md)
+  — Preview con Deployment Protection, bypass de CI y política de merge.
 
 ## Cierre / aceptación
 
