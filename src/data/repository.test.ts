@@ -40,7 +40,7 @@ describe("fileCatalogRepository", () => {
 
   it("VAL-016-03: mutar campos anidados en índices no altera catálogo ni otro índice", () => {
     const liquidKey = "liquid:herrera-abarra-freebase";
-    const { byId, bySlug, byPlatform } = fileCatalogRepository.indexes();
+    const { byId, bySlug } = fileCatalogRepository.indexes();
     const fromId = byId.get("herrera-abarra-freebase");
     const fromSlug = bySlug.get(liquidKey);
     assert.ok(fromId && fromSlug);

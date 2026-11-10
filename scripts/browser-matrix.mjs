@@ -69,7 +69,7 @@ try {
     E2E_BASE_URL: `${BASE}/`,
     E2E_PORT: PORT,
   });
-} catch (err) {
+} catch {
   exitCode = 1;
 }
 
