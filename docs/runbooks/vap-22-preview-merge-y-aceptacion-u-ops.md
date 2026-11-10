@@ -105,7 +105,12 @@ Cadena típica en PR:
 1. Push al PR → CI corre `release-ready` (y el resto de jobs obligatorios).
 2. La app Vercel construye y publica **Preview** (suele colgar del mismo commit;
    puede estar configurada para esperar checks concretos).
-3. `preview-e2e` espera hasta 900 s la URL de Preview (`wait-preview-url.mjs`)
+3. `preview-e2e` espera hasta 900 s la URL de Preview (`wait-preview-url.mjs`).
+   Si Deployment Protection / SSO está activo, el probe ve redirect a
+   `vercel.com/sso-api` y falla en el intento 1. Remedio: secreto de repo
+   `VERCEL_AUTOMATION_BYPASS_SECRET` (mismo valor que Automation Bypass en
+   Vercel) o relajar protección en Previews. Sin el secreto, `release-ready`
+   sigue pudiendo quedar verde (el job no está en `needs`).
    y ejecuta Playwright (`playwright.preview.config.ts`).
 
 **Riesgo si se mete `preview-e2e` dentro de `release-ready` sin reconfigurar

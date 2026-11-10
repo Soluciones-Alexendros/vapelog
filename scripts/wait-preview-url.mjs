@@ -17,6 +17,24 @@ import { writeFileSync } from "node:fs";
 export const PRODUCTION_HOST = "vapelog-alexendros.vercel.app";
 const DEFAULT_PROBE_TIMEOUT_MS = 15_000;
 
+/** Cabeceras de Automation Bypass (Deployment Protection / SSO). */
+export function protectionBypassHeaders(env = process.env) {
+  const secret = env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (!secret || !String(secret).trim()) return {};
+  return {
+    "x-vercel-protection-bypass": String(secret).trim(),
+    "x-vercel-set-bypass-cookie": "true",
+  };
+}
+
+/**
+ * @param {string} host
+ */
+export function isVercelSsoHost(host) {
+  const h = String(host ?? "").toLowerCase();
+  return h === "vercel.com" || h.endsWith(".vercel.com");
+}
+
 /**
  * @param {string} url
  */
@@ -65,21 +83,31 @@ export function pickPreviewUrl(statuses) {
 export async function probePreviewReady(url, expectedSha, opts = {}) {
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
   const timeoutMs = opts.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS;
+  const bypassHeaders = opts.bypassHeaders ?? protectionBypassHeaders();
+  const requestInit = {
+    method: "GET",
+    redirect: /** @type {RequestRedirect} */ ("manual"),
+    headers: bypassHeaders,
+  };
 
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), timeoutMs);
   /** @type {Response} */
   let probe;
   try {
-    probe = await fetchImpl(url, { method: "GET", redirect: "manual", signal: ac.signal });
+    probe = await fetchImpl(url, { ...requestInit, signal: ac.signal });
   } finally {
     clearTimeout(timer);
   }
 
   if (probe.status === 401 || probe.status === 403) {
-    throw Object.assign(new Error(`Preview responde ${probe.status} (protección Vercel).`), {
-      fatal: true,
-    });
+    throw Object.assign(
+      new Error(
+        `Preview responde ${probe.status} (Deployment Protection). ` +
+          "Configura VERCEL_AUTOMATION_BYPASS_SECRET o relaja la protección en Previews.",
+      ),
+      { fatal: true },
+    );
   }
   if (probe.status >= 300 && probe.status < 400) {
     const location = probe.headers.get("location") ?? "";
@@ -88,6 +116,17 @@ export async function probePreviewReady(url, expectedSha, opts = {}) {
       host = new URL(location, url).host;
     } catch {
       host = location;
+    }
+    if (isVercelSsoHost(host)) {
+      throw Object.assign(
+        new Error(
+          `Preview redirige a SSO Vercel (${host}). ` +
+            "Deployment Protection activo: define el secreto de repo " +
+            "VERCEL_AUTOMATION_BYPASS_SECRET (mismo valor que en Vercel → " +
+            "Deployment Protection → Automation Bypass).",
+        ),
+        { fatal: true },
+      );
     }
     if (host === PRODUCTION_HOST || (host && host !== new URL(url).host)) {
       throw Object.assign(new Error(`Preview redirige a host no Preview (${host || location}).`), {
@@ -108,8 +147,7 @@ export async function probePreviewReady(url, expectedSha, opts = {}) {
   let manifestRes;
   try {
     manifestRes = await fetchImpl(`${url}/build-manifest.json`, {
-      method: "GET",
-      redirect: "manual",
+      ...requestInit,
       signal: ac2.signal,
     });
   } finally {

@@ -5,6 +5,14 @@ if (!baseURL) {
   throw new Error("E2E_BASE_URL es obligatorio para el suite preview");
 }
 
+const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
+const bypassHeaders = bypass
+  ? {
+      "x-vercel-protection-bypass": bypass,
+      "x-vercel-set-bypass-cookie": "true",
+    }
+  : undefined;
+
 export default defineConfig({
   testDir: "./e2e/preview",
   fullyParallel: false,
@@ -18,6 +26,7 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
     colorScheme: "dark",
+    ...(bypassHeaders ? { extraHTTPHeaders: bypassHeaders } : {}),
   },
   projects: [
     {
