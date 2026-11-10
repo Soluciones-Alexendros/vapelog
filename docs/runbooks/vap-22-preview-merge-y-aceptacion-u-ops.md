@@ -139,6 +139,23 @@ rotado o incorrecto). El probe envía solo `x-vercel-protection-bypass`;
 Playwright, que sí navega con cookies. Un `3xx` al mismo host se sigue una vez
 (normalización) y un bucle equivalente es error fatal.
 
+Playwright **no** usa `extraHTTPHeaders`: `e2e/preview/global-setup.ts` siembra la
+cookie en un contexto de API limitado al origen del Preview, de modo que el
+secreto no viaja en cada petición ni a terceros del contexto (toolbar
+`vercel.live`). El `storageState` se escribe en `os.tmpdir()` con permisos `0600`
+y `global-teardown.ts` lo borra al terminar.
+
+Comprobación local de la configuración, sin tocar Vercel:
+
+```bash
+pnpm run check:preview-bypass   # exit 0 si hay bypass o si el gate no aplica
+```
+
+**Detección de deriva:** el job `preview-bypass-config` corre en cada push a
+`main` y falla si `VERCEL_PREVIEW_BYPASS_ENABLED` deja de ser `true` o si el
+secreto desaparece. Sin él, apagar la variable convertiría `preview-e2e`
+(required) en un verde sin cobertura.
+
 **Alta y rotación (operador):**
 
 ```bash
