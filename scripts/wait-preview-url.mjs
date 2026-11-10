@@ -1,16 +1,19 @@
 #!/usr/bin/env node
 /**
  * Espera un deployment Preview de Vercel listo para el SHA dado y escribe la URL.
- * Usa la API de deployments de GitHub (sin secretos de Vercel).
+ * La URL se descubre por la API de deployments de GitHub; el acceso al Preview
+ * protegido usa `VERCEL_AUTOMATION_BYPASS_SECRET` cuando está definido.
  *
  * Política:
  * - Solo environment=Preview del SHA pedido (sin fallback a producción).
- * - redirect: manual; 3xx al canónico de producción → fallo.
+ * - redirect: manual; 3xx al canónico de producción o a SSO → fallo con código.
+ * - Un 3xx al mismo host se sigue una vez; bucle equivalente → fallo.
  * - GET /build-manifest.json debe coincidir con el SHA.
  * - Rate limit / 401 / 403 → exit 1 inmediato.
  *
  * Uso: node scripts/wait-preview-url.mjs <sha> [timeoutSec]
- * Env: GITHUB_REPOSITORY (owner/repo), GH_TOKEN o GITHUB_TOKEN
+ * Env: GITHUB_REPOSITORY (owner/repo), GH_TOKEN o GITHUB_TOKEN,
+ *      VERCEL_AUTOMATION_BYPASS_SECRET (opcional; solo si hay protección)
  */
 import { writeFileSync } from "node:fs";
 
