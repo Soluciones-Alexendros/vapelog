@@ -263,6 +263,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # El secreto de Automation Bypass vive en este environment, no en el repo.
+    environment: Preview
     permissions:
       contents: read
       deployments: read
@@ -281,16 +283,33 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Los pasos siguientes solo corren si hay bypass. Sin él, aviso explícito
+      # y job verde: nunca un check required colgado ni un rojo de adorno.
+      - name: Verificar bypass de Preview
+        id: bypass
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          VERCEL_PREVIEW_BYPASS_ENABLED: ${{ vars.VERCEL_PREVIEW_BYPASS_ENABLED }}
+          PREVIEW_IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: node scripts/check-preview-bypass.mjs
+
       - name: Install Chromium for preview e2e
+        if: steps.bypass.outputs.state == 'ok'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Esperar URL del Preview
+        if: steps.bypass.outputs.state == 'ok'
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          # Mismo valor que Vercel → Deployment Protection → Automation Bypass.
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: node scripts/wait-preview-url.mjs "${{ github.event.pull_request.head.sha }}" 900
 
       - name: Playwright catálogo contra Preview
+        if: steps.bypass.outputs.state == 'ok'
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           set -euo pipefail
           E2E_BASE_URL="$(tr -d '\n' < preview-url.txt)"

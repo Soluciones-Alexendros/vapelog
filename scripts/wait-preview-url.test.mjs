@@ -4,8 +4,10 @@ import {
   PRODUCTION_HOST,
   detectVercelRateLimit,
   isTransientGithubError,
+  isVercelSsoHost,
   pickPreviewUrl,
   probePreviewReady,
+  protectionBypassHeaders,
 } from "./wait-preview-url.mjs";
 
 test("pickPreviewUrl ignora producción y entornos no Preview", () => {
@@ -81,6 +83,90 @@ test("probePreviewReady falla ante redirect al canónico", async () => {
   );
 });
 
+test("probePreviewReady diagnostica SSO de Deployment Protection", async () => {
+  /** @type {typeof fetch} */
+  const fetchImpl = async () =>
+    /** @type {Response} */ ({
+      ok: false,
+      status: 302,
+      headers: {
+        get: (n) =>
+          n.toLowerCase() === "location"
+            ? "https://vercel.com/sso-api?url=https%3A%2F%2Fpreview.example.test%2F"
+            : null,
+      },
+      json: async () => ({}),
+    });
+  await assert.rejects(
+    () => probePreviewReady("https://preview.example.test", "sha", { fetchImpl }),
+    /SSO Vercel|VERCEL_AUTOMATION_BYPASS_SECRET/,
+  );
+});
+
+/** @returns {typeof fetch} */
+function ssoFetch(status = 302) {
+  return async () =>
+    /** @type {Response} */ ({
+      ok: false,
+      status,
+      headers: {
+        get: (n) =>
+          n.toLowerCase() === "location" && status >= 300 && status < 400
+            ? "https://vercel.com/sso-api?url=https%3A%2F%2Fpreview.example.test%2F"
+            : null,
+      },
+      json: async () => ({}),
+    });
+}
+
+test("probePreviewReady distingue secreto ausente de secreto inválido (302 SSO)", async () => {
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(302),
+        bypassHeaders: {},
+      }),
+    (err) => err.code === "NO_BYPASS_SECRET" && /\[NO_BYPASS_SECRET\]/.test(err.message),
+  );
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(302),
+        bypassHeaders: { "x-vercel-protection-bypass": "caducado" },
+      }),
+    (err) => err.code === "BYPASS_INVALID" && /rotado/.test(err.message),
+  );
+});
+
+test("probePreviewReady distingue secreto ausente de secreto inválido (403)", async () => {
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(403),
+        bypassHeaders: {},
+      }),
+    (err) => err.code === "NO_BYPASS_SECRET" && err.fatal === true,
+  );
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(401),
+        bypassHeaders: { "x-vercel-protection-bypass": "caducado" },
+      }),
+    (err) => err.code === "BYPASS_INVALID" && err.fatal === true,
+  );
+});
+
+test("protectionBypassHeaders y isVercelSsoHost", () => {
+  assert.deepEqual(protectionBypassHeaders({}), {});
+  assert.deepEqual(protectionBypassHeaders({ VERCEL_AUTOMATION_BYPASS_SECRET: "  tok  " }), {
+    "x-vercel-protection-bypass": "tok",
+    "x-vercel-set-bypass-cookie": "true",
+  });
+  assert.equal(isVercelSsoHost("vercel.com"), true);
+  assert.equal(isVercelSsoHost("vapelog-xxx.vercel.app"), false);
+});
+
 test("detectVercelRateLimit", () => {
   assert.equal(
     detectVercelRateLimit(
@@ -104,4 +190,72 @@ test("isTransientGithubError reconoce 5xx y red", () => {
   assert.equal(isTransientGithubError(new Error("GitHub 429 /repos/x/status: ")), true);
   assert.equal(isTransientGithubError(new Error("GitHub 404 /repos/x/status: ")), false);
   assert.equal(isTransientGithubError(new Error("fetch failed")), true);
+});
+
+test("protectionBypassHeaders puede omitir la cookie de bypass (probe)", () => {
+  assert.deepEqual(
+    protectionBypassHeaders({ VERCEL_AUTOMATION_BYPASS_SECRET: "tok" }, { setCookie: false }),
+    { "x-vercel-protection-bypass": "tok" },
+  );
+});
+
+test("probePreviewReady sigue un 3xx al mismo host una sola vez", async () => {
+  const calls = [];
+  /** @type {typeof fetch} */
+  const fetchImpl = async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (calls.length === 1) {
+      return /** @type {Response} */ ({
+        ok: false,
+        status: 307,
+        headers: {
+          get: (n) => (n.toLowerCase() === "location" ? "https://preview.example.test/" : null),
+        },
+        json: async () => ({}),
+      });
+    }
+    if (url.endsWith("/build-manifest.json")) {
+      return /** @type {Response} */ ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({ commit: "sha-ok" }),
+      });
+    }
+    return /** @type {Response} */ ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({}),
+    });
+  };
+  const url = await probePreviewReady("https://preview.example.test", "sha-ok", {
+    fetchImpl,
+    bypassHeaders: {},
+  });
+  assert.equal(url, "https://preview.example.test");
+  assert.deepEqual(calls, [
+    "https://preview.example.test",
+    "https://preview.example.test/",
+    "https://preview.example.test/build-manifest.json",
+  ]);
+});
+
+test("probePreviewReady falla si el 3xx al mismo host se repite", async () => {
+  /** @type {typeof fetch} */
+  const fetchImpl = async () =>
+    /** @type {Response} */ ({
+      ok: false,
+      status: 307,
+      headers: {
+        get: (n) => (n.toLowerCase() === "location" ? "https://preview.example.test/" : null),
+      },
+      json: async () => ({}),
+    });
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", { fetchImpl, bypassHeaders: {} }),
+    /bucle al mismo host/,
+  );
 });

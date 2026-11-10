@@ -18,6 +18,33 @@ export const PRODUCTION_HOST = "vapelog-alexendros.vercel.app";
 const DEFAULT_PROBE_TIMEOUT_MS = 15_000;
 
 /**
+ * Cabeceras de Automation Bypass (Deployment Protection / SSO).
+ *
+ * `setCookie` añade `x-vercel-set-bypass-cookie`, que hace que Vercel responda
+ * un 307 para dejar la cookie. En el probe se desactiva: no hay navegador que la
+ * necesite y el redirect confundiría la comprobación de estado.
+ *
+ * @param {Record<string, string | undefined>} [env]
+ * @param {{ setCookie?: boolean }} [options]
+ */
+export function protectionBypassHeaders(env = process.env, { setCookie = true } = {}) {
+  const secret = env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (!secret || !String(secret).trim()) return {};
+  /** @type {Record<string, string>} */
+  const headers = { "x-vercel-protection-bypass": String(secret).trim() };
+  if (setCookie) headers["x-vercel-set-bypass-cookie"] = "true";
+  return headers;
+}
+
+/**
+ * @param {string} host
+ */
+export function isVercelSsoHost(host) {
+  const h = String(host ?? "").toLowerCase();
+  return h === "vercel.com" || h.endsWith(".vercel.com");
+}
+
+/**
  * @param {string} url
  */
 export function stripUrlForLog(url) {
@@ -62,59 +89,109 @@ export function pickPreviewUrl(statuses) {
  * @param {string} expectedSha
  * @param {{ fetchImpl?: typeof fetch, timeoutMs?: number }} [opts]
  */
-export async function probePreviewReady(url, expectedSha, opts = {}) {
-  const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS;
-
+/**
+ * GET sin seguir redirects, con timeout propio.
+ *
+ * @param {string} url
+ * @param {RequestInit} init
+ * @param {number} timeoutMs
+ * @param {typeof fetch} fetchImpl
+ * @returns {Promise<Response>}
+ */
+async function fetchManual(url, init, timeoutMs, fetchImpl) {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), timeoutMs);
-  /** @type {Response} */
-  let probe;
   try {
-    probe = await fetchImpl(url, { method: "GET", redirect: "manual", signal: ac.signal });
+    return await fetchImpl(url, { ...init, signal: ac.signal });
   } finally {
     clearTimeout(timer);
   }
+}
+
+export async function probePreviewReady(url, expectedSha, opts = {}) {
+  const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS;
+  // Sin `x-vercel-set-bypass-cookie`: el probe solo necesita el bypass, y esa
+  // cabecera devuelve un 307 de set-cookie que abortaría la comprobación.
+  const bypassHeaders =
+    opts.bypassHeaders ?? protectionBypassHeaders(process.env, { setCookie: false });
+  // Distingue «no hay secreto configurado» de «el secreto no vale»: el mensaje
+  // del primero es una tarea de configuración, el del segundo una rotación.
+  const hasBypass = Object.keys(bypassHeaders).length > 0;
+  const accessCode = hasBypass ? "BYPASS_INVALID" : "NO_BYPASS_SECRET";
+  const accessHint = hasBypass
+    ? "El secreto no es válido o fue rotado: actualiza VERCEL_AUTOMATION_BYPASS_SECRET (environment Preview)."
+    : "Define VERCEL_AUTOMATION_BYPASS_SECRET en el environment Preview con el valor de " +
+      "Vercel → Deployment Protection → Protection Bypass for Automation.";
+  const requestInit = {
+    method: "GET",
+    redirect: /** @type {RequestRedirect} */ ("manual"),
+    headers: bypassHeaders,
+  };
+
+  let currentUrl = url;
+  let probe = await fetchManual(currentUrl, requestInit, timeoutMs, fetchImpl);
+
+  // Un 3xx al mismo host se sigue una sola vez (normalización de Vercel).
+  // Cualquier otro destino se clasifica abajo como error fatal.
+  if (probe.status >= 300 && probe.status < 400) {
+    const location = probe.headers.get("location") ?? "";
+    /** @type {URL | null} */
+    const parsed = (() => {
+      try {
+        return new URL(location, currentUrl);
+      } catch {
+        return null;
+      }
+    })();
+    if (parsed && parsed.host === new URL(currentUrl).host) {
+      currentUrl = parsed.toString();
+      probe = await fetchManual(currentUrl, requestInit, timeoutMs, fetchImpl);
+    }
+  }
 
   if (probe.status === 401 || probe.status === 403) {
-    throw Object.assign(new Error(`Preview responde ${probe.status} (protección Vercel).`), {
-      fatal: true,
-    });
+    throw Object.assign(
+      new Error(
+        `[${accessCode}] Preview responde ${probe.status} (Deployment Protection). ${accessHint}`,
+      ),
+      { fatal: true, code: accessCode },
+    );
   }
   if (probe.status >= 300 && probe.status < 400) {
     const location = probe.headers.get("location") ?? "";
     let host;
     try {
-      host = new URL(location, url).host;
+      host = new URL(location, currentUrl).host;
     } catch {
       host = location;
     }
-    if (host === PRODUCTION_HOST || (host && host !== new URL(url).host)) {
+    if (isVercelSsoHost(host)) {
+      throw Object.assign(
+        new Error(`[${accessCode}] Preview redirige a SSO Vercel (${host}). ${accessHint}`),
+        { fatal: true, code: accessCode },
+      );
+    }
+    if (host === PRODUCTION_HOST || (host && host !== new URL(currentUrl).host)) {
       throw Object.assign(new Error(`Preview redirige a host no Preview (${host || location}).`), {
         fatal: true,
       });
     }
-    throw Object.assign(new Error(`Preview redirect inesperado ${probe.status}`), {
-      fatal: true,
-    });
+    throw Object.assign(
+      new Error(`Preview redirect ${probe.status} en bucle al mismo host (${currentUrl}).`),
+      { fatal: true },
+    );
   }
   if (!probe.ok) {
     throw new Error(`Preview HTTP ${probe.status}`);
   }
 
-  const ac2 = new AbortController();
-  const timer2 = setTimeout(() => ac2.abort(), timeoutMs);
-  /** @type {Response} */
-  let manifestRes;
-  try {
-    manifestRes = await fetchImpl(`${url}/build-manifest.json`, {
-      method: "GET",
-      redirect: "manual",
-      signal: ac2.signal,
-    });
-  } finally {
-    clearTimeout(timer2);
-  }
+  const manifestRes = await fetchManual(
+    `${currentUrl.replace(/\/$/, "")}/build-manifest.json`,
+    requestInit,
+    timeoutMs,
+    fetchImpl,
+  );
 
   if (manifestRes.status >= 300 && manifestRes.status < 400) {
     throw Object.assign(new Error("build-manifest.json redirige; no se sigue."), {

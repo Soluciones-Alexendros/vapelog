@@ -108,6 +108,63 @@ Cadena típica en PR:
 3. `preview-e2e` espera hasta 900 s la URL de Preview (`wait-preview-url.mjs`)
    y ejecuta Playwright (`playwright.preview.config.ts`).
 
+## Acceso a Preview protegido (Deployment Protection / SSO)
+
+El proyecto Vercel `alexendros-team/vapelog` tiene `ssoProtection` sobre
+_preview_: sin bypass, cualquier petición anónima recibe `302` a
+`vercel.com/sso-api` y el probe falla en el intento 1 (determinista, no flake).
+
+**Contrato vigente:**
+
+| Pieza                             | Dónde                                      | Notas                                                                          |
+| --------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| Automation Bypass                 | Vercel → Settings → Deployment Protection  | Un secreto por consumidor, revocable e independiente                           |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | GitHub **environment `Preview`** (no repo) | Solo lo recibe el job `preview-e2e`                                            |
+| `VERCEL_PREVIEW_BYPASS_ENABLED`   | Variable de repo                           | `true` en este repo: sin secreto el job **falla**, no se salta en silencio     |
+| `preview-e2e`                     | Protección de `main`                       | Required (política A); fuera de `needs` de `release-ready` para no crear ciclo |
+
+Estados de `scripts/check-preview-bypass.mjs` (primer paso del job):
+
+- `ok` — hay secreto; el job ejecuta probe + Playwright.
+- `skipped` — PR de fork (Vercel no genera Preview por `gitForkProtection`) o
+  `VERCEL_PREVIEW_BYPASS_ENABLED≠true`. Aviso `::warning` y job verde, **sin
+  fingir cobertura**.
+- `error` — PR del propio repo sin secreto con la variable en `true`:
+  `::error` accionable y exit 1.
+
+`wait-preview-url.mjs` distingue además el motivo del rechazo:
+`NO_BYPASS_SECRET` (falta configuración) frente a `BYPASS_INVALID` (secreto
+rotado o incorrecto). El probe envía solo `x-vercel-protection-bypass`;
+`x-vercel-set-bypass-cookie` provoca un `307` de set-cookie y se reserva para
+Playwright, que sí navega con cookies. Un `3xx` al mismo host se sigue una vez
+(normalización) y un bucle equivalente es error fatal.
+
+**Alta y rotación (operador):**
+
+```bash
+# Alta (OAuth: sin `secret`, la API genera el valor)
+printf '%s' '{"generate":{"note":"github-actions preview-e2e"}}' \
+| vercel api "/v1/projects/vapelog/protection-bypass?slug=alexendros-team" \
+    --scope alexendros-team -X PATCH --input - --raw
+
+# Guardar sin eco ni historial
+read -rs BYPASS
+printf '%s' "$BYPASS" | gh secret set VERCEL_AUTOMATION_BYPASS_SECRET \
+  --env Preview --repo Soluciones-Alexendros/vapelog
+unset BYPASS
+
+# Comprobación: 302 sin cabecera, 200 con ella
+curl -sI "$PREVIEW_URL/" | head -1
+curl -sI -H "x-vercel-protection-bypass: $BYPASS" "$PREVIEW_URL/" | head -1
+```
+
+Rotar = crear un bypass nuevo en Vercel y repetir `gh secret set`; el anterior
+se revoca cuando el secret nuevo esté verificado. Si el secret se revoca sin
+sustituirlo, el job falla con `BYPASS_INVALID` (no se reintenta en bucle).
+
+**Prohibido:** bajar/quitar `ssoProtection` para poner el job en verde, o
+meter `preview-e2e` en `needs` de `release-ready`.
+
 **Riesgo si se mete `preview-e2e` dentro de `release-ready` sin reconfigurar
 Vercel:** Preview podría esperar `release-ready` → `release-ready` esperaría
 `preview-e2e` → `preview-e2e` espera Preview → **bloqueo circular**.
