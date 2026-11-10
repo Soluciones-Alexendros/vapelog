@@ -103,6 +103,60 @@ test("probePreviewReady diagnostica SSO de Deployment Protection", async () => {
   );
 });
 
+/** @returns {typeof fetch} */
+function ssoFetch(status = 302) {
+  return async () =>
+    /** @type {Response} */ ({
+      ok: false,
+      status,
+      headers: {
+        get: (n) =>
+          n.toLowerCase() === "location" && status >= 300 && status < 400
+            ? "https://vercel.com/sso-api?url=https%3A%2F%2Fpreview.example.test%2F"
+            : null,
+      },
+      json: async () => ({}),
+    });
+}
+
+test("probePreviewReady distingue secreto ausente de secreto inválido (302 SSO)", async () => {
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(302),
+        bypassHeaders: {},
+      }),
+    (err) => err.code === "NO_BYPASS_SECRET" && /\[NO_BYPASS_SECRET\]/.test(err.message),
+  );
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(302),
+        bypassHeaders: { "x-vercel-protection-bypass": "caducado" },
+      }),
+    (err) => err.code === "BYPASS_INVALID" && /rotado/.test(err.message),
+  );
+});
+
+test("probePreviewReady distingue secreto ausente de secreto inválido (403)", async () => {
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(403),
+        bypassHeaders: {},
+      }),
+    (err) => err.code === "NO_BYPASS_SECRET" && err.fatal === true,
+  );
+  await assert.rejects(
+    () =>
+      probePreviewReady("https://preview.example.test", "sha", {
+        fetchImpl: ssoFetch(401),
+        bypassHeaders: { "x-vercel-protection-bypass": "caducado" },
+      }),
+    (err) => err.code === "BYPASS_INVALID" && err.fatal === true,
+  );
+});
+
 test("protectionBypassHeaders y isVercelSsoHost", () => {
   assert.deepEqual(protectionBypassHeaders({}), {});
   assert.deepEqual(protectionBypassHeaders({ VERCEL_AUTOMATION_BYPASS_SECRET: "  tok  " }), {

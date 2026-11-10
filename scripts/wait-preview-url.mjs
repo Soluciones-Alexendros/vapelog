@@ -84,6 +84,14 @@ export async function probePreviewReady(url, expectedSha, opts = {}) {
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
   const timeoutMs = opts.timeoutMs ?? DEFAULT_PROBE_TIMEOUT_MS;
   const bypassHeaders = opts.bypassHeaders ?? protectionBypassHeaders();
+  // Distingue «no hay secreto configurado» de «el secreto no vale»: el mensaje
+  // del primero es una tarea de configuración, el del segundo una rotación.
+  const hasBypass = Object.keys(bypassHeaders).length > 0;
+  const accessCode = hasBypass ? "BYPASS_INVALID" : "NO_BYPASS_SECRET";
+  const accessHint = hasBypass
+    ? "El secreto no es válido o fue rotado: actualiza VERCEL_AUTOMATION_BYPASS_SECRET (environment Preview)."
+    : "Define VERCEL_AUTOMATION_BYPASS_SECRET en el environment Preview con el valor de " +
+      "Vercel → Deployment Protection → Protection Bypass for Automation.";
   const requestInit = {
     method: "GET",
     redirect: /** @type {RequestRedirect} */ ("manual"),
@@ -103,10 +111,9 @@ export async function probePreviewReady(url, expectedSha, opts = {}) {
   if (probe.status === 401 || probe.status === 403) {
     throw Object.assign(
       new Error(
-        `Preview responde ${probe.status} (Deployment Protection). ` +
-          "Configura VERCEL_AUTOMATION_BYPASS_SECRET o relaja la protección en Previews.",
+        `[${accessCode}] Preview responde ${probe.status} (Deployment Protection). ${accessHint}`,
       ),
-      { fatal: true },
+      { fatal: true, code: accessCode },
     );
   }
   if (probe.status >= 300 && probe.status < 400) {
@@ -119,13 +126,8 @@ export async function probePreviewReady(url, expectedSha, opts = {}) {
     }
     if (isVercelSsoHost(host)) {
       throw Object.assign(
-        new Error(
-          `Preview redirige a SSO Vercel (${host}). ` +
-            "Deployment Protection activo: define el secreto de repo " +
-            "VERCEL_AUTOMATION_BYPASS_SECRET (mismo valor que en Vercel → " +
-            "Deployment Protection → Automation Bypass).",
-        ),
-        { fatal: true },
+        new Error(`[${accessCode}] Preview redirige a SSO Vercel (${host}). ${accessHint}`),
+        { fatal: true, code: accessCode },
       );
     }
     if (host === PRODUCTION_HOST || (host && host !== new URL(url).host)) {
