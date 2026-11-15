@@ -12,6 +12,10 @@ Este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambios
+
+- ci: `ci-gate` agrupa los mismos jobs que `release-ready`. `preview-e2e` sigue fuera.
+
 ## [0.15.1] - 2026-11-10
 
 ### Cambios

@@ -19,11 +19,12 @@
 2. `pnpm install`
 3. `pnpm run typecheck && pnpm run lint && pnpm test`
 4. `pnpm run build && pnpm run smoke` (o `make validate`).
-5. PR con CI verde. El check agregador es **`release-ready`**: exige
-   `success` en `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e`,
+5. PR con CI verde. El check de flota es **`ci-gate`**. Exige lo mismo que
+   **`release-ready`**, que sigue abriendo la publicación: `success` en
+   `quality`, `test`, `build`, `smoke`, `browser`, `fx-e2e`,
    `supply-chain`, `sql-integration`, `secrets` y `sca` (lista única en
    `scripts/release-ready.mjs` → `REQUIRED_JOBS`, paridad con
-   `.github/workflows/ci.yml`). Fuera del agregador: `smoke-bench`
+   `.github/workflows/ci.yml`). Fuera de ambos: `smoke-bench`
    (informativo), `release` (solo push a `main`), `preview-e2e` si existe
    (aceptación desplegada; no entra en el gate de integración). Revisión
    `@Alexendros`. El método de merge del repo es el configurado en
