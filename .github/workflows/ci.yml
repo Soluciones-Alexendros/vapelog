@@ -586,3 +586,37 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           node scripts/release.mjs
+
+  # Mismos needs que release-ready. preview-e2e, preview-bypass-config,
+  # smoke-bench y release quedan fuera: no corren en todo evento, o no bloquean.
+  ci-gate:
+    name: ci-gate
+    needs:
+      [quality, test, build, smoke, browser, fx-e2e, supply-chain, sql-integration, secrets, sca]
+    # No correr si el workflow entero se canceló: evita un ci-gate rojo fantasma.
+    if: always() && !cancelled()
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluar needs y hold
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          ALLOWED_SKIPS: ""
+          HOLD: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'hold') }}
+        run: |
+          set -euo pipefail
+          if [[ "${HOLD}" == "true" ]]; then
+            echo "::error::PR con etiqueta hold: ci-gate falla a propósito (quita hold para auto-merge)."
+            exit 1
+          fi
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          fi
+          echo "$NEEDS_JSON" | jq -e --argjson skips "$(printf '%s\n' "${ALLOWED_SKIPS}" | jq -R 'split(" ") | map(select(length>0))')" '
+            to_entries
+            | map(select(.value.result != "success" and ((.key as $k | $skips | index($k)) | not)))
+            | if length == 0 then true else
+                error("ci-gate: jobs no success: " + (map(.key + "=" + .value.result) | join(", ")))
+              end
+          ' >/dev/null

@@ -58,8 +58,13 @@ fuera de esta API.
 | **Code scanning**        | CodeQL, umbral `high_or_higher` / alertas `errors`                           |
 | **Checks de CI**         | **No** hay regla `required_status_checks` en el ruleset                      |
 
-El nombre del ruleset (`sin ci-gate`) coincide con la evidencia: el gate de CI
-sigue viviendo en la **protección clásica** (`release-ready`), no en el ruleset.
+El nombre del ruleset (`sin ci-gate`) coincide con la evidencia de esa fecha: el gate de CI
+vivía en la **protección clásica** (`release-ready`), no en el ruleset.
+
+**2026-11-15.** `ci.yml` añade `ci-gate` con los mismos `needs` que `release-ready`.
+`preview-e2e` sigue fuera de los dos, por el ciclo con Vercel. `release-ready`
+sigue decidiendo si el job `release` publica. El check que GitHub exige para
+fusionar pasa al ruleset (`ci-gate`) cuando este cambio está en `main`.
 
 ### Ruleset `26288301` — `plan/*: squash (sin ci-gate)`
 
